@@ -66,7 +66,22 @@ Cada archivo en esta carpeta está enfocado en **una sola tarea específica** co
 10. **[10_CHECKLIST_DE_VERIFICACION_FINAL.md](./10_CHECKLIST_DE_VERIFICACION_FINAL.md)**
     * Lista interactiva con casillas de verificación para auditar tu trabajo antes de pasar a la programación de Kinect.
 
-11. **[RECOMENDACION_PACKAGES_Y_HERRAMIENTAS_UNITY.md](../RECOMENDACION_PACKAGES_Y_HERRAMIENTAS_UNITY.md)** *(Nuevo)*
+11. **[11_ESTRUCTURA_Y_ARQUITECTURA_DE_SCRIPTS.md](./11_ESTRUCTURA_Y_ARQUITECTURA_DE_SCRIPTS.md)** *(Nuevo)*
+    * Taxonomía de carpetas para scripts (`Core`, `Combat`, `Fighters`, `Input`, `Audio`, `UI`, `Testing`, `Editor`).
+    * Matriz de decisión para saber dónde colocar cada nuevo script.
+    * Probador de animaciones con teclado (`FighterAnimationTester`) y calibración manual del pivote del pie.
+
+12. **[12_PLAN_DE_DESARROLLO_Y_SPRINTS_3_DEVS.md](./12_PLAN_DE_DESARROLLO_Y_SPRINTS_3_DEVS.md)** *(Nuevo)*
+    * Plan de trabajo por Sprints de 2 semanas para 3 desarrolladores universitarios (Sep 5 - Dic 1, 2026).
+    * Asignación de roles desacoplados (Gameplay, Arte/Audio, Kinect/UI) y mitigación de cuellos de botella.
+
+13. **[13_GUIA_GITHUB_PROJECTS_Y_KANBAN_AUTOMATIZADO.md](./13_GUIA_GITHUB_PROJECTS_Y_KANBAN_AUTOMATIZADO.md)** *(Nuevo)*
+    * Configuración del tablero Kanban, flujos de trabajo automáticos de GitHub y estrategia de ramas Git.
+
+14. **[14_MILESTONES_Y_TAREAS_SPRINTS_GITHUB.md](./14_MILESTONES_Y_TAREAS_SPRINTS_GITHUB.md)** *(Nuevo)*
+    * Detalle exhaustivo de los 6 Milestones y las 36 tareas atómicas con criterios de aceptación (Definition of Done).
+
+15. **[RECOMENDACION_PACKAGES_Y_HERRAMIENTAS_UNITY.md](../RECOMENDACION_PACKAGES_Y_HERRAMIENTAS_UNITY.md)**
     * Guía técnica de paquetes esenciales de Unity, herramientas recomendadas (Input System, Cinemachine, URP 2D, Animancer, Frame Data), shaders de Super Flash y depuración para agilizar el desarrollo.
 
 ---

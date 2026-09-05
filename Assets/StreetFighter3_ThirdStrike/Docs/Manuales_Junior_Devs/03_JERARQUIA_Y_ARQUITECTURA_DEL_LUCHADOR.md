@@ -72,7 +72,7 @@ La Pushbox es la caja invisible que impide que Ryu y Ken se traspasen como fanta
    * En **Order in Layer**, pon **`10`**.
 5. Añade el componente **Animator**:
    * Clic en **Add Component** ➔ **`Animator`**.
-   * En el campo **Controller**, arrastra el `Ryu_AnimatorController` que creaste en la Guía 02.
+   * *(Nota: En la siguiente **Guía 04** crearemos y configuraremos el `Ryu_AnimatorController` con todos sus estados y parámetros; por ahora puedes dejar el campo Controller vacío o asignar uno nuevo si ya lo creaste).*
 
 > [!IMPORTANT]
 > **¿Por qué el SpriteRenderer va en un hijo llamado `Visuals`?**
@@ -84,11 +84,11 @@ La Pushbox es la caja invisible que impide que Ryu y Ken se traspasen como fanta
 
 #### 5. Crear las Hurtboxes y Hitboxes
 
-Ahora que Ryu es visible en la escena, ajustaremos sus cajas de combate:
+Ahora que Ryu es visible en la escena en su postura neutra, ajustaremos sus colisionadores de combate:
 
 > [!NOTE]
 > **¿La Hurtbox debe cubrir a Ryu por completo?**
-> **SÍ.** A diferencia de la Pushbox, la Hurtbox representa **toda la zona donde Ryu es vulnerable a recibir golpes** (desde la coronilla de la cabeza hasta los pies).
+> **SÍ.** A diferencia de la Pushbox, la Hurtbox representa **toda la zona donde Ryu es vulnerable a recibir daño** (desde la coronilla de la cabeza hasta los pies).
 
 1. **Crear la Hurtbox (`Hurtbox_Root` - Donde Ryu RECIBE daño):**
    * Haz clic derecho sobre `Fighter_Ryu` ➔ **Create Empty**. Llámalo **`Hurtbox_Root`**.
@@ -99,20 +99,21 @@ Ahora que Ryu es visible en la escena, ajustaremos sus cajas de combate:
        * **Offset:** `X: 0`, `Y: 0.56` *(la mitad exacta de 1.12 para centrarlo desde los pies)*.
        * **Size:** `X: 0.75`, `Y: 1.12` *(cubre toda la silueta de Ryu en reposo)*.
      * *(Tip visual): Puedes hacer clic en el botón **Edit Collider** (cuadrado verde con 4 puntos) para ver y retocar los bordes verdes sobre la silueta de Ryu en la ventana Scene.*
-   * Clic en **Add Component** ➔ busca el script **`FighterHurtbox`** (incluido en `Assets/.../Scripts/Combat/FighterCombatColliders.cs`):
+   * Clic en **Add Component** ➔ busca el script **`FighterHurtbox`** (en `Assets/StreetFighter3_ThirdStrike/Scripts/Combat/FighterHurtbox.cs`):
      * En el campo **Owner**, arrastra el GameObject raíz **`Fighter_Ryu`**. *(Esto evita que Ryu se golpee a sí mismo)*.
 
-2. **Crear la Hitbox (`Hitbox_Root` - Donde Ryu HACE daño al atacar):**
+2. **Crear el contenedor de la Hitbox (`Hitbox_Root` - Donde Ryu HACE daño):**
    * Haz clic derecho sobre `Fighter_Ryu` ➔ **Create Empty**. Llámalo **`Hitbox_Root`**.
    * En el Inspector, cambia su **Layer** a: **`Hitbox`**.
    * Clic en **Add Component** ➔ **Box Collider 2D**:
      * Marca la casilla **`Is Trigger` [X]** (True).
-     * **Valores de referencia para un puñetazo:**
-       * **Offset:** `X: 0.45`, `Y: 0.75` *(a la altura del puño/pecho de Ryu)*.
-       * **Size:** `X: 0.40`, `Y: 0.30`.
-   * Clic en **Add Component** ➔ busca el script **`FighterHitbox`**:
+   * Clic en **Add Component** ➔ busca el script **`FighterHitbox`** (en `Assets/StreetFighter3_ThirdStrike/Scripts/Combat/FighterHitbox.cs`):
      * **Damage:** `10`.
      * **Hit Stun Duration:** `0.2`.
    * **¡CRÍTICO! Desactiva este GameObject por defecto:**
      * En la parte superior izquierda del Inspector de `Hitbox_Root`, **desmarca la casilla de verificación junto al nombre** para apagarlo.
-     * La Hitbox **solo** debe encenderse durante los fotogramas del golpe mediante los Animation Events que aprenderás en la Guía 05.
+   
+   > [!TIP]
+   > **¿Por qué no alineamos la Hitbox todavía?**
+   > Porque Ryu está en postura de reposo (*idle*) y sus puños no están lanzados hacia adelante. **¡No intentes adivinar la posición del golpe ahora!** 
+   > En la **Guía 04** vincularemos los ataques en el Animator y, en la **Guía 05**, congelaremos el fotograma exacto donde el puño impacta para colocar la caja roja de la Hitbox justo sobre el puño extendido de Ryu.

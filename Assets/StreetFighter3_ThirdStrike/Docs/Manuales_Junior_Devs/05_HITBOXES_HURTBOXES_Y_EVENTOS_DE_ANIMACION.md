@@ -43,37 +43,49 @@ Para que una Hitbox nunca choque con otra Hitbox, sino únicamente con la Hurtbo
 
 ---
 
-### 📍 Paso 4: Qué son los Animation Events y Cómo Usarlos
-Un golpe no debe hacer daño todo el tiempo; únicamente en los fotogramas en que la mano o pie impacta. Para lograr esto sin escribir líneas interminables de temporizadores en C#, usamos **Animation Events**:
+### 💻 Paso 4: Añadir el Script `FighterCombatColliders` al GameObject con el Animator (`Visuals`)
 
-1. En la ventana **Hierarchy**, selecciona tu personaje `Fighter_Ryu`.
-2. Abre la ventana **Animation** (`Window > Animation > Animation` o `Ctrl + 6`).
-3. En el menú desplegable de animaciones (arriba a la izquierda de la ventana Animation), selecciona la animación de ataque: por ejemplo `Ryu_Heavy_Punch`.
-4. Mueve la barra vertical blanca de tiempo (la aguja de reproducción) cuadro por cuadro hasta encontrar el frame donde el puño está completamente extendido (por ejemplo, el **frame 3**).
+> [!IMPORTANT]
+> **Regla de Unity para Animation Events:**
+> Unity **únicamente** busca funciones públicas en los componentes que están en el **mismo GameObject que tiene el componente `Animator`** (es decir, en el hijo **`Visuals`**). Si colocas el script en el padre `Fighter_Ryu`, el menú desplegable de funciones aparecerá vacío.
 
-#### Crear el Evento de "Activar Golpe":
-1. Justo debajo de la regla con los números de fotogramas, haz **clic derecho** sobre la línea gris y selecciona:
-   **`Add Animation Event`**.
-2. Verás que aparece un pequeño marcador con forma de lápiz o etiqueta blanca.
-3. Con ese marcador seleccionado, mira el panel **Inspector** a la derecha:
-   * En el campo **Function**, escribe el nombre exacto de la función en tu script:
-     **`EnableHitbox`** (o `ActivarGolpe`).
-
-#### Crear el Evento de "Desactivar Golpe":
-1. Ahora avanza la aguja de tiempo un par de cuadros hacia adelante, donde el puño comienza a replegarse (por ejemplo, el **frame 6**).
-2. Haz **clic derecho** ➔ **`Add Animation Event`**.
-3. En el Inspector, en el campo **Function**, escribe:
-   **`DisableHitbox`** (o `DesactivarGolpe`).
-
-#### Crear el Evento de "Sonido de Golpe":
-1. En el mismo **frame 3** (donde impacta el golpe), haz clic derecho ➔ **`Add Animation Event`**.
-2. En **Function**, escribe: **`PlayAttackVoice`**.
+1. En la ventana **Hierarchy**, selecciona el hijo **`Visuals`** de Ryu.
+2. Haz clic en **Add Component** ➔ busca y añade **`FighterCombatColliders`**.
+3. En el Inspector:
+   * En el campo **Hitbox Object**, arrastra el hijo **`Hitbox_Root`**.
+   * *(Opcional)* En el campo **Attack Voice Clip**, arrastra el audio de voz que desees (ej. `Audio/Voices/02_Ryu/SE_00062.wav`).
 
 ---
 
-### 💻 Ejemplo de Script C# para Colisionadores (Listo para Usar)
-Hemos incluido en el paquete el script `Assets/StreetFighter3_ThirdStrike/Scripts/Combat/FighterCombatColliders.cs`.
-Este script contiene las funciones listas para ser llamadas por tus Animation Events:
+### 📍 Paso 5: Cómo Posicionar la Hitbox sobre el Puño (Viendo el Golpe en Vivo)
+
+1. Con el hijo **`Visuals`** seleccionado en la Hierarchy, abre la ventana **Animation** (`Ctrl + 6`).
+2. En el desplegable de animaciones (arriba a la izquierda de la ventana Animation), selecciona **`light_punch`**.
+3. Mueve la barra vertical blanca de tiempo (la aguja de reproducción) hasta el **frame 2 o 3** (donde el puño está completamente extendido).
+4. **¡Mira la ventana Scene!** Verás a Ryu congelado con el puño estirado.
+5. En la Hierarchy, selecciona el hijo **`Hitbox_Root`**:
+   * En el Inspector, haz clic en el botón **Edit Collider** del `Box Collider 2D`.
+   * En la ventana Scene, **arrastra el recuadro para que envuelva exactamente el puño derecho de Ryu**.
+
+---
+
+### 📍 Paso 6: Crear los Animation Events (Encender y Apagar el Golpe)
+
+1. En la ventana **Animation**, con la animación `light_punch` abierta:
+2. **Evento para ENCENDER la Hitbox:**
+   * Sitúa la aguja en el **frame 1 o 2** (justo cuando el puño sale).
+   * Haz **clic derecho** sobre la línea gris de tiempo ➔ **`Add Animation Event`**.
+   * Con la etiqueta blanca seleccionada, mira el **Inspector**: en el desplegable **Function**, ahora verás **`EnableHitbox()`** listado automáticamente. Selecciónalo.
+
+3. **Evento para APAGAR la Hitbox:**
+   * Mueve la aguja al **frame 4 o 5** (cuando el brazo empieza a replegarse).
+   * Haz **clic derecho** ➔ **`Add Animation Event`**.
+   * En el Inspector, en **Function**, selecciona **`DisableHitbox()`**.
+
+4. **(Opcional) Evento de Voz:**
+   * En el frame del impacto, crea otro Animation Event y selecciona **`PlayAttackVoice()`**.
+
+El script ya viene incluido en `Assets/StreetFighter3_ThirdStrike/Scripts/Combat/FighterCombatColliders.cs`:
 
 ```csharp
 using UnityEngine;
