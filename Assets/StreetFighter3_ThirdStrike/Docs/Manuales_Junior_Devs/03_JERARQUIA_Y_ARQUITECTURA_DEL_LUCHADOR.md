@@ -46,13 +46,16 @@ Así es como debe lucir tu personaje en la ventana **Hierarchy**:
      * Marca la casilla: **`Freeze Rotation Z` [X]**. *(¡Crítico! Si no marcas esto, cuando otro personaje empuje a Ryu, este se caerá de espaldas rodando).*
 
 #### 3. Crear la Pushbox (Caja de Empuje Físico)
-La Pushbox es la caja invisible que impide que Ryu y Ken se traspasen como fantasmas cuando caminan el uno hacia el otro:
+La Pushbox es la caja invisible que impide que Ryu y Ken se traspasen como fantasmas cuando caminan el uno hacia el otro.
+> [!NOTE]
+> **¿La Pushbox debe cubrir todo a Ryu?**
+> **NO.** La Pushbox debe ser más estrecha y no cubrir la cabeza (para permitir saltos cruzados o *cross-ups*). Solo representa el núcleo sólido del cuerpo (desde los pies hasta los hombros).
+
 1. Con `Fighter_Ryu` seleccionado, haz clic en **Add Component** ➔ **Box Collider 2D**.
 2. Deja la casilla **Is Trigger** **DESMARCADA (False)**.
-3. Haz clic en el botón **Edit Collider** (el icono cuadrado verde con cuatro puntos).
-4. En la ventana **Scene**, ajusta los bordes para que cubran el cuerpo del personaje:
-   * **Size:** `X: 0.6`, `Y: 1.6`.
-   * **Offset:** `X: 0`, `Y: 0.8`.
+3. **Valores exactos de CPS-3 (Ryu mide 111 px = 1.11 unidades a PPU 100):**
+   * **Offset:** `X: 0`, `Y: 0.50` *(centrado a media altura del torso)*.
+   * **Size:** `X: 0.48`, `Y: 1.00` *(deja libre la cabeza y los extremos de los brazos)*.
 
 ---
 
@@ -83,17 +86,21 @@ La Pushbox es la caja invisible que impide que Ryu y Ken se traspasen como fanta
 
 Ahora que Ryu es visible en la escena, ajustaremos sus cajas de combate:
 
+> [!NOTE]
+> **¿La Hurtbox debe cubrir a Ryu por completo?**
+> **SÍ.** A diferencia de la Pushbox, la Hurtbox representa **toda la zona donde Ryu es vulnerable a recibir golpes** (desde la coronilla de la cabeza hasta los pies).
+
 1. **Crear la Hurtbox (`Hurtbox_Root` - Donde Ryu RECIBE daño):**
    * Haz clic derecho sobre `Fighter_Ryu` ➔ **Create Empty**. Llámalo **`Hurtbox_Root`**.
    * En el Inspector, cambia su **Layer** a: **`Hurtbox`** (creada en la Guía 05).
    * Clic en **Add Component** ➔ **Box Collider 2D**:
      * Marca la casilla **`Is Trigger` [X]** (True).
-     * **Valores de referencia para Ryu:**
-       * **Offset:** `X: 0`, `Y: 0.85`
-       * **Size:** `X: 0.7`, `Y: 1.65`
-     * *(Opcional): Haz clic en el botón **Edit Collider** (cuadrado verde con 4 puntos) para ajustar manualmente los bordes verdes alrededor de la cabeza, torso y piernas de Ryu en la ventana Scene.*
+     * **Valores exactos CPS-3 (Ryu mide 78x111 px):**
+       * **Offset:** `X: 0`, `Y: 0.56` *(la mitad exacta de 1.12 para centrarlo desde los pies)*.
+       * **Size:** `X: 0.75`, `Y: 1.12` *(cubre toda la silueta de Ryu en reposo)*.
+     * *(Tip visual): Puedes hacer clic en el botón **Edit Collider** (cuadrado verde con 4 puntos) para ver y retocar los bordes verdes sobre la silueta de Ryu en la ventana Scene.*
    * Clic en **Add Component** ➔ busca el script **`FighterHurtbox`** (incluido en `Assets/.../Scripts/Combat/FighterCombatColliders.cs`):
-     * En el campo **Owner**, arrastra el GameObject raíz **`Fighter_Ryu`**. *(Esto evita que Ryu se golpee a sí mismo).*
+     * En el campo **Owner**, arrastra el GameObject raíz **`Fighter_Ryu`**. *(Esto evita que Ryu se golpee a sí mismo)*.
 
 2. **Crear la Hitbox (`Hitbox_Root` - Donde Ryu HACE daño al atacar):**
    * Haz clic derecho sobre `Fighter_Ryu` ➔ **Create Empty**. Llámalo **`Hitbox_Root`**.
@@ -101,8 +108,8 @@ Ahora que Ryu es visible en la escena, ajustaremos sus cajas de combate:
    * Clic en **Add Component** ➔ **Box Collider 2D**:
      * Marca la casilla **`Is Trigger` [X]** (True).
      * **Valores de referencia para un puñetazo:**
-       * **Offset:** `X: 0.65`, `Y: 1.1` (justo al frente del pecho/hombro de Ryu).
-       * **Size:** `X: 0.5`, `Y: 0.4`
+       * **Offset:** `X: 0.45`, `Y: 0.75` *(a la altura del puño/pecho de Ryu)*.
+       * **Size:** `X: 0.40`, `Y: 0.30`.
    * Clic en **Add Component** ➔ busca el script **`FighterHitbox`**:
      * **Damage:** `10`.
      * **Hit Stun Duration:** `0.2`.
