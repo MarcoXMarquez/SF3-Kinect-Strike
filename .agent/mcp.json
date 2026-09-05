@@ -1,0 +1,17 @@
+﻿{
+  "mcpServers": {
+    "sequential-thinking": {
+      "command": "node",
+      "args": [
+        "C:/Users/marco/AppData/Roaming/npm/node_modules/@modelcontextprotocol/server-sequential-thinking/dist/index.js"
+      ]
+    },
+    "knowledge-base": {
+      "command": "node",
+      "args": [
+        "C:/Users/marco/AppData/Roaming/npm/node_modules/@modelcontextprotocol/server-filesystem/dist/index.js",
+        "C:/Users/marco/Documents/KnowledgeBase"
+      ]
+    }
+  }
+}
