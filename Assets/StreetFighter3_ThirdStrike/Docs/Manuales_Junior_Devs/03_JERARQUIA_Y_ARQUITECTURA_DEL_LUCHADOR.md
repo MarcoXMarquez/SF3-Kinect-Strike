@@ -62,11 +62,14 @@ La Pushbox es la caja invisible que impide que Ryu y Ken se traspasen como fanta
 3. Asegúrate de que su **Position** en el Transform esté en `(0, 0, 0)`.
 4. Añade el componente **Sprite Renderer**:
    * Clic en **Add Component** ➔ **`Sprite Renderer`**.
+   * **¡MUY IMPORTANTE (El Sprite de Referencia)!**: En el campo **Sprite**, arrastra la primera imagen de reposo:
+     `Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/01_Movement/idle_stance/0.png`.
+     *(¿Por qué? Esto hace que Ryu aparezca inmediatamente visible en la ventana Scene. Así tendrás su silueta como "maniquí" para ajustar los colisionadores de daño en el siguiente paso).*
    * En **Sorting Layer**, selecciona **`Fighters`**.
    * En **Order in Layer**, pon **`10`**.
 5. Añade el componente **Animator**:
    * Clic en **Add Component** ➔ **`Animator`**.
-   * En el campo **Controller**, arrastra el `Ryu_Animator` que creaste en la Guía 02.
+   * En el campo **Controller**, arrastra el `Ryu_AnimatorController` que creaste en la Guía 02.
 
 > [!IMPORTANT]
 > **¿Por qué el SpriteRenderer va en un hijo llamado `Visuals`?**
@@ -77,14 +80,32 @@ La Pushbox es la caja invisible que impide que Ryu y Ken se traspasen como fanta
 ---
 
 #### 5. Crear las Hurtboxes y Hitboxes
-1. Haz clic derecho sobre `Fighter_Ryu` ➔ **Create Empty**. Llámalo **`Hurtbox_Root`**.
-   * Añade un **Box Collider 2D**.
-   * Marca la casilla **`Is Trigger` [X]** (True).
-   * Ajusta el tamaño para que cubra la cabeza, torso y piernas de Ryu.
-   * Añade el script incluido: `Assets/.../Scripts/Combat/FighterHurtbox.cs`.
 
-2. Haz clic derecho sobre `Fighter_Ryu` ➔ **Create Empty**. Llámalo **`Hitbox_Root`**.
-   * Añade un **Box Collider 2D**.
-   * Marca la casilla **`Is Trigger` [X]** (True).
-   * Por defecto, **desactiva** este GameObject (desmarcando la casilla de verificación junto a su nombre en la parte superior izquierda del Inspector). Solo se activará mediante eventos de animación cuando Ryu lance un puño o patada.
-   * Añade el script incluido: `Assets/.../Scripts/Combat/FighterHitbox.cs`.
+Ahora que Ryu es visible en la escena, ajustaremos sus cajas de combate:
+
+1. **Crear la Hurtbox (`Hurtbox_Root` - Donde Ryu RECIBE daño):**
+   * Haz clic derecho sobre `Fighter_Ryu` ➔ **Create Empty**. Llámalo **`Hurtbox_Root`**.
+   * En el Inspector, cambia su **Layer** a: **`Hurtbox`** (creada en la Guía 05).
+   * Clic en **Add Component** ➔ **Box Collider 2D**:
+     * Marca la casilla **`Is Trigger` [X]** (True).
+     * **Valores de referencia para Ryu:**
+       * **Offset:** `X: 0`, `Y: 0.85`
+       * **Size:** `X: 0.7`, `Y: 1.65`
+     * *(Opcional): Haz clic en el botón **Edit Collider** (cuadrado verde con 4 puntos) para ajustar manualmente los bordes verdes alrededor de la cabeza, torso y piernas de Ryu en la ventana Scene.*
+   * Clic en **Add Component** ➔ busca el script **`FighterHurtbox`** (incluido en `Assets/.../Scripts/Combat/FighterCombatColliders.cs`):
+     * En el campo **Owner**, arrastra el GameObject raíz **`Fighter_Ryu`**. *(Esto evita que Ryu se golpee a sí mismo).*
+
+2. **Crear la Hitbox (`Hitbox_Root` - Donde Ryu HACE daño al atacar):**
+   * Haz clic derecho sobre `Fighter_Ryu` ➔ **Create Empty**. Llámalo **`Hitbox_Root`**.
+   * En el Inspector, cambia su **Layer** a: **`Hitbox`**.
+   * Clic en **Add Component** ➔ **Box Collider 2D**:
+     * Marca la casilla **`Is Trigger` [X]** (True).
+     * **Valores de referencia para un puñetazo:**
+       * **Offset:** `X: 0.65`, `Y: 1.1` (justo al frente del pecho/hombro de Ryu).
+       * **Size:** `X: 0.5`, `Y: 0.4`
+   * Clic en **Add Component** ➔ busca el script **`FighterHitbox`**:
+     * **Damage:** `10`.
+     * **Hit Stun Duration:** `0.2`.
+   * **¡CRÍTICO! Desactiva este GameObject por defecto:**
+     * En la parte superior izquierda del Inspector de `Hitbox_Root`, **desmarca la casilla de verificación junto al nombre** para apagarlo.
+     * La Hitbox **solo** debe encenderse durante los fotogramas del golpe mediante los Animation Events que aprenderás en la Guía 05.
