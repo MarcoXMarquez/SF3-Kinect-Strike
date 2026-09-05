@@ -1,29 +1,38 @@
 using UnityEngine;
 
-public class FighterHitbox : MonoBehaviour
+public class FighterCombatColliders : MonoBehaviour
 {
-    public float damage = 10f;
-    public float hitStunDuration = 0.2f;
-    public bool isKnockdown = false;
-    public AudioClip hitSound;
+    [Header("Referencias a Colisionadores")]
+    [Tooltip("Asignar el hijo Hitbox_Root que contiene el BoxCollider2D Trigger")]
+    public GameObject hitboxObject;
 
-    void OnTriggerEnter2D(Collider2D other)
+    [Header("Audio y Efectos")]
+    public AudioClip attackVoiceClip;
+
+    // Llamado por el Animation Event en el frame de impacto
+    public void EnableHitbox()
     {
-        FighterHurtbox hurtbox = other.GetComponent<FighterHurtbox>();
-        if (hurtbox != null && hurtbox.owner != transform.root.gameObject)
+        if (hitboxObject != null)
         {
-            hurtbox.TakeHit(damage, hitStunDuration, isKnockdown, hitSound);
+            hitboxObject.SetActive(true);
         }
     }
-}
 
-public class FighterHurtbox : MonoBehaviour
-{
-    public GameObject owner;
-    public System.Action<float, float, bool, AudioClip> onHitReceived;
-
-    public void TakeHit(float damage, float hitStun, bool knockdown, AudioClip sfx)
+    // Llamado por el Animation Event cuando el golpe termina
+    public void DisableHitbox()
     {
-        onHitReceived?.Invoke(damage, hitStun, knockdown, sfx);
+        if (hitboxObject != null)
+        {
+            hitboxObject.SetActive(false);
+        }
+    }
+
+    // Reproduce la voz del personaje en el momento del impacto
+    public void PlayAttackVoice()
+    {
+        if (attackVoiceClip != null)
+        {
+            SF3SoundManager.Instance.PlayVoice(attackVoiceClip);
+        }
     }
 }
