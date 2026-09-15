@@ -2,79 +2,450 @@
   "1": {
     "id": 1,
     "folder": "subject_01",
-    "name": "Baluarte",
-    "height_cm": 176,
+    "name": "jeremy",
+    "height_cm": 174,
     "gender": "M",
     "calibrated_biometrics": {
-      "arm_r_cm": 41.4,
-      "arm_l_cm": 41.4,
-      "leg_r_cm": 77.2,
-      "leg_l_cm": 77.3,
-      "torso_cm": 45.0,
-      "arm_span_cm": 48.0,
-      "calibrated_at": "2026-09-15 01:15:44"
-    }
+      "arm_r_cm": 54.0,
+      "arm_l_cm": 53.1,
+      "leg_r_cm": 82.2,
+      "leg_l_cm": 81.8,
+      "torso_cm": 56.1,
+      "arm_span_cm": 76.3,
+      "calibrated_at": "2026-09-15 08:56:42"
+    },
+    "set_id": 1,
+    "set_folder": "set_01"
   },
   "2": {
     "id": 2,
     "folder": "subject_02",
-    "name": "Persona 2",
-    "height_cm": 172,
-    "gender": "M"
+    "name": "marco",
+    "height_cm": 180,
+    "gender": "M",
+    "calibrated_biometrics": {
+      "arm_r_cm": 53.7,
+      "arm_l_cm": 52.8,
+      "leg_r_cm": 81.7,
+      "leg_l_cm": 81.4,
+      "torso_cm": 55.8,
+      "arm_span_cm": 65.0,
+      "calibrated_at": "2026-09-15 09:14:50"
+    },
+    "set_id": 1,
+    "set_folder": "set_01"
   },
   "3": {
     "id": 3,
     "folder": "subject_03",
-    "name": "Persona 3",
+    "name": "kevin",
     "height_cm": 172,
-    "gender": "M"
+    "gender": "M",
+    "calibrated_biometrics": {
+      "arm_r_cm": 51.0,
+      "arm_l_cm": 50.2,
+      "leg_r_cm": 77.6,
+      "leg_l_cm": 77.3,
+      "torso_cm": 52.3,
+      "arm_span_cm": 74.9,
+      "calibrated_at": "2026-09-15 09:20:57"
+    },
+    "set_id": 1,
+    "set_folder": "set_01"
   },
   "4": {
     "id": 4,
     "folder": "subject_04",
     "name": "Persona 4",
-    "height_cm": 172,
-    "gender": "M"
+    "height_cm": 170,
+    "gender": "M",
+    "calibrated_biometrics": {
+      "arm_r_cm": 49.2,
+      "arm_l_cm": 48.4,
+      "leg_r_cm": 74.9,
+      "leg_l_cm": 74.6,
+      "torso_cm": 50.8,
+      "arm_span_cm": 72.9,
+      "calibrated_at": "2026-09-15 09:26:28"
+    },
+    "set_id": 1,
+    "set_folder": "set_01"
   },
   "5": {
     "id": 5,
     "folder": "subject_05",
-    "name": "Persona 5",
-    "height_cm": 172,
-    "gender": "M"
+    "name": "anderson",
+    "height_cm": 168,
+    "gender": "M",
+    "calibrated_biometrics": {
+      "arm_r_cm": 54.8,
+      "arm_l_cm": 54.0,
+      "leg_r_cm": 83.4,
+      "leg_l_cm": 83.1,
+      "torso_cm": 57.0,
+      "arm_span_cm": 69.4,
+      "calibrated_at": "2026-09-15 09:40:18"
+    },
+    "set_id": 1,
+    "set_folder": "set_01"
   },
   "6": {
     "id": 6,
     "folder": "subject_06",
-    "name": "Persona 6",
-    "height_cm": 172,
-    "gender": "M"
+    "name": "joao",
+    "height_cm": 174,
+    "gender": "M",
+    "calibrated_biometrics": {
+      "arm_r_cm": 55.3,
+      "arm_l_cm": 54.4,
+      "leg_r_cm": 84.1,
+      "leg_l_cm": 83.8,
+      "torso_cm": 57.5,
+      "arm_span_cm": 69.4,
+      "calibrated_at": "2026-09-15 09:44:48"
+    },
+    "set_id": 1,
+    "set_folder": "set_01"
   },
   "7": {
     "id": 7,
     "folder": "subject_07",
-    "name": "Persona 7",
-    "height_cm": 172,
-    "gender": "M"
+    "name": "fabiana",
+    "height_cm": 164,
+    "gender": "F",
+    "calibrated_biometrics": {
+      "arm_r_cm": 48.0,
+      "arm_l_cm": 47.2,
+      "leg_r_cm": 73.1,
+      "leg_l_cm": 72.7,
+      "torso_cm": 49.5,
+      "arm_span_cm": 79.4,
+      "calibrated_at": "2026-09-15 09:58:38"
+    },
+    "set_id": 1,
+    "set_folder": "set_01"
   },
   "8": {
     "id": 8,
     "folder": "subject_08",
-    "name": "Persona 8",
-    "height_cm": 172,
-    "gender": "M"
+    "name": "fochis",
+    "height_cm": 176,
+    "gender": "M",
+    "calibrated_biometrics": {
+      "arm_r_cm": 52.1,
+      "arm_l_cm": 51.3,
+      "leg_r_cm": 79.3,
+      "leg_l_cm": 78.9,
+      "torso_cm": 54.1,
+      "arm_span_cm": 88.9,
+      "calibrated_at": "2026-09-15 10:09:54"
+    },
+    "set_id": 1,
+    "set_folder": "set_01"
   },
   "9": {
     "id": 9,
     "folder": "subject_09",
     "name": "Persona 9",
-    "height_cm": 172,
-    "gender": "M"
+    "height_cm": 176,
+    "gender": "M",
+    "calibrated_biometrics": {
+      "arm_r_cm": 51.1,
+      "arm_l_cm": 50.3,
+      "leg_r_cm": 77.8,
+      "leg_l_cm": 77.5,
+      "torso_cm": 53.0,
+      "arm_span_cm": 85.2,
+      "calibrated_at": "2026-09-15 10:15:42"
+    },
+    "set_id": 1,
+    "set_folder": "set_01"
   },
   "10": {
     "id": 10,
     "folder": "subject_10",
     "name": "Persona 10",
+    "height_cm": 172,
+    "gender": "M",
+    "calibrated_biometrics": {
+      "arm_r_cm": 50.2,
+      "arm_l_cm": 49.4,
+      "leg_r_cm": 76.4,
+      "leg_l_cm": 76.0,
+      "torso_cm": 52.2,
+      "arm_span_cm": 69.9,
+      "calibrated_at": "2026-09-15 10:21:45"
+    },
+    "set_id": 1,
+    "set_folder": "set_01"
+  },
+  "11": {
+    "id": 11,
+    "set_id": 2,
+    "set_folder": "set_02",
+    "folder": "subject_11",
+    "name": "Persona 11",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "12": {
+    "id": 12,
+    "set_id": 2,
+    "set_folder": "set_02",
+    "folder": "subject_12",
+    "name": "Persona 12",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "13": {
+    "id": 13,
+    "set_id": 2,
+    "set_folder": "set_02",
+    "folder": "subject_13",
+    "name": "Persona 13",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "14": {
+    "id": 14,
+    "set_id": 2,
+    "set_folder": "set_02",
+    "folder": "subject_14",
+    "name": "Persona 14",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "15": {
+    "id": 15,
+    "set_id": 2,
+    "set_folder": "set_02",
+    "folder": "subject_15",
+    "name": "Persona 15",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "16": {
+    "id": 16,
+    "set_id": 2,
+    "set_folder": "set_02",
+    "folder": "subject_16",
+    "name": "Persona 16",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "17": {
+    "id": 17,
+    "set_id": 2,
+    "set_folder": "set_02",
+    "folder": "subject_17",
+    "name": "Persona 17",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "18": {
+    "id": 18,
+    "set_id": 2,
+    "set_folder": "set_02",
+    "folder": "subject_18",
+    "name": "Persona 18",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "19": {
+    "id": 19,
+    "set_id": 2,
+    "set_folder": "set_02",
+    "folder": "subject_19",
+    "name": "Persona 19",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "20": {
+    "id": 20,
+    "set_id": 2,
+    "set_folder": "set_02",
+    "folder": "subject_20",
+    "name": "Persona 20",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "21": {
+    "id": 21,
+    "set_id": 3,
+    "set_folder": "set_03",
+    "folder": "subject_21",
+    "name": "Persona 21",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "22": {
+    "id": 22,
+    "set_id": 3,
+    "set_folder": "set_03",
+    "folder": "subject_22",
+    "name": "Persona 22",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "23": {
+    "id": 23,
+    "set_id": 3,
+    "set_folder": "set_03",
+    "folder": "subject_23",
+    "name": "Persona 23",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "24": {
+    "id": 24,
+    "set_id": 3,
+    "set_folder": "set_03",
+    "folder": "subject_24",
+    "name": "Persona 24",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "25": {
+    "id": 25,
+    "set_id": 3,
+    "set_folder": "set_03",
+    "folder": "subject_25",
+    "name": "Persona 25",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "26": {
+    "id": 26,
+    "set_id": 3,
+    "set_folder": "set_03",
+    "folder": "subject_26",
+    "name": "Persona 26",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "27": {
+    "id": 27,
+    "set_id": 3,
+    "set_folder": "set_03",
+    "folder": "subject_27",
+    "name": "Persona 27",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "28": {
+    "id": 28,
+    "set_id": 3,
+    "set_folder": "set_03",
+    "folder": "subject_28",
+    "name": "Persona 28",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "29": {
+    "id": 29,
+    "set_id": 3,
+    "set_folder": "set_03",
+    "folder": "subject_29",
+    "name": "Persona 29",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "30": {
+    "id": 30,
+    "set_id": 3,
+    "set_folder": "set_03",
+    "folder": "subject_30",
+    "name": "Persona 30",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "31": {
+    "id": 31,
+    "set_id": 4,
+    "set_folder": "set_04",
+    "folder": "subject_31",
+    "name": "Persona 31",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "32": {
+    "id": 32,
+    "set_id": 4,
+    "set_folder": "set_04",
+    "folder": "subject_32",
+    "name": "Persona 32",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "33": {
+    "id": 33,
+    "set_id": 4,
+    "set_folder": "set_04",
+    "folder": "subject_33",
+    "name": "Persona 33",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "34": {
+    "id": 34,
+    "set_id": 4,
+    "set_folder": "set_04",
+    "folder": "subject_34",
+    "name": "Persona 34",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "35": {
+    "id": 35,
+    "set_id": 4,
+    "set_folder": "set_04",
+    "folder": "subject_35",
+    "name": "Persona 35",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "36": {
+    "id": 36,
+    "set_id": 4,
+    "set_folder": "set_04",
+    "folder": "subject_36",
+    "name": "Persona 36",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "37": {
+    "id": 37,
+    "set_id": 4,
+    "set_folder": "set_04",
+    "folder": "subject_37",
+    "name": "Persona 37",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "38": {
+    "id": 38,
+    "set_id": 4,
+    "set_folder": "set_04",
+    "folder": "subject_38",
+    "name": "Persona 38",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "39": {
+    "id": 39,
+    "set_id": 4,
+    "set_folder": "set_04",
+    "folder": "subject_39",
+    "name": "Persona 39",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "40": {
+    "id": 40,
+    "set_id": 4,
+    "set_folder": "set_04",
+    "folder": "subject_40",
+    "name": "Persona 40",
     "height_cm": 172,
     "gender": "M"
   }

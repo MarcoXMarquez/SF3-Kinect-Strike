@@ -196,13 +196,17 @@ def build_dataset_features(data_dir: str, processed_csv_path: str) -> pd.DataFra
             full_path = os.path.join(root, f)
             try:
                 # Deducir sujeto y acción de la estructura de carpetas o metadatos
-                # Formato: data_dir/subject_XX/action_name/sample_YYY.csv
+                # Formato Set:  data_dir/set_XX/subject_YY/action_name/sample_ZZZ.csv
+                # Formato Flat: data_dir/subject_YY/action_name/sample_ZZZ.csv
                 rel_parts = os.path.relpath(full_path, data_dir).replace("\\", "/").split("/")
 
                 subject_id = "unknown"
                 action_name = ""
 
-                if len(rel_parts) >= 3:
+                if len(rel_parts) >= 4 and rel_parts[0].startswith("set_"):
+                    subject_id = rel_parts[1]
+                    action_name = rel_parts[2]
+                elif len(rel_parts) >= 3:
                     subject_id = rel_parts[0]
                     action_name = rel_parts[1]
                 elif len(rel_parts) == 2:

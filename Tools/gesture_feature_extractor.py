@@ -371,9 +371,13 @@ def load_clip_from_csv(csv_path: str) -> np.ndarray:
     """
     df = pd.read_csv(csv_path)
 
-    # Filtrar columnas de metadatos si existen
-    meta_cols = [c for c in ["frame_idx", "timestamp", "timestamp_s", "subject_id", "action_id", "label"] if c in df.columns]
-    data_df = df.drop(columns=meta_cols)
+    # Seleccionar columnas de articulaciones o filtrar columnas de metadatos
+    joint_cols = [c for c in df.columns if c.startswith("joint_")]
+    if joint_cols:
+        data_df = df[joint_cols]
+    else:
+        meta_cols = [c for c in ["frame_idx", "timestamp", "timestamp_s", "subject_id", "subject_name", "subject_height_cm", "subject_gender", "action_id", "label"] if c in df.columns]
+        data_df = df.drop(columns=meta_cols)
 
     arr = data_df.values.astype(np.float32)
 

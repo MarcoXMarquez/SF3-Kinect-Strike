@@ -17,6 +17,7 @@ import time
 import json
 import argparse
 import collections
+import glob
 import numpy as np
 import pandas as pd
 import cv2
@@ -186,24 +187,40 @@ PROFILES_FILE = os.path.join(os.path.dirname(__file__), "dataset_raw", "subject_
 
 def load_subject_profiles():
     os.makedirs(os.path.dirname(PROFILES_FILE), exist_ok=True)
+    profiles = {}
     if os.path.exists(PROFILES_FILE):
         try:
             with open(PROFILES_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                profiles = json.load(f)
         except Exception:
             pass
 
-    # Perfiles predeterminados para 10 personas
-    profiles = {}
-    for i in range(1, 11):
-        profiles[str(i)] = {
-            "id": i,
-            "folder": f"subject_{i:02d}",
-            "name": f"Persona {i}",
-            "height_cm": 172,
-            "gender": "M"  # M: Masculino, F: Femenino, O: Otro
-        }
-    save_subject_profiles(profiles)
+    # Asegurar que existan los 40 perfiles para los 4 Sets (10 por set)
+    updated = False
+    for i in range(1, 41):
+        set_idx = ((i - 1) // 10) + 1
+        str_id = str(i)
+        if str_id not in profiles:
+            profiles[str_id] = {
+                "id": i,
+                "set_id": set_idx,
+                "set_folder": f"set_{set_idx:02d}",
+                "folder": f"subject_{i:02d}",
+                "name": f"Persona {i}",
+                "height_cm": 172,
+                "gender": "M"  # M: Masculino, F: Femenino, O: Otro
+            }
+            updated = True
+        else:
+            # Asegurar claves de set
+            p = profiles[str_id]
+            if "set_id" not in p or "set_folder" not in p:
+                p["set_id"] = set_idx
+                p["set_folder"] = f"set_{set_idx:02d}"
+                updated = True
+
+    if updated or not os.path.exists(PROFILES_FILE):
+        save_subject_profiles(profiles)
     return profiles
 
 def save_subject_profiles(profiles):
@@ -526,7 +543,8 @@ class GestureStudio:
     def __init__(self, is_mock: bool = False, initial_subject: int = 1):
         self.is_mock = is_mock
         self.profiles = load_subject_profiles()
-        self.current_subject_id = initial_subject  # 1 a 10
+        self.current_subject_id = max(1, min(40, initial_subject))  # 1 a 40
+        self.current_set_id = ((self.current_subject_id - 1) // 10) + 1  # 1 a 4 (Set 1 a Set 4)
         self.selected_action_idx = 1  # default: punch_right
 
         # Edición de Nombre en Vivo
@@ -562,27 +580,8 @@ class GestureStudio:
         self.ml_confidence = 0.0
         self.last_ml_time = 0.0
 
-        # Cuotas por acción del sujeto (X / 20)
-        self.quota_counts = {}
-        self.total_subject_clips = 0
-        self.update_quota_counts()
-
-        # Resumen global de los 10 sujetos (para selector y vista de pájaro)
-        self.all_subjects_summary = {}
-        self.subj_tile_rects = []
-        self.update_all_subjects_summary()
-
-        # Auditoría de guardado confirmado en disco
-        self.last_saved_info = None
-        self.last_saved_action_id = None
-        self.last_saved_time = 0.0
-
-        # Calibración A-Pose Biomecánica (Medidas corporales en A-Pose)
-        self.is_calibrating = False
-        self.calibration_start_time = 0.0
-        self.calibration_frames = []
-
         # Zonas interactivas (Mouse)
+        self.set_btn_rects = []         # [(rect, set_id)] para los 4 Sets
         self.action_btn_rects = []
         self.subj_prev_rect = (0, 0, 0, 0)
         self.subj_next_rect = (0, 0, 0, 0)
@@ -596,6 +595,26 @@ class GestureStudio:
         self.discard_btn_rect = (0, 0, 0, 0)
         self.pause_btn_rect = (0, 0, 0, 0)
         self.apose_btn_rect = (0, 0, 0, 0)
+
+        # Cuotas por acción del sujeto (X / 20)
+        self.quota_counts = {}
+        self.total_subject_clips = 0
+        self.update_quota_counts()
+
+        # Resumen global de los 40 sujetos (10 por set)
+        self.all_subjects_summary = {}
+        self.subj_tile_rects = []
+        self.update_all_subjects_summary()
+
+        # Auditoría de guardado confirmado en disco
+        self.last_saved_info = None
+        self.last_saved_action_id = None
+        self.last_saved_time = 0.0
+
+        # Calibración A-Pose Biomecánica (Medidas corporales en A-Pose)
+        self.is_calibrating = False
+        self.calibration_start_time = 0.0
+        self.calibration_frames = []
 
         self.last_msg = ""
         self.flash_until = 0.0
@@ -612,20 +631,39 @@ class GestureStudio:
                 print(f"⚠️ Error cargando ML: {ex}")
 
     def get_current_profile(self):
+        set_idx = ((self.current_subject_id - 1) // 10) + 1
         return self.profiles.get(str(self.current_subject_id), {
             "id": self.current_subject_id,
+            "set_id": set_idx,
+            "set_folder": f"set_{set_idx:02d}",
             "folder": f"subject_{self.current_subject_id:02d}",
             "name": f"Persona {self.current_subject_id}",
             "height_cm": 172,
             "gender": "M"
         })
 
+    def get_subject_dir(self, subject_id=None):
+        if subject_id is None:
+            subject_id = self.current_subject_id
+        set_idx = ((subject_id - 1) // 10) + 1
+        p_obj = self.profiles.get(str(subject_id), {})
+        s_folder = p_obj.get("folder", f"subject_{subject_id:02d}")
+        set_folder = p_obj.get("set_folder", f"set_{set_idx:02d}")
+
+        # Buscar primero en dataset_raw/set_XX/subject_YY
+        path_set = os.path.join(os.path.dirname(__file__), "dataset_raw", set_folder, s_folder)
+        if os.path.exists(path_set):
+            return path_set
+        # Fallback a dataset_raw/subject_YY
+        path_flat = os.path.join(os.path.dirname(__file__), "dataset_raw", s_folder)
+        if os.path.exists(path_flat):
+            return path_flat
+        return path_set
+
     def update_quota_counts(self):
         self.quota_counts = {}
         self.total_subject_clips = 0
-        prof = self.get_current_profile()
-        subj_folder = prof.get("folder", f"subject_{self.current_subject_id:02d}")
-        subj_dir = os.path.join(os.path.dirname(__file__), "dataset_raw", subj_folder)
+        subj_dir = self.get_subject_dir(self.current_subject_id)
         for act in COMBAT_ACTIONS:
             act_id = act["id"]
             act_dir = os.path.join(subj_dir, act_id)
@@ -638,11 +676,8 @@ class GestureStudio:
 
     def update_all_subjects_summary(self):
         self.all_subjects_summary = {}
-        base_dir = os.path.join(os.path.dirname(__file__), "dataset_raw")
-        for s_id in range(1, 11):
-            p_obj = self.profiles.get(str(s_id), {})
-            s_folder = p_obj.get("folder", f"subject_{s_id:02d}")
-            s_dir = os.path.join(base_dir, s_folder)
+        for s_id in range(1, 41):
+            s_dir = self.get_subject_dir(s_id)
             tot_clips = 0
             poses_with_data = 0
             if os.path.exists(s_dir):
@@ -711,7 +746,7 @@ class GestureStudio:
         frames_arr = np.array(self.video_frames, dtype=np.float32)
         self.video_quality = evaluate_clip_quality(frames_arr, self.video_action)
 
-        self.last_msg = f"🎥 Video listo: {self.video_quality['title']} | [ENTER] Guardar  |  [R] Re-grabar"
+        self.last_msg = f"🎥 Video listo: {self.video_quality['title']} | [ENTER] Guardar (Reemplaza previa)  |  [R] Re-grabar"
         print(f"🎥 [VIDEO LISTO] {len(self.video_frames)} frames. Estado: {self.video_quality['title']}")
 
     def confirm_save_video(self):
@@ -720,10 +755,24 @@ class GestureStudio:
 
         act = self.video_action
         prof = self.video_subject_info or self.get_current_profile()
-        subj_folder = prof.get("folder", f"subject_{self.current_subject_id:02d}")
+        subj_id = prof.get("id", self.current_subject_id)
+        set_id = prof.get("set_id", ((subj_id - 1) // 10) + 1)
+        set_folder = f"set_{set_id:02d}"
+        subj_folder = prof.get("folder", f"subject_{subj_id:02d}")
 
-        out_dir = os.path.join(os.path.dirname(__file__), "dataset_raw", subj_folder, act["id"])
+        out_dir = os.path.join(os.path.dirname(__file__), "dataset_raw", set_folder, subj_folder, act["id"])
         os.makedirs(out_dir, exist_ok=True)
+
+        # REEMPLAZO DETERMINISTA AISLADO:
+        # Eliminar cualquier muestra previa (.csv) exclusivamente en la carpeta de este movimiento y este participante
+        # (ej. el crouch de Jeremy solo reemplaza al crouch previo de Jeremy, dejando intactos sus otros golpes y a otros sujetos)
+        existing_csvs = [f for f in os.listdir(out_dir) if f.endswith(".csv")]
+        for old_f in existing_csvs:
+            try:
+                os.remove(os.path.join(out_dir, old_f))
+                print(f"🔄 Reemplazando muestra previa de '{act['name']}': {old_f}")
+            except Exception as ex:
+                print(f"⚠️ Error al reemplazar muestra previa {old_f}: {ex}")
 
         sample_id = int(time.time() * 1000)
         csv_path = os.path.join(out_dir, f"sample_{sample_id}.csv")
@@ -743,11 +792,16 @@ class GestureStudio:
 
         df_clip.to_csv(csv_path, index=False)
 
-        # Snapshot de auditoría
+        # Snapshot de auditoría (eliminar snapshot anterior de este sujeto y acción)
         review_dir = os.path.join(os.path.dirname(__file__), "captured_pose_reviews")
         os.makedirs(review_dir, exist_ok=True)
-        img_path = os.path.join(review_dir, f"{subj_folder}_{act['id']}_{sample_id}.png")
+        for old_snap in glob.glob(os.path.join(review_dir, f"{subj_folder}_{act['id']}_*.png")):
+            try:
+                os.remove(old_snap)
+            except Exception:
+                pass
 
+        img_path = os.path.join(review_dir, f"{subj_folder}_{act['id']}_{sample_id}.png")
         mid_idx = n_frames // 2
         snap = self.render_snapshot(frames_arr[mid_idx], act, prof["name"])
         cv2.imwrite(img_path, snap)
@@ -765,8 +819,9 @@ class GestureStudio:
             "success": file_saved_ok,
             "action_id": act["id"],
             "action_name": act["name"],
-            "subject_id": self.current_subject_id,
+            "subject_id": subj_id,
             "subject_name": prof.get("name", ""),
+            "set_id": set_id,
             "filename": os.path.basename(csv_path),
             "csv_path": csv_path,
             "time_str": time.strftime("%H:%M:%S"),
@@ -778,18 +833,16 @@ class GestureStudio:
         self.last_saved_time = time.time()
         play_audio_tone(1500, 180)
 
-        # Auto-avanzar si se completaron las 20 repeticiones
-        if cur_cnt >= 20:
+        # Auto-avanzar a la siguiente acción si ya se completó
+        if cur_cnt >= 1:
             for idx, a in enumerate(COMBAT_ACTIONS):
-                if self.quota_counts.get(a["id"], 0) < 20:
+                if self.quota_counts.get(a["id"], 0) < 1:
                     self.selected_action_idx = idx
-                    self.last_msg = f"🎯 Cuota completa ({act['name']} 20/20). Siguiente sugerida: {a['name']}"
                     break
-        else:
-            self.last_msg = f"✅ Guardado verificado: {act['name']} ({cur_cnt}/20) [{prof['name']}]"
 
+        self.last_msg = f"✅ Reemplazado con éxito: '{act['name']}' [{prof['name']} / Set {set_id}] ({file_size_kb:.1f} KB)"
         self.flash_until = time.time() + 0.6
-        print(f"💾 [DISCO OK] {act['name']} ({cur_cnt}/20) guardado: {csv_path} ({file_size_kb:.1f} KB)")
+        print(f"💾 ✅ [REEMPLAZO GUARDADO] {prof['name']} (Set {set_id} / {subj_folder}) | Acción: {act['id']} | Archivo: {os.path.basename(csv_path)}")
 
     def trigger_apose_calibration(self):
         if self.is_recording or self.is_counting_down:
@@ -865,31 +918,48 @@ class GestureStudio:
 
     def on_mouse_click(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
-            # 0. Clic en la barra rápida de los 10 sujetos
+            # 0. Clic en Tabs de Sets (SET 1 a SET 4)
+            for rect, set_num in self.set_btn_rects:
+                bx, by, bw, bh = rect
+                if bx <= x <= bx + bw and by <= y <= by + bh:
+                    self.current_set_id = set_num
+                    first_in_set = (set_num - 1) * 10 + 1
+                    last_in_set = set_num * 10
+                    if not (first_in_set <= self.current_subject_id <= last_in_set):
+                        self.current_subject_id = first_in_set
+                    self.update_quota_counts()
+                    self.update_all_subjects_summary()
+                    self.last_msg = f"📁 Set cambiado a: SET {set_num} (Sujetos {first_in_set:02d} - {last_in_set:02d})"
+                    return
+
+            # 0.1. Clic en los 10 sujetos del Set activo
             for rect, s_id in self.subj_tile_rects:
                 sx, sy, sw, sh = rect
                 if sx <= x <= sx + sw and sy <= y <= sy + sh:
                     self.current_subject_id = s_id
+                    self.current_set_id = ((s_id - 1) // 10) + 1
                     self.update_quota_counts()
                     self.update_all_subjects_summary()
-                    self.last_msg = f"👤 Sujeto cambiado a: Sujeto {s_id:02d} ({self.get_current_profile()['name']})"
+                    self.last_msg = f"👤 Sujeto cambiado a: Sujeto {s_id:02d} ({self.get_current_profile()['name']}) [SET {self.current_set_id}]"
                     return
 
-            # 1. Selector de Sujeto: Anterior / Siguiente
+            # 1. Selector de Sujeto: Anterior / Siguiente (1 a 40 con sincronización de Set)
             px, py, pw, ph = self.subj_prev_rect
             if px <= x <= px + pw and py <= y <= py + ph:
                 self.current_subject_id = max(1, self.current_subject_id - 1)
+                self.current_set_id = ((self.current_subject_id - 1) // 10) + 1
                 self.update_quota_counts()
                 self.update_all_subjects_summary()
-                self.last_msg = f"👤 Sujeto cambiado a: Sujeto {self.current_subject_id:02d}"
+                self.last_msg = f"👤 Sujeto cambiado a: Sujeto {self.current_subject_id:02d} [SET {self.current_set_id}]"
                 return
 
             nx, ny, nw, nh = self.subj_next_rect
             if nx <= x <= nx + nw and ny <= y <= ny + nh:
-                self.current_subject_id = min(10, self.current_subject_id + 1)
+                self.current_subject_id = min(40, self.current_subject_id + 1)
+                self.current_set_id = ((self.current_subject_id - 1) // 10) + 1
                 self.update_quota_counts()
                 self.update_all_subjects_summary()
-                self.last_msg = f"👤 Sujeto cambiado a: Sujeto {self.current_subject_id:02d}"
+                self.last_msg = f"👤 Sujeto cambiado a: Sujeto {self.current_subject_id:02d} [SET {self.current_set_id}]"
                 return
 
             # 2. Clic en Caja de Nombre para editar
@@ -1100,40 +1170,75 @@ def main():
         cv2.line(canvas, (LEFT_W, 0), (LEFT_W, HEIGHT), (55, 62, 78), 2)
 
         # TARJETA DEL SUJETO ACTIVO (Panel Izquierdo Superior)
-        cv2.rectangle(canvas, (12, 10), (LEFT_W - 12, 218), (30, 36, 48), -1)
-        cv2.rectangle(canvas, (12, 10), (LEFT_W - 12, 218), (0, 200, 255), 1)
+        cv2.rectangle(canvas, (12, 8), (LEFT_W - 12, 222), (30, 36, 48), -1)
+        cv2.rectangle(canvas, (12, 8), (LEFT_W - 12, 222), (0, 200, 255), 1)
 
         prof = studio.get_current_profile()
 
-        # Selector de Sujeto: [<] SUJETO XX / 10 [>]
-        sb_y = 16
-        studio.subj_prev_rect = (18, sb_y, 28, 26)
-        cv2.rectangle(canvas, (18, sb_y), (46, sb_y + 26), (45, 58, 76), -1)
-        cv2.rectangle(canvas, (18, sb_y), (46, sb_y + 26), (0, 200, 255), 1)
-        cv2.putText(canvas, "<", (25, sb_y + 19), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255, 255, 255), 2, cv2.LINE_AA)
+        # Selector de Sujeto: [<] SUJETO XX / 40 [SET Y] [>]
+        sb_y = 12
+        studio.subj_prev_rect = (18, sb_y, 26, 24)
+        cv2.rectangle(canvas, (18, sb_y), (44, sb_y + 24), (45, 58, 76), -1)
+        cv2.rectangle(canvas, (18, sb_y), (44, sb_y + 24), (0, 200, 255), 1)
+        cv2.putText(canvas, "<", (24, sb_y + 17), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (255, 255, 255), 2, cv2.LINE_AA)
 
-        mid_bx = 50
-        mid_bw = LEFT_W - 100
-        cv2.rectangle(canvas, (mid_bx, sb_y), (mid_bx + mid_bw, sb_y + 26), (36, 46, 62), -1)
-        subj_title = f"SUJETO {studio.current_subject_id:02d} / 10 - {prof['name'][:14]}"
-        cv2.putText(canvas, subj_title, (mid_bx + 10, sb_y + 18),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.44, (0, 255, 220), 2, cv2.LINE_AA)
+        mid_bx = 48
+        mid_bw = LEFT_W - 96
+        cv2.rectangle(canvas, (mid_bx, sb_y), (mid_bx + mid_bw, sb_y + 24), (36, 46, 62), -1)
+        subj_title = f"S{studio.current_subject_id:02d}/40 [SET {studio.current_set_id}] {prof['name'][:13]}"
+        cv2.putText(canvas, subj_title, (mid_bx + 8, sb_y + 16),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 220), 2, cv2.LINE_AA)
 
         next_x = mid_bx + mid_bw + 4
-        studio.subj_next_rect = (next_x, sb_y, 28, 26)
-        cv2.rectangle(canvas, (next_x, sb_y), (next_x + 28, sb_y + 26), (45, 58, 76), -1)
-        cv2.rectangle(canvas, (next_x, sb_y), (next_x + 28, sb_y + 26), (0, 200, 255), 1)
-        cv2.putText(canvas, ">", (next_x + 8, sb_y + 19), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255, 255, 255), 2, cv2.LINE_AA)
+        studio.subj_next_rect = (next_x, sb_y, 26, 24)
+        cv2.rectangle(canvas, (next_x, sb_y), (next_x + 26, sb_y + 24), (45, 58, 76), -1)
+        cv2.rectangle(canvas, (next_x, sb_y), (next_x + 26, sb_y + 24), (0, 200, 255), 1)
+        cv2.putText(canvas, ">", (next_x + 7, sb_y + 17), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (255, 255, 255), 2, cv2.LINE_AA)
 
-        # MATRIZ RÁPIDA DE LOS 10 MODELOS (2 filas x 5 columnas clicables)
+        # TABS DE LOS 4 SETS (SET 1 a SET 4)
+        studio.set_btn_rects.clear()
+        tab_y = 40
+        tab_h = 20
+        tab_w = 85
+        for s_idx in range(1, 5):
+            tab_x = 18 + (s_idx - 1) * (tab_w + 5)
+            tab_rect = (tab_x, tab_y, tab_w, tab_h)
+            studio.set_btn_rects.append((tab_rect, s_idx))
+
+            is_active_set = (s_idx == studio.current_set_id)
+            set_start = (s_idx - 1) * 10 + 1
+            set_end = s_idx * 10
+            set_clips = sum(studio.all_subjects_summary.get(sid, {}).get("total_clips", 0) for sid in range(set_start, set_end + 1))
+
+            if is_active_set:
+                s_bg = (60, 95, 140)
+                s_bdr = (0, 255, 220)
+                s_thick = 2
+            else:
+                s_bg = (24, 28, 36)
+                s_bdr = (55, 65, 80)
+                s_thick = 1
+
+            cv2.rectangle(canvas, (tab_x, tab_y), (tab_x + tab_w, tab_y + tab_h), s_bg, -1)
+            cv2.rectangle(canvas, (tab_x, tab_y), (tab_x + tab_w, tab_y + tab_h), s_bdr, s_thick)
+            set_txt = f"SET {s_idx} ({set_clips})"
+            cv2.putText(canvas, set_txt, (tab_x + 6, tab_y + 14),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.31,
+                        (255, 255, 255) if is_active_set else (150, 165, 185), 1, cv2.LINE_AA)
+
+        # MATRIZ RÁPIDA DE LOS 10 MODELOS DEL SET ACTIVO (2 filas x 5 columnas clicables)
         studio.subj_tile_rects.clear()
-        t_w = 66
-        t_h = 20
-        for s_idx in range(1, 11):
-            c_col = (s_idx - 1) % 5
-            c_row = (s_idx - 1) // 5
+        t_w = 67
+        t_h = 19
+        start_s = (studio.current_set_id - 1) * 10 + 1
+        end_s = studio.current_set_id * 10
+        tile_base_y = 64
+
+        for i, s_idx in enumerate(range(start_s, end_s + 1)):
+            c_col = i % 5
+            c_row = i // 5
             tx = 18 + c_col * (t_w + 5)
-            ty = 46 + c_row * (t_h + 3)
+            ty = tile_base_y + c_row * (t_h + 3)
             s_rect = (tx, ty, t_w, t_h)
             studio.subj_tile_rects.append((s_rect, s_idx))
 
@@ -1145,7 +1250,7 @@ def main():
                 t_bg = (60, 95, 140)
                 t_bdr = (0, 255, 220)
                 bdr_thick = 2
-            elif s_clips >= 160:
+            elif s_clips >= 7:
                 t_bg = (20, 80, 40)
                 t_bdr = (0, 230, 100)
                 bdr_thick = 1
@@ -1163,78 +1268,80 @@ def main():
 
             t_label = f"S{s_idx:02d}:{s_clips}"
             cv2.putText(canvas, t_label, (tx + 5, ty + 14),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.32, (255, 255, 255) if (is_cur_s or s_clips > 0) else (140, 150, 165), 1, cv2.LINE_AA)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.31,
+                        (255, 255, 255) if (is_cur_s or s_clips > 0) else (140, 150, 165), 1, cv2.LINE_AA)
 
-        # Resumen global de dataset de 10 sujetos
+        # Resumen global de dataset de los 40 sujetos
         tot_all_clips = sum(s["total_clips"] for s in studio.all_subjects_summary.values())
         subjs_with_data = sum(1 for s in studio.all_subjects_summary.values() if s["total_clips"] > 0)
-        cv2.putText(canvas, f"Modelos c/datos: {subjs_with_data}/10 | Dataset: {tot_all_clips}/1600 clips",
-                    (18, 98), cv2.FONT_HERSHEY_SIMPLEX, 0.33, (170, 195, 220), 1, cv2.LINE_AA)
+        active_set_clips = sum(studio.all_subjects_summary.get(sid, {}).get("total_clips", 0) for sid in range(start_s, end_s + 1))
+        cv2.putText(canvas, f"Set {studio.current_set_id}: {active_set_clips}/70 clips | Total 40: {tot_all_clips}/280 ({subjs_with_data}/40)",
+                    (18, 114), cv2.FONT_HERSHEY_SIMPLEX, 0.31, (170, 195, 220), 1, cv2.LINE_AA)
 
         # Campo: Nombre / Alias (Clic o tecla 'E' para editar)
-        ny = 110
-        cv2.putText(canvas, "Nombre:", (18, ny + 17), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (180, 190, 200), 1, cv2.LINE_AA)
-        studio.name_box_rect = (76, ny, LEFT_W - 96, 24)
+        ny = 124
+        cv2.putText(canvas, "Nombre:", (18, ny + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (180, 190, 200), 1, cv2.LINE_AA)
+        studio.name_box_rect = (76, ny, LEFT_W - 96, 22)
         name_bg = (50, 75, 110) if studio.is_editing_name else (22, 26, 34)
         name_bdr = (0, 255, 200) if studio.is_editing_name else (55, 65, 80)
-        cv2.rectangle(canvas, (76, ny), (LEFT_W - 20, ny + 24), name_bg, -1)
-        cv2.rectangle(canvas, (76, ny), (LEFT_W - 20, ny + 24), name_bdr, 2 if studio.is_editing_name else 1)
+        cv2.rectangle(canvas, (76, ny), (LEFT_W - 20, ny + 22), name_bg, -1)
+        cv2.rectangle(canvas, (76, ny), (LEFT_W - 20, ny + 22), name_bdr, 2 if studio.is_editing_name else 1)
 
         disp_name = (studio.edit_name_buffer + "_") if studio.is_editing_name else prof["name"]
-        cv2.putText(canvas, disp_name[:18], (82, ny + 17),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 255, 255), 1, cv2.LINE_AA)
+        cv2.putText(canvas, disp_name[:18], (82, ny + 16),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 255, 255), 1, cv2.LINE_AA)
 
         # Campo: Estatura, Sexo y Calibración A-Pose
-        hy = 140
-        cv2.putText(canvas, "Estatura:", (18, hy + 17), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (180, 190, 200), 1, cv2.LINE_AA)
+        hy = 150
+        cv2.putText(canvas, "Estatura:", (18, hy + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (180, 190, 200), 1, cv2.LINE_AA)
 
         # Botón [-]
-        studio.h_dec_rect = (76, hy, 24, 24)
-        cv2.rectangle(canvas, (76, hy), (100, hy + 24), (40, 50, 65), -1)
-        cv2.rectangle(canvas, (76, hy), (100, hy + 24), (60, 75, 95), 1)
-        cv2.putText(canvas, "-", (84, hy + 17), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (255, 255, 255), 2, cv2.LINE_AA)
+        studio.h_dec_rect = (76, hy, 22, 22)
+        cv2.rectangle(canvas, (76, hy), (98, hy + 22), (40, 50, 65), -1)
+        cv2.rectangle(canvas, (76, hy), (98, hy + 22), (60, 75, 95), 1)
+        cv2.putText(canvas, "-", (83, hy + 16), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (255, 255, 255), 2, cv2.LINE_AA)
 
-        cv2.putText(canvas, f"{prof['height_cm']}cm", (106, hy + 17),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 200), 1, cv2.LINE_AA)
+        cv2.putText(canvas, f"{prof['height_cm']}cm", (104, hy + 16),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 200), 1, cv2.LINE_AA)
 
         # Botón [+]
-        studio.h_inc_rect = (162, hy, 24, 24)
-        cv2.rectangle(canvas, (162, hy), (186, hy + 24), (40, 50, 65), -1)
-        cv2.rectangle(canvas, (162, hy), (186, hy + 24), (60, 75, 95), 1)
-        cv2.putText(canvas, "+", (168, hy + 17), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (255, 255, 255), 2, cv2.LINE_AA)
+        studio.h_inc_rect = (158, hy, 22, 22)
+        cv2.rectangle(canvas, (158, hy), (180, hy + 22), (40, 50, 65), -1)
+        cv2.rectangle(canvas, (158, hy), (180, hy + 22), (60, 75, 95), 1)
+        cv2.putText(canvas, "+", (163, hy + 16), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (255, 255, 255), 2, cv2.LINE_AA)
 
         # Sexo / Género Toggle
-        cv2.putText(canvas, "Sexo:", (196, hy + 17), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (180, 190, 200), 1, cv2.LINE_AA)
-        studio.gender_rect = (236, hy, 54, 24)
-        cv2.rectangle(canvas, (236, hy), (290, hy + 24), (40, 60, 85), -1)
-        cv2.rectangle(canvas, (236, hy), (290, hy + 24), (0, 200, 255), 1)
+        cv2.putText(canvas, "Sexo:", (190, hy + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (180, 190, 200), 1, cv2.LINE_AA)
+        studio.gender_rect = (230, hy, 52, 22)
+        cv2.rectangle(canvas, (230, hy), (282, hy + 22), (40, 60, 85), -1)
+        cv2.rectangle(canvas, (230, hy), (282, hy + 22), (0, 200, 255), 1)
         g_label = "Masc" if prof["gender"] == "M" else ("Fem" if prof["gender"] == "F" else "Otro")
-        cv2.putText(canvas, g_label, (244, hy + 17), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (255, 255, 255), 1, cv2.LINE_AA)
+        cv2.putText(canvas, g_label, (237, hy + 16), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (255, 255, 255), 1, cv2.LINE_AA)
 
         # Botón Calibrar A-Pose [C]
-        studio.apose_btn_rect = (298, hy, 74, 24)
-        cv2.rectangle(canvas, (298, hy), (372, hy + 24), (35, 55, 75), -1)
-        cv2.rectangle(canvas, (298, hy), (372, hy + 24), (0, 255, 200), 1)
-        cv2.putText(canvas, "[C] A-Pose", (302, hy + 16), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (0, 255, 200), 1, cv2.LINE_AA)
+        studio.apose_btn_rect = (290, hy, 78, 22)
+        cv2.rectangle(canvas, (290, hy), (368, hy + 22), (35, 55, 75), -1)
+        cv2.rectangle(canvas, (290, hy), (368, hy + 22), (0, 255, 200), 1)
+        cv2.putText(canvas, "[C] A-Pose", (295, hy + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.33, (0, 255, 200), 1, cv2.LINE_AA)
 
         # Medidas Biométricas (A-Pose) y Progreso de Sujeto Activo
         cb = prof.get("calibrated_biometrics")
         if cb:
             cal_txt = f"A-Pose: B={cb['arm_r_cm']:.0f} P={cb['leg_r_cm']:.0f} T={cb['torso_cm']:.0f}cm"
-            cv2.putText(canvas, cal_txt, (18, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (0, 255, 200), 1, cv2.LINE_AA)
+            cv2.putText(canvas, cal_txt, (18, 185), cv2.FONT_HERSHEY_SIMPLEX, 0.33, (0, 255, 200), 1, cv2.LINE_AA)
         else:
-            cv2.putText(canvas, "A-Pose: Sin calibrar aún (Presiona [C])", (18, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.33, (150, 165, 185), 1, cv2.LINE_AA)
+            cv2.putText(canvas, "A-Pose: Sin calibrar aún (Presiona [C])", (18, 185), cv2.FONT_HERSHEY_SIMPLEX, 0.32, (150, 165, 185), 1, cv2.LINE_AA)
 
-        pct = min(100, int((studio.total_subject_clips / 160.0) * 100))
-        cv2.putText(canvas, f"Progreso Sujeto {studio.current_subject_id:02d}: {studio.total_subject_clips}/160 clips ({pct}%)",
-                    (18, 198), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (160, 230, 180), 1, cv2.LINE_AA)
+        pct = min(100, int((studio.total_subject_clips / 7.0) * 100))
+        cv2.putText(canvas, f"Progreso Sujeto {studio.current_subject_id:02d}: {studio.total_subject_clips}/7 acciones ({pct}%)",
+                    (18, 205), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (160, 230, 180), 1, cv2.LINE_AA)
 
-        # LISTA DE LAS 8 ACCIONES DE COMBATE
-        cv2.putText(canvas, "ACCIONES DE COMBATE (Teclas 0 - 7):", (14, 232),
+        # LISTA DE LAS ACCIONES DE COMBATE
+        cv2.putText(canvas, "ACCIONES DE COMBATE (Teclas 0 - 6):", (14, 236),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.44, (0, 220, 255), 2, cv2.LINE_AA)
 
         studio.action_btn_rects.clear()
-        act_y_start = 242
+        act_y_start = 244
         act_h = 56
 
         for a_idx, act in enumerate(COMBAT_ACTIONS):
@@ -1284,17 +1391,12 @@ def main():
                 p_bg = (24, 28, 36)
                 p_bdr = (60, 70, 85)
                 p_col = (140, 150, 165)
-                p_txt = "[-] VACIO 0/20"
-            elif cnt < 20:
-                p_bg = (18, 50, 70)
-                p_bdr = (0, 200, 255)
-                p_col = (0, 230, 255)
-                p_txt = f"[SAVE] {cnt}/20"
+                p_txt = "[-] PENDIENTE"
             else:
                 p_bg = (15, 65, 32)
                 p_bdr = (0, 240, 120)
                 p_col = (0, 255, 130)
-                p_txt = "[OK] 20/20 OK"
+                p_txt = f"[OK] GUARDADO ({cnt})"
 
             cv2.rectangle(canvas, (pill_x, pill_y), (pill_x + pill_w, pill_y + pill_h), p_bg, -1)
             cv2.rectangle(canvas, (pill_x, pill_y), (pill_x + pill_w, pill_y + pill_h), p_bdr, 1)
@@ -1758,14 +1860,30 @@ def main():
             g_cycle = {"M": "F", "F": "O", "O": "M"}
             prof["gender"] = g_cycle.get(prof.get("gender", "M"), "M")
             save_subject_profiles(studio.profiles)
-        elif key == ord('['):      # Sujeto anterior
+        elif key == ord('['):      # Sujeto anterior (1 a 40)
             studio.current_subject_id = max(1, studio.current_subject_id - 1)
+            studio.current_set_id = ((studio.current_subject_id - 1) // 10) + 1
             studio.update_quota_counts()
-            studio.last_msg = f"👤 Sujeto cambiado a: Sujeto {studio.current_subject_id:02d}"
-        elif key == ord(']'):      # Sujeto siguiente
-            studio.current_subject_id = min(10, studio.current_subject_id + 1)
+            studio.update_all_subjects_summary()
+            studio.last_msg = f"👤 Sujeto cambiado a: Sujeto {studio.current_subject_id:02d} [SET {studio.current_set_id}]"
+        elif key == ord(']'):      # Sujeto siguiente (1 a 40)
+            studio.current_subject_id = min(40, studio.current_subject_id + 1)
+            studio.current_set_id = ((studio.current_subject_id - 1) // 10) + 1
             studio.update_quota_counts()
-            studio.last_msg = f"👤 Sujeto cambiado a: Sujeto {studio.current_subject_id:02d}"
+            studio.update_all_subjects_summary()
+            studio.last_msg = f"👤 Sujeto cambiado a: Sujeto {studio.current_subject_id:02d} [SET {studio.current_set_id}]"
+        elif key in (ord('{'), ord('(')):  # Set anterior (1 a 4)
+            studio.current_set_id = max(1, studio.current_set_id - 1)
+            studio.current_subject_id = (studio.current_set_id - 1) * 10 + 1
+            studio.update_quota_counts()
+            studio.update_all_subjects_summary()
+            studio.last_msg = f"📁 Set cambiado a: SET {studio.current_set_id} (Sujetos {(studio.current_set_id - 1)*10 + 1:02d} - {studio.current_set_id*10:02d})"
+        elif key in (ord('}'), ord(')')):  # Set siguiente (1 a 4)
+            studio.current_set_id = min(4, studio.current_set_id + 1)
+            studio.current_subject_id = (studio.current_set_id - 1) * 10 + 1
+            studio.update_quota_counts()
+            studio.update_all_subjects_summary()
+            studio.last_msg = f"📁 Set cambiado a: SET {studio.current_set_id} (Sujetos {(studio.current_set_id - 1)*10 + 1:02d} - {studio.current_set_id*10:02d})"
         elif key in (ord('0'), ord('1'), ord('2'), ord('3'), ord('4'), ord('5'), ord('6'), ord('7')):
             act_num = int(chr(key))
             studio.selected_action_idx = act_num
