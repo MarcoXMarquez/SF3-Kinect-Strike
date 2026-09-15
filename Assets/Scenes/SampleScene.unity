@@ -674,6 +674,8 @@ GameObject:
   - component: {fileID: 1115216660}
   - component: {fileID: 1115216659}
   - component: {fileID: 1115216662}
+  - component: {fileID: 1115216664}
+  - component: {fileID: 1115216663}
   m_Layer: 0
   m_Name: Fighter_Ryu
   m_TagString: Player
@@ -796,6 +798,45 @@ MonoBehaviour:
     [Y]                  -> Tatsumaki (hurricane)\n\u2022 [T]                  ->
     Super Art (super_art_2 / denjin)\n\u2022 [P] / [H]            -> Parry / Recibir
     Golpe\n\u2022 [Espacio]            -> Forzar reposo (idle_stance)"
+--- !u!114 &1115216663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1115216658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59217d12d37b4fc41851ca81bf1d680d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FighterStateMachine
+  fighterPhysics: {fileID: 0}
+  animator: {fileID: 0}
+  currentState: 0
+  currentAnimationName: idle_stance
+--- !u!114 &1115216664
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1115216658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92393d3f1c9aa8b449f6c5971ad7fa03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FighterPhysics
+  walkForwardSpeed: 3.4
+  walkBackwardSpeed: 2.8
+  jumpVerticalVelocity: 8.5
+  jumpHorizontalVelocity: 3.2
+  gravityScale: 22
+  groundLevelY: 0
+  useRaycastGroundCheck: 0
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  groundCheckDistance: 0.1
 --- !u!1 &1583437408
 GameObject:
   m_ObjectHideFlags: 0

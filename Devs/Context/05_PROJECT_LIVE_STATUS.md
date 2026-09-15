@@ -30,6 +30,8 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 | `FighterCombatColliders.cs` | `Scripts/Combat/` | Marco | Coordinador de activación/desactivación de hitboxes y voces. |
 | `ParallaxBackground.cs` | `Scripts/Environment/` | Sebas / Marco | Scroll con efecto de profundidad 2.5D para escenarios. |
 | `SF3SoundManager.cs` | `Scripts/Audio/` | Marco / Sebas | Singleton para reproducir BGM, SFX y voces de luchadores. |
+| `FighterPhysics.cs` | `Scripts/Core/` | Marco | Controlador de física determinista arcade, gravedad aumentada y salto parabólico CPS-3. |
+| `FighterStateMachine.cs` | `Scripts/Core/` | Marco | Máquina de estados desacoplada (sin flechas Mecanim) con retorno automático a reposo. |
 
 ---
 
@@ -43,9 +45,7 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 
 ### 🔄 Historial de Cambios Recientes (Changelog)
 
-* **2026-09-05:**
-  - Creadas las 36 tareas atómicas de los Sprints 1 a 6 en `Devs/`.
-  - Creado el sistema de sincronización y contexto para IAs en `Devs/Context/`.
-  - Creada la Skill `.agent/skills/sf3-team-developer/SKILL.md`.
-  - Creado el script de auto-configuración `Tools/setup_team_workspace.py`.
-  - Sincronizados los 64 AnimationClips de Ryu en `Ryu_Animator.controller`.
+* **2026-09-08 (Marco - Sprint 1):**
+  - Implementados `FighterPhysics.cs` y `FighterStateMachine.cs` en `Assets/StreetFighter3_ThirdStrike/Scripts/Core/` para la Tarea #1.
+  - Salto parabólico CPS-3 determinista con *Jump Arc Commitment* y detección de suelo en $Y=0$.
+  - Desacoplamiento total de Mecanim mediante llamadas directas `animator.Play(...)` y retornos automáticos a `idle_stance`.
