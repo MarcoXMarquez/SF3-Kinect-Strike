@@ -1,0 +1,81 @@
+{
+  "1": {
+    "id": 1,
+    "folder": "subject_01",
+    "name": "Baluarte",
+    "height_cm": 176,
+    "gender": "M",
+    "calibrated_biometrics": {
+      "arm_r_cm": 41.4,
+      "arm_l_cm": 41.4,
+      "leg_r_cm": 77.2,
+      "leg_l_cm": 77.3,
+      "torso_cm": 45.0,
+      "arm_span_cm": 48.0,
+      "calibrated_at": "2026-09-15 01:15:44"
+    }
+  },
+  "2": {
+    "id": 2,
+    "folder": "subject_02",
+    "name": "Persona 2",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "3": {
+    "id": 3,
+    "folder": "subject_03",
+    "name": "Persona 3",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "4": {
+    "id": 4,
+    "folder": "subject_04",
+    "name": "Persona 4",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "5": {
+    "id": 5,
+    "folder": "subject_05",
+    "name": "Persona 5",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "6": {
+    "id": 6,
+    "folder": "subject_06",
+    "name": "Persona 6",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "7": {
+    "id": 7,
+    "folder": "subject_07",
+    "name": "Persona 7",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "8": {
+    "id": 8,
+    "folder": "subject_08",
+    "name": "Persona 8",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "9": {
+    "id": 9,
+    "folder": "subject_09",
+    "name": "Persona 9",
+    "height_cm": 172,
+    "gender": "M"
+  },
+  "10": {
+    "id": 10,
+    "folder": "subject_10",
+    "name": "Persona 10",
+    "height_cm": 172,
+    "gender": "M"
+  }
+}

@@ -35,8 +35,10 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 | `AzureKinectInput.cs` | `Scripts/Input/` | Kevin | Adaptador somatosensorial de Azure Kinect con cálculo cinemático de articulaciones 3D. |
 | `AzureKinectBodyTracker.cs` | `Scripts/Input/` | Kevin | Conector del hardware Azure Kinect y Body Tracking SDK para Unity. |
 | `KinectPoseMatcher.cs` | `Scripts/Input/` | Kevin | Comparador de poses calibradas en tiempo real desde JSON con cálculo de similitud (%). |
-| `Test_AzureKinect_Body.unity` | `Scenes/` | Kevin | Escena de pruebas para visualizar y calibrar el esqueleto 3D en el laboratorio. |
-| `sf3_kinect_sagittal_visualizer.py` | `Tools/` | Kevin | Visualizador OpenCV de esqueleto 3D (frontal y perfil sagital) con telemetría. |
+| `sf3_kinect_sagittal_visualizer.py` | `Tools/` | Kevin | Visualizador OpenCV con grabación dinámica de clips (35 frames), mini-video player en bucle, gestión de 10 sujetos y modo mockup (--mock). |
+| `gesture_feature_extractor.py` | `Tools/` | Kevin | Extractor matemático de cinemática 3D: normalización local, ángulos relativos, velocidades instantáneas y 26 métricas agregadas por clip. |
+| `train_gesture_classifier.py` | `Tools/` | Kevin | Entrenador de Random Forest con GroupKFold por sujeto, exportador ONNX a Unity Models y generador sintético. |
+| `gesture_classifier.onnx` | `Assets/.../Models/` & `Tools/` | Kevin | Modelo tabular supervisado optimizado para inferencia en Unity Sentis / Python. |
 
 ---
 
@@ -50,6 +52,18 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 
 ### 🔄 Historial de Cambios Recientes (Changelog)
 
+* **2026-09-15 (Pipeline ML Cinemático Temporal - 10 Sujetos, UX Studio & 44 Features):**
+  - **Filtro Adaptativo One-Euro ($1€$):** Implementado en `Tools/gesture_feature_extractor.py` sobre el eje temporal 3D, mitigando el jitter de profundidad ToF en reposo sin añadir latencia a golpes explosivos.
+  - **Normalización Antropométrica y Extensión Biomecánica:** Incorporada longitud de torso ($L_{\text{torso}}$) y ratios de extensión articular ($\text{Ext}_{\text{brazo}}, \text{Ext}_{\text{pierna}}$) invariantes a la estatura (44 features cinemáticas totales).
+  - **Cuenta Regresiva de 3 Segundos (Visual + Audio):** Integrada cuenta 3.. 2.. 1.. con tonos audibles (`winsound.Beep`) y overlay en `Tools/sf3_kinect_sagittal_visualizer.py` para sincronizar al voluntario y centrar los golpes en el clip.
+  - **Auditoría Heurística de Calidad (Quality Gatekeeper):** Evaluación instantánea de velocidad pico, centrado temporal de impacto y distancia operativa ($Z$), asistiendo al operador en la revisión manual.
+  - **Sistema Cuádruple de Verificación y Auditoría Anti-Olvido ("Memoria de Pollo"):**
+    1. **Badges Permanentes por Pose:** Píldoras visuales en cada una de las 8 acciones (`[OK] 20/20 OK`, `[SAVE] X/20`, `[-] VACIO 0/20`).
+    2. **Resaltado de Guardado Reciente:** Borde verde brillante y tag `>> RECIEN GUARDADO (Xs)` en el botón de la acción recién guardada.
+    3. **Matriz Rápida de los 10 Sujetos:** Vista de pájaro con 10 botones interactivos (`S01` a `S10`) con conteo de clips en tiempo real y salto inmediato con un clic.
+    4. **Comprobante Físico Permanente en Disco:** Tarjeta fija con timestamp, nombre de archivo CSV y tamaño en KB verificado en disco tanto en el centro inferior como en el panel derecho de video.
+  - **Calibración Biomecánica A-Pose (Tecla `[C]`):** Captura de 2 segundos para medir y registrar longitudes de brazos, piernas, torso y envergadura en `Tools/dataset_raw/subject_profiles.json`.
+  - **Re-entrenamiento ML & ONNX:** Modelo Random Forest re-entrenado con 44 features y GroupKFold (99.98% de exactitud), exportado a `Tools/gesture_classifier.onnx` y `Assets/StreetFighter3_ThirdStrike/Models/gesture_classifier.onnx`.
 * **2026-09-08 (Martes de Laboratorio - Sprint 1):**
   - Implementada la arquitectura desacoplada de entrada: `IFighterInput.cs`.
   - Creado el adaptador de teclado `KeyboardFighterInput.cs` con controles de movimiento, ataques y emulación de gestos.

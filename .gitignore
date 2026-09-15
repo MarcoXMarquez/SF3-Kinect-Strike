@@ -67,11 +67,12 @@ Thumbs.db
 ehthumbs.db
 [Dd]esktop.ini
 
-# Python cache / temporary tools
+# Python cache / temporary tools / venv
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.venv/
 Tools/__pycache__/
 Tools/temp_*/
 Tools/*.zip
@@ -85,4 +86,10 @@ Tools/*.bak
 /directml.dll
 /onnxruntime*.dll
 /*.onnx
+
+# Dataset temporal / archivos CSV de captura masiva
+Tools/dataset_raw/**/*.csv
+Tools/dataset_processed.csv
+!Tools/dataset_raw/subject_profiles.json
+
 
