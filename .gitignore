@@ -76,3 +76,13 @@ Tools/__pycache__/
 Tools/temp_*/
 Tools/*.zip
 Tools/*.bak
+
+# Azure Kinect native runtime binaries and ONNX models in root
+/depthengine_2_0.dll
+/k4a*.dll
+/k4a*.pdb
+/k4abt.dll
+/directml.dll
+/onnxruntime*.dll
+/*.onnx
+

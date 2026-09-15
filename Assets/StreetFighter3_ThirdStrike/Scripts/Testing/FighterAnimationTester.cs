@@ -160,9 +160,14 @@ public class FighterAnimationTester : MonoBehaviour
     }
 
     /// <summary>
+    /// Retorna si Ryu está ocupado ejecutando una animación activa de ataque.
+    /// </summary>
+    public bool IsBusyWithAction() => isBusyWithAction;
+
+    /// <summary>
     /// Ejecuta una animación de ataque/reacción y regresa automáticamente al estado neutral.
     /// </summary>
-    private void ExecuteOneShotAction(string animName)
+    public void ExecuteOneShotAction(string animName)
     {
         if (animator == null) return;
 
@@ -208,14 +213,14 @@ public class FighterAnimationTester : MonoBehaviour
         }
     }
 
-    private void PlayLoop(string animName)
+    public void PlayLoop(string animName)
     {
         if (animator == null) return;
         currentAnimation = animName;
         animator.Play(animName, 0, 0f);
     }
 
-    private void PlayIdle()
+    public void PlayIdle()
     {
         if (animator == null) return;
         currentAnimation = "idle_stance";
