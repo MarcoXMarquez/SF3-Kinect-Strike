@@ -39,6 +39,9 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 | `gesture_feature_extractor.py` | `Tools/` | Kevin | Extractor matemático de cinemática 3D: normalización local, ángulos relativos, velocidades instantáneas y 26 métricas agregadas por clip. |
 | `train_gesture_classifier.py` | `Tools/` | Kevin | Entrenador de Random Forest con GroupKFold por sujeto, exportador ONNX a Unity Models y generador sintético. |
 | `gesture_classifier.onnx` | `Assets/.../Models/` & `Tools/` | Kevin | Modelo tabular supervisado optimizado para inferencia en Unity Sentis / Python. |
+| `clean_dataset_outliers.py` | `Tools/` | Kevin | Limpiador de outliers e interpolador de discontinuidades ToF con filtro 1€ adaptativo. |
+| `test_live_gesture_classifier.py` | `Tools/` | Kevin | Testeador terminal interactivo de inferencia y auditor de sesgos/probabilidades por clase. |
+| `test_live_kinect_classifier.py` | `Tools/` | Kevin | Detector somatosensorial en vivo con Azure Kinect físico y panel visual HUD de sesgos (7 clases). |
 
 ---
 
@@ -51,6 +54,14 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 ---
 
 ### 🔄 Historial de Cambios Recientes (Changelog)
+
+* **2026-09-17 (Set 2 Bloqueo Dinámico, Limpieza Biomecánica, Retorno Inmediato a Idle < 200ms y Re-entrenamiento ML 98 Clips):**
+  - **Captura e Integración de Set 2 (Sujetos 11 a 14):** 28 nuevos clips CSV incorporando la nueva dinámica de combate: Bloqueo dinámico (`block`: brazos suben desde guardia a bloquear el pecho/cara y vuelven a bajar) y Guardia estática (`idle` estable con velocidad < 0.1 m/s). Total dataset: **98 clips**.
+  - **Limpieza de Outliers (`Tools/clean_dataset_outliers.py`):** Procesados los 98 clips en `Tools/dataset_cleaned/`. Se eliminaron 313 saltos espurios (> 30 cm), logrando 0 discontinuidades y reduciendo el salto máximo promedio de 0.348m a 0.074m.
+  - **Re-entrenamiento Random Forest Supervisado (`Tools/train_gesture_classifier.py`):** Entrenado sobre los 98 clips limpios (14 sujetos). Validación cruzada `GroupKFold` subió de 91.43% a **95.24% ± 3.01%** sobre sujetos no vistos. La característica `max_elev_wrist_l` ascendió al Top 2 de importancia (7.00%) para captar la elevación bilateral de brazos del bloqueo.
+  - **Exportación ONNX y Joblib Sincronizada:** Actualizados `Tools/gesture_classifier.joblib`, `Tools/gesture_classifier.onnx` y `Assets/StreetFighter3_ThirdStrike/Models/gesture_classifier.onnx`.
+  - **Retorno Inmediato a Guardia / Idle (< 200 ms):** Solucionada la latencia de 2 segundos de retorno a guardia causada por la persistencia de picos de velocidad en la ventana rodante de 35 frames. Implementado detector de desaceleración y reposo instantáneo (últimos 6 frames / ~200 ms, $v < 0.42\text{ m/s}$) tanto en `Tools/test_live_kinect_classifier.py` como en `Tools/sf3_kinect_sagittal_visualizer.py`. Si las extremidades se detienen tras un golpe, el sistema transiciona instantáneamente a `idle` (o `crouch`/`block` sostenido si corresponde).
+  - **Mejora del Detector en Vivo (`Tools/test_live_kinect_classifier.py`):** Integrada persistencia visual de impacto (2.5s), telemetría de guardia activa en reposo y registro de eventos y sesgos por consola en tiempo real.
 
 * **2026-09-15 (Pipeline ML Cinemático Temporal - 10 Sujetos, UX Studio & 44 Features):**
   - **Filtro Adaptativo One-Euro ($1€$):** Implementado en `Tools/gesture_feature_extractor.py` sobre el eje temporal 3D, mitigando el jitter de profundidad ToF en reposo sin añadir latencia a golpes explosivos.

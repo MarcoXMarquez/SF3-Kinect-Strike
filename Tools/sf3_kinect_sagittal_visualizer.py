@@ -1483,18 +1483,53 @@ def main():
                     feats = extract_clip_features(buf_arr, fps=30.0)
                     feat_vec = np.array([[feats[fn] for fn in FEATURE_NAMES]], dtype=np.float32)
 
-                    # Si muñecas están muy juntas frente al pecho = Bloqueo
-                    if feats.get("min_wrist_distance", 1.0) < 0.14:
-                        studio.ml_pred_label = "block"
-                        studio.ml_confidence = 0.95
-                    elif feats["peak_vel_wrist_r"] < 0.9 and feats["peak_vel_wrist_l"] < 0.9 and feats["peak_vel_ankle_r"] < 0.9 and feats["peak_vel_ankle_l"] < 0.9 and feats["peak_vel_pelvis_y"] < 0.7:
-                        studio.ml_pred_label = "idle"
-                        studio.ml_confidence = 0.98
+                    # Velocidades instantáneas recientes (últimos 6 frames = ~200 ms)
+                    recent_frames = buf_arr[-6:]
+                    dt_r = 1.0 / 30.0
+                    recent_v_wr_r = np.max(np.linalg.norm(np.diff(recent_frames[:, 14, :], axis=0), axis=1)) / dt_r
+                    recent_v_wr_l = np.max(np.linalg.norm(np.diff(recent_frames[:, 7, :], axis=0), axis=1)) / dt_r
+                    recent_v_ank_r = np.max(np.linalg.norm(np.diff(recent_frames[:, 24, :], axis=0), axis=1)) / dt_r
+                    recent_v_ank_l = np.max(np.linalg.norm(np.diff(recent_frames[:, 20, :], axis=0), axis=1)) / dt_r
+                    recent_v_pelvis = np.max(np.abs(np.diff(recent_frames[:, 0, 1]))) / dt_r
+
+                    is_recent_calm = (
+                        recent_v_wr_r < 0.42 and
+                        recent_v_wr_l < 0.42 and
+                        recent_v_ank_r < 0.42 and
+                        recent_v_ank_l < 0.42 and
+                        recent_v_pelvis < 0.35
+                    )
+
+                    probs = studio.ml_model.predict_proba(feat_vec)[0]
+                    top_idx = int(np.argmax(probs))
+                    class_id = studio.ml_model.classes_[top_idx] if hasattr(studio.ml_model, "classes_") else top_idx
+                    raw_action = ACTION_ID_TO_NAME.get(class_id, "unknown")
+                    raw_conf = float(probs[top_idx])
+
+                    if is_recent_calm:
+                        last_frame = buf_arr[-1]
+                        pelvis_y = last_frame[0, 1]
+                        knee_r_y = last_frame[23, 1]
+                        is_holding_crouch = (feats.get("min_disp_pelvis_y", 0.0) < -0.16 and (pelvis_y - knee_r_y) > -0.40)
+
+                        wrist_dist_now = np.linalg.norm(last_frame[14, :] - last_frame[7, :])
+                        wrist_elev_r = last_frame[0, 1] - last_frame[14, 1]
+                        wrist_elev_l = last_frame[0, 1] - last_frame[7, 1]
+                        is_holding_block = (wrist_dist_now < 0.36 and wrist_elev_r > 0.40 and wrist_elev_l > 0.40)
+
+                        if is_holding_crouch:
+                            studio.ml_pred_label = "crouch"
+                            studio.ml_confidence = 0.94
+                        elif is_holding_block:
+                            studio.ml_pred_label = "block"
+                            studio.ml_confidence = 0.92
+                        else:
+                            # Retorno rápido a guardia / idle
+                            studio.ml_pred_label = "idle"
+                            studio.ml_confidence = 0.96
                     else:
-                        probs = studio.ml_model.predict_proba(feat_vec)[0]
-                        top_idx = int(np.argmax(probs))
-                        studio.ml_pred_label = ACTION_ID_TO_NAME.get(top_idx, "unknown")
-                        studio.ml_confidence = float(probs[top_idx])
+                        studio.ml_pred_label = raw_action
+                        studio.ml_confidence = raw_conf
 
                     studio.last_ml_time = time.time()
                 except Exception:
