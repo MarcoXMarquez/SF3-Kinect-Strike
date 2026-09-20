@@ -14,6 +14,86 @@ public class FighterAnimationTester : MonoBehaviour
     [Header("Estado Actual")]
     [SerializeField] private string currentAnimation = "idle_stance";
     [SerializeField] private bool isBusyWithAction = false;
+    [SerializeField] private bool reviewMode = false;
+    [SerializeField] private int reviewIndex = 0;
+
+    private static readonly string[] reviewAnimations =
+    {
+        "crouch_down",
+        "crouch_idle",
+        "dash_backward",
+        "dash_forward",
+        "idle_stance",
+        "jump_backward",
+        "jump_forward",
+        "jump_neutral",
+        "walk_backward",
+        "walk_forward",
+        "back_medium_kick",
+        "crouch_heavy_kick",
+        "crouch_heavy_punch",
+        "crouch_light_kick",
+        "crouch_light_punch",
+        "crouch_medium_kick",
+        "crouch_medium_punch",
+        "forward_heavy_kick",
+        "forward_medium_kick",
+        "heavy_kick",
+        "heavy_punch",
+        "heavy_punch_close",
+        "jump_forward_heavy_kick",
+        "jump_forward_medium_kick",
+        "jump_heavy_kick",
+        "jump_heavy_punch",
+        "jump_light_kick",
+        "jump_light_punch",
+        "jump_medium_kick",
+        "jump_medium_punch",
+        "light_kick",
+        "light_punch",
+        "light_punch_close",
+        "medium_kick",
+        "medium_punch",
+        "medium_punch_close",
+        "fhkfake",
+        "fireball",
+        "flamingdp",
+        "hurricane",
+        "sf3kenhadouken2",
+        "stance_lbx",
+        "straight",
+        "super_art_1",
+        "super_art_2",
+        "super_art_3",
+        "super_art_3miss",
+        "whats_this",
+        "block_crouching",
+        "block_high",
+        "block_standing",
+        "hit_crouching",
+        "hit_electrocuted",
+        "hit_standing",
+        "knockdown_slam",
+        "knockdown_twist",
+        "parry_crouching",
+        "parry_standing",
+        "kneegrab",
+        "throw_backward",
+        "throw_forward",
+        "throwmiss",
+        "intro_1",
+        "intro_2",
+        "intro_3",
+        "intro_4",
+        "special_ryu_intro",
+        "taunt",
+        "taunt_red",
+        "thumb",
+        "victory_pose_1",
+        "victory_pose_2",
+        "defeat_chip_death",
+        "defeat_timeout",
+    };
 
     [Header("Instrucciones de Teclas en Play")]
     [TextArea(12, 16)]
@@ -29,7 +109,10 @@ public class FighterAnimationTester : MonoBehaviour
         "• [Y]                  -> Tatsumaki (hurricane)\n" +
         "• [T]                  -> Super Art (super_art_2 / denjin)\n" +
         "• [P] / [H]            -> Parry / Recibir Golpe\n" +
-        "• [Espacio]            -> Forzar reposo (idle_stance)";
+        "• [Espacio]            -> Forzar reposo (idle_stance)\n" +
+        "• [R]                  -> Modo revision 74 animaciones\n" +
+        "• [N] / [B]            -> Siguiente / anterior animacion\n" +
+        "• [Enter]              -> Repetir animacion actual";
 
     private Coroutine actionCoroutine;
 
@@ -48,6 +131,17 @@ public class FighterAnimationTester : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            ToggleReviewMode();
+        }
+
+        if (reviewMode)
+        {
+            HandleReviewModeInput();
+            return;
+        }
+
         // 1. Si está en medio de una acción activa, esperar a que finalice (o cancelar con Espacio)
         if (isBusyWithAction)
         {
@@ -101,6 +195,7 @@ public class FighterAnimationTester : MonoBehaviour
         {
             if (HasState("special_shoryuken")) ExecuteOneShotAction("special_shoryuken");
             else if (HasState("shoryuken")) ExecuteOneShotAction("shoryuken");
+            else if (HasState("flamingdp")) ExecuteOneShotAction("flamingdp");
             return;
         }
         if (Input.GetKeyDown(KeyCode.Y))
@@ -228,24 +323,111 @@ public class FighterAnimationTester : MonoBehaviour
         return animator.HasState(0, Animator.StringToHash(stateName));
     }
 
+    private void ToggleReviewMode()
+    {
+        reviewMode = !reviewMode;
+
+        if (actionCoroutine != null)
+        {
+            StopCoroutine(actionCoroutine);
+            actionCoroutine = null;
+        }
+
+        isBusyWithAction = false;
+
+        if (reviewMode)
+        {
+            reviewIndex = Mathf.Clamp(reviewIndex, 0, reviewAnimations.Length - 1);
+            PlayReviewAnimation();
+        }
+        else
+        {
+            PlayIdle();
+        }
+    }
+
+    private void HandleReviewModeInput()
+    {
+        if (Input.GetKeyDown(KeyCode.N) || Input.GetKeyDown(KeyCode.PageDown) || Input.GetKeyDown(KeyCode.RightBracket))
+        {
+            MoveReviewIndex(1);
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.PageUp) || Input.GetKeyDown(KeyCode.LeftBracket))
+        {
+            MoveReviewIndex(-1);
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+        {
+            PlayReviewAnimation();
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            reviewMode = false;
+            PlayIdle();
+        }
+    }
+
+    private void MoveReviewIndex(int direction)
+    {
+        reviewIndex += direction;
+
+        if (reviewIndex < 0)
+        {
+            reviewIndex = reviewAnimations.Length - 1;
+        }
+        else if (reviewIndex >= reviewAnimations.Length)
+        {
+            reviewIndex = 0;
+        }
+
+        PlayReviewAnimation();
+    }
+
+    private void PlayReviewAnimation()
+    {
+        if (animator == null) return;
+
+        string animName = reviewAnimations[reviewIndex];
+
+        if (!HasState(animName))
+        {
+            Debug.LogWarning($"No existe el estado de animacion '{animName}' en {animator.name}.");
+            currentAnimation = $"MISSING: {animName}";
+            return;
+        }
+
+        currentAnimation = animName;
+        animator.Play(animName, 0, 0f);
+    }
+
     void OnGUI()
     {
-        GUI.Box(new Rect(10, 10, 360, 320), "🥋 SF3 - Tester de Combate y Estados");
+        GUI.Box(new Rect(10, 10, 410, 385), "🥋 SF3 - Tester de Combate y Estados");
         
         string statusText = isBusyWithAction ? "<color=red>[EJECUTANDO ACCION]</color>" : "<color=green>[NEUTRAL / LIBRE]</color>";
         GUI.Label(new Rect(20, 35, 340, 25), $"<b>Estado:</b> {statusText}");
         GUI.Label(new Rect(20, 55, 340, 25), $"<b>Animacion:</b> <color=yellow>{currentAnimation}</color>");
+        GUI.Label(new Rect(20, 75, 380, 20), $"Revision 74: {(reviewMode ? "ON" : "OFF")} ({reviewIndex + 1}/{reviewAnimations.Length})");
 
-        GUI.Label(new Rect(20, 85, 340, 20), "• [D] / [A] (Mantener) : Caminar Adelante / Atrás");
-        GUI.Label(new Rect(20, 105, 340, 20), "• [S]       (Mantener) : Agacharse");
-        GUI.Label(new Rect(20, 125, 340, 20), "• [W]                  : Saltar");
-        GUI.Label(new Rect(20, 145, 340, 20), "• [J] / [K]            : Puño Débil / Fuerte");
-        GUI.Label(new Rect(20, 165, 340, 20), "• [L] / [O]            : Patada Débil / Fuerte");
-        GUI.Label(new Rect(20, 185, 340, 20), "• [U]                  : Hadouken (fireball)");
-        GUI.Label(new Rect(20, 205, 340, 20), "• [I]                  : Shoryuken (shoryuken)");
-        GUI.Label(new Rect(20, 225, 340, 20), "• [Y]                  : Tatsumaki (hurricane)");
-        GUI.Label(new Rect(20, 245, 340, 20), "• [T]                  : Super Art 2 / Denjin");
-        GUI.Label(new Rect(20, 265, 340, 20), "• [P] / [H]            : Parry / Recibir Golpe");
-        GUI.Label(new Rect(20, 285, 340, 20), "• [Espacio]            : Forzar Cancel a Idle");
+        GUI.Label(new Rect(20, 100, 380, 20), "• [R]                  : Entrar/salir revision de 74 animaciones");
+        GUI.Label(new Rect(20, 120, 380, 20), "• [N] / [B]            : Siguiente / anterior");
+        GUI.Label(new Rect(20, 140, 380, 20), "• [Enter]              : Repetir actual");
+        GUI.Label(new Rect(20, 160, 380, 20), "• [Espacio]            : Salir revision y volver a idle");
+
+        GUI.Label(new Rect(20, 195, 380, 20), "• [D] / [A] (Mantener) : Caminar Adelante / Atrás");
+        GUI.Label(new Rect(20, 215, 380, 20), "• [S]       (Mantener) : Agacharse");
+        GUI.Label(new Rect(20, 235, 380, 20), "• [W]                  : Saltar");
+        GUI.Label(new Rect(20, 255, 380, 20), "• [J] / [K]            : Puño Débil / Fuerte");
+        GUI.Label(new Rect(20, 275, 380, 20), "• [L] / [O]            : Patada Débil / Fuerte");
+        GUI.Label(new Rect(20, 295, 380, 20), "• [U]                  : Hadouken (fireball)");
+        GUI.Label(new Rect(20, 315, 380, 20), "• [I]                  : Shoryuken / flamingdp");
+        GUI.Label(new Rect(20, 335, 380, 20), "• [Y]                  : Tatsumaki (hurricane)");
+        GUI.Label(new Rect(20, 355, 380, 20), "• [T] / [P] / [H]      : Super / Parry / Hit");
     }
 }
