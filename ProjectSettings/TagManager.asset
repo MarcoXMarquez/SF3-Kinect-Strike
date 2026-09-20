@@ -41,8 +41,23 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Background_Sky
+    uniqueID: 104740399
+    locked: 0
+  - name: Background_Distant
+    uniqueID: 1781263594
+    locked: 0
+  - name: Midground_Temple
+    uniqueID: 1851520163
+    locked: 0
+  - name: Floor_Ground
+    uniqueID: 588359356
+    locked: 0
   - name: Fighters
     uniqueID: 1731102905
+    locked: 0
+  - name: Foreground_Props
+    uniqueID: 1416199092
     locked: 0
   m_RenderingLayers:
   - Default
