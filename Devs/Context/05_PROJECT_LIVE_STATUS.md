@@ -42,6 +42,13 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 | `clean_dataset_outliers.py` | `Tools/` | Kevin | Limpiador de outliers e interpolador de discontinuidades ToF con filtro 1€ adaptativo. |
 | `test_live_gesture_classifier.py` | `Tools/` | Kevin | Testeador terminal interactivo de inferencia y auditor de sesgos/probabilidades por clase. |
 | `test_live_kinect_classifier.py` | `Tools/` | Kevin | Detector somatosensorial en vivo con Azure Kinect físico y panel visual HUD de sesgos (7 clases). |
+| `DuelFighter.cs` | `Scripts/Combat/` | Sebas | Controlador de combate 2D con Rigidbody2D, orientación, animaciones, bloqueo frontal y hurtboxes (cabeza, torso, piernas). |
+| `DuelRoster.cs` | `Scripts/Combat/` | Sebas | ScriptableObject que almacena 21 secuencias de sprites por personaje (230 Ken, 256 Ryu). |
+| `JapanDuel.cs` | `Scripts/Combat/` | Sebas | Gestor del duelo local Ken vs. Ryu en Suzaku Castle (rondas, HUD de vida, KO y revancha). |
+| `JapanDuelValidation.cs` | `Scripts/Editor/` | Sebas | Validador automatizado en Play Mode del duelo (`SF3 Tools > Validate Local Duel`). |
+| `SF3JapanStageBuilder.cs` | `Scripts/Editor/` | Sebas | Constructor y ensamblador del escenario de Japón (Suzaku Castle) con parallax y colliders. |
+| `StageParallaxTester.cs` | `Scripts/Testing/` | Sebas | Script de prueba de cámara para validar el desplazamiento de capas de parallax. |
+| `SF3ChromaKeySprite.shader` | `Shaders/` | Sebas | Shader de ChromaKey para eliminación de fondos en sprites del escenario. |
 
 ---
 
@@ -54,6 +61,12 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 ---
 
 ### 🔄 Historial de Cambios Recientes (Changelog)
+
+* **2026-09-22 (Integración Rama Sebas - Escenario Japón Suzaku Castle y Duelo Local Ken vs. Ryu):**
+  - **Fusión de `feature/sp1-sebas-japan-stage`:** Incorporados los commits `a55f8e8ce` y `e3f89b646` de Sebas.
+  - **Escenario Suzaku Castle con Parallax:** Prefab `Stage_Japan.prefab`, shader ChromaKey `SF3ChromaKeySprite.shader` y constructor automatizado en `SF3JapanStageBuilder.cs`.
+  - **Duelo Local 2 Jugadores (`Sandbox_Sebas.unity`):** Sistema de combate desacoplado `JapanDuel.cs` y `DuelFighter.cs` para Ken (P1: WASD + F/H/V/B) vs. Ryu (P2: Flechas + Numpad), con hurtboxes tripartitas, bloqueo frontal, daño diferenciado y ScriptableObject `JapanDuelRoster.asset` con 486 sprites referenciados.
+  - **Validador Automatizado:** Herramienta en el menú de Unity `SF3 Tools > Validate Local Duel` (`JapanDuelValidation.cs`) para verificar sin intervención manual el set completo de colisiones, alcances, KO y victoria.
 
 * **2026-09-17 (Set 2 Bloqueo Dinámico, Limpieza Biomecánica, Retorno Inmediato a Idle < 200ms y Re-entrenamiento ML 98 Clips):**
   - **Captura e Integración de Set 2 (Sujetos 11 a 14):** 28 nuevos clips CSV incorporando la nueva dinámica de combate: Bloqueo dinámico (`block`: brazos suben desde guardia a bloquear el pecho/cara y vuelven a bajar) y Guardia estática (`idle` estable con velocidad < 0.1 m/s). Total dataset: **98 clips**.
