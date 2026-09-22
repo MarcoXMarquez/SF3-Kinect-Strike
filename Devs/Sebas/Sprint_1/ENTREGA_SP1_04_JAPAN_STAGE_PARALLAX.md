@@ -11,6 +11,7 @@ Tambien se preparo una escena `Sandbox_Sebas` independiente para abrir y comprob
 - `Assets/StreetFighter3_ThirdStrike/Prefabs/Stage_Japan.prefab`: prefab reutilizable del escenario completo.
 - `Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_Sebas.unity`: escena de verificacion con camara ortografica y una instancia de `Stage_Japan`.
 - `Assets/StreetFighter3_ThirdStrike/Scripts/Editor/SF3JapanStageBuilder.cs`: herramienta de editor para reconstruir la configuracion del escenario.
+- `Assets/StreetFighter3_ThirdStrike/Scripts/Testing/StageParallaxTester.cs`: control de camara exclusivo del Sandbox para comprobar el efecto con las flechas izquierda y derecha.
 - `Assets/StreetFighter3_ThirdStrike/Shaders/SF3ChromaKeySprite.shader`: shader para retirar el fondo magenta de las imagenes originales.
 - `Assets/StreetFighter3_ThirdStrike/Materials/Stage_ChromaKey.mat`: material compartido por las cinco capas visuales.
 - Los archivos `.meta` y metadatos de carpeta asociados, necesarios para conservar GUID y referencias de Unity.
@@ -34,6 +35,8 @@ El prefab contiene las siguientes capas:
 | `Foreground_Roof` | `Foreground_Props` | 0.80 | 0.08 |
 
 `ParallaxBackground` obtiene automaticamente `Camera.main` al comenzar si el campo `Target Camera` no esta asignado. En cada `LateUpdate` calcula el desplazamiento de la camara y mueve cada capa segun sus factores. De esta forma, los elementos lejanos avanzan menos que los cercanos y producen profundidad 2.5D.
+
+En `Sandbox_Sebas`, `StageParallaxTester` mueve la camara horizontalmente con las flechas izquierda y derecha dentro de un rango controlado. Este componente solo pertenece a la escena de prueba y no modifica el comportamiento del prefab reutilizable.
 
 `Ground_Collider` utiliza un `BoxCollider2D` de `12 x 0.2` ubicado en `Y=-0.1`; su borde superior queda en `Y=0`, que es la altura de apoyo requerida para los luchadores.
 
