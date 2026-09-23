@@ -49,6 +49,16 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 | `SF3JapanStageBuilder.cs` | `Scripts/Editor/` | Sebas | Constructor y ensamblador del escenario de Japón (Suzaku Castle) con parallax y colliders. |
 | `StageParallaxTester.cs` | `Scripts/Testing/` | Sebas | Script de prueba de cámara para validar el desplazamiento de capas de parallax. |
 | `SF3ChromaKeySprite.shader` | `Shaders/` | Sebas | Shader de ChromaKey para eliminación de fondos en sprites del escenario. |
+| `ISteeringAgent.cs` | `Scripts/AI/Steering/` | Kevin | Contrato cinemático para entidades con aceleración de dirección (Reynolds). |
+| `ISteeringBehavior.cs` | `Scripts/AI/Steering/` | Kevin | Contrato desacoplado para algoritmos de cálculo de fuerzas vectoriales de dirección. |
+| `SeekBehavior.cs` | `Scripts/AI/Steering/` | Kevin | Algoritmo clásico de Persecución (Seeking) de Craig Reynolds con frenado suave de llegada. |
+| `WanderBehavior.cs` | `Scripts/AI/Steering/` | Kevin | Algoritmo clásico de Merodeo (Wandering) de Craig Reynolds con círculo virtual y variación angular. |
+| `SteeringUIEntity.cs` | `Scripts/AI/Steering/` | Kevin | MonoBehaviour cinemático para mover entidades en Canvas UI con rebote elástico perimetral. |
+| `MainMenuController.cs` | `Scripts/UI/` | Kevin | Menú principal interactivo 100% navegable con teclado, submenú Versus (Bot / 2P) y SFX arcade. |
+| `LoadingScreenController.cs` | `Scripts/UI/` | Kevin | Controlador de pantalla de carga asíncrona, barra de progreso y orquestador del minijuego. |
+| `LoadingMinigameManager.cs` | `Scripts/UI/` | Kevin | Administrador del minijuego estilo DBZ Tenkaichi 3 que coordina orbes Wandering y buscador Seeking. |
+| `MiniFighterController.cs` | `Scripts/UI/` | Kevin | Avatar 2D jugable en la pantalla de carga (movimiento horizontal, salto, golpe y animación de Ryu). |
+| `SF3MainMenuBuilder.cs` | `Scripts/Editor/` | Kevin | Generador automatizado de la escena `MainMenu_Scene.unity` y sincronizador de `EditorBuildSettings`. |
 
 ---
 
@@ -61,6 +71,16 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 ---
 
 ### 🔄 Historial de Cambios Recientes (Changelog)
+
+* **2026-09-22 (Menú de Inicio Retro y Pantalla de Carga con Minijuego Cinemático DBZ Tenkaichi 3):**
+  - **Menú Principal Arcade (`MainMenuController.cs`):** Navegación completa por teclado (`W`/`S`, `Flechas`, `Enter`/`Espacio`, `ESC`/`Backspace`), indicador animado con cursor retro (`>>`), escalado palpitante de opciones activas y efectos de sonido arcade (`Menu_Cursor_Select.wav`, `Menu_Confirm_Start.wav`).
+  - **Estructura de Menú y Submenús:** Opciones principales `Modo Historia`, `Versus` (con submenú interactivo `Versus Bot (1P vs CPU)` y `Versus 2 Players (Local)` conectado al duelo Suzaku Castle) y botón `Salir`.
+  - **Pantalla de Carga y Minijuego DBZ Tenkaichi 3 (`LoadingScreenController.cs`, `LoadingMinigameManager.cs`):** Barra de progreso CPS-3 animada (0% a 100%), avatar 2D jugable (`MiniFighterController.cs`) con físicas de salto, desplazamiento y golpes con sprites arcade de Ryu.
+  - **Algoritmos Cinemáticos de Dirección (Craig Reynolds Steering Behaviors):**
+    1. **`WanderBehavior.cs` (Merodeo):** 3 orbes autónomos que navegan orgánicamente por la pantalla con un círculo proyectado adelante y perturbación angular suave ($\Delta \theta$).
+    2. **`SeekBehavior.cs` (Persecución):** Orbe/espíritu buscador que persigue activamente al orbe más cercano mediante vector de aceleración deseada $\vec{v}_{desired} - \vec{v}$.
+    3. **Puntuación y SFX:** Marcador en tiempo real de orbes recolectados, SFX de impacto (`Bonus_Basketball_Bounce.wav`, `Hit_Punch_Light.wav`) y badges explicativos de algoritmos activos.
+  - **Builder Automatizado de Escena (`SF3MainMenuBuilder.cs`):** Genera la escena `MainMenu_Scene.unity` completa y sincroniza `EditorBuildSettings` (Escena 0: Menú, Escena 2: Duelo Japón) con validación batchmode sin errores (Exit Code 0).
 
 * **2026-09-22 (Integración Rama Sebas - Escenario Japón Suzaku Castle y Duelo Local Ken vs. Ryu):**
   - **Fusión de `feature/sp1-sebas-japan-stage`:** Incorporados los commits `a55f8e8ce` y `e3f89b646` de Sebas.
