@@ -74,13 +74,15 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 
 * **2026-09-22 (Menú de Inicio Retro y Pantalla de Carga con Minijuego Cinemático DBZ Tenkaichi 3):**
   - **Menú Principal Arcade (`MainMenuController.cs`):** Navegación completa por teclado (`W`/`S`, `Flechas`, `Enter`/`Espacio`, `ESC`/`Backspace`), indicador animado con cursor retro (`>>`), escalado palpitante de opciones activas y efectos de sonido arcade (`Menu_Cursor_Select.wav`, `Menu_Confirm_Start.wav`).
+  - **Ventana Modal "Próximamente" para Modo Historia:** Al seleccionar Modo Historia, se abre una ventana modal explicativa que indica que el modo requerirá el sensor Azure Kinect DK e IA somatosensorial en el Sprint 2, descartable con Enter/Espacio/Esc sin iniciar combate accidental.
   - **Estructura de Menú y Submenús:** Opciones principales `Modo Historia`, `Versus` (con submenú interactivo `Versus Bot (1P vs CPU)` y `Versus 2 Players (Local)` conectado al duelo Suzaku Castle) y botón `Salir`.
-  - **Pantalla de Carga y Minijuego DBZ Tenkaichi 3 (`LoadingScreenController.cs`, `LoadingMinigameManager.cs`):** Barra de progreso CPS-3 animada (0% a 100%), avatar 2D jugable (`MiniFighterController.cs`) con físicas de salto, desplazamiento y golpes con sprites arcade de Ryu.
+  - **Pantalla de Carga Ampliada y Minijuego DBZ Tenkaichi 3 (`LoadingScreenController.cs`, `LoadingMinigameManager.cs`):** Área de minijuego expandida a 1460x580 px con límites horizontales de 670 px, barra de progreso CPS-3 animada (0% a 100%), avatar 2D jugable (`MiniFighterController.cs`) con físicas de salto aumentadas (jumpForce = 620), desplazamiento ágil y puñetazos con sprites arcade de Ryu.
+  - **Música de Pelea y Menú de Pausa en Duelo (`JapanDuel.cs`):** Incorporada música de fondo BGM para el combate de Suzaku Castle (`08_Kobu_Ryu_Stage.mp3` en `Resources/Audio/BGM_Japan.mp3`) con bucle activo. Sistema de pausa interactivo con tecla `ESC` o `P` que congela la física, reproduce SFX y permite elegir con teclado o ratón entre `Reanudar`, `Reiniciar Ronda` o `Volver al Menú Principal` (`MainMenu_Scene`).
   - **Algoritmos Cinemáticos de Dirección (Craig Reynolds Steering Behaviors):**
     1. **`WanderBehavior.cs` (Merodeo):** 3 orbes autónomos que navegan orgánicamente por la pantalla con un círculo proyectado adelante y perturbación angular suave ($\Delta \theta$).
     2. **`SeekBehavior.cs` (Persecución):** Orbe/espíritu buscador que persigue activamente al orbe más cercano mediante vector de aceleración deseada $\vec{v}_{desired} - \vec{v}$.
     3. **Puntuación y SFX:** Marcador en tiempo real de orbes recolectados, SFX de impacto (`Bonus_Basketball_Bounce.wav`, `Hit_Punch_Light.wav`) y badges explicativos de algoritmos activos.
-  - **Builder Automatizado de Escena (`SF3MainMenuBuilder.cs`):** Genera la escena `MainMenu_Scene.unity` completa y sincroniza `EditorBuildSettings` (Escena 0: Menú, Escena 2: Duelo Japón) con validación batchmode sin errores (Exit Code 0).
+  - **Builder Automatizado de Escena (`SF3MainMenuBuilder.cs`):** Menú superior `SF3 Tools > Build Main Menu & Loading Scene`. Genera la escena `MainMenu_Scene.unity` completa y sincroniza `EditorBuildSettings` (Escena 0: Menú, Escena 2: Duelo Japón) con validación batchmode sin errores (Exit Code 0).
 
 * **2026-09-22 (Integración Rama Sebas - Escenario Japón Suzaku Castle y Duelo Local Ken vs. Ryu):**
   - **Fusión de `feature/sp1-sebas-japan-stage`:** Incorporados los commits `a55f8e8ce` y `e3f89b646` de Sebas.
