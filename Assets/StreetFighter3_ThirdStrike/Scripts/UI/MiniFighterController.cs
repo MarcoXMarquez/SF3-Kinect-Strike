@@ -12,11 +12,11 @@ namespace StreetFighter3.UI
     public class MiniFighterController : MonoBehaviour
     {
         [Header("Movimiento")]
-        [SerializeField] private float moveSpeed = 320f;
-        [SerializeField] private float jumpForce = 520f;
-        [SerializeField] private float gravity = 1200f;
-        [SerializeField] private float groundY = -140f;
-        [SerializeField] private Vector2 horizontalBounds = new Vector2(-420f, 420f);
+        [SerializeField] private float moveSpeed = 380f;
+        [SerializeField] private float jumpForce = 620f;
+        [SerializeField] private float gravity = 1400f;
+        [SerializeField] private float groundY = -215f;
+        [SerializeField] private Vector2 horizontalBounds = new Vector2(-660f, 660f);
 
         [Header("Sprites de Animación")]
         [SerializeField] private Sprite[] idleFrames;
@@ -54,6 +54,14 @@ namespace StreetFighter3.UI
             walkFrames = walk;
             punchFrames = punch;
             jumpFrames = jump;
+        }
+
+        public void ConfigureBoundsAndGround(float ground, Vector2 bounds, float jump = 620f, float speed = 380f)
+        {
+            groundY = ground;
+            horizontalBounds = bounds;
+            jumpForce = jump;
+            moveSpeed = speed;
         }
 
         private void Update()

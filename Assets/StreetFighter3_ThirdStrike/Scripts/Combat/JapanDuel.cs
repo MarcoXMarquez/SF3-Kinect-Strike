@@ -7,7 +7,15 @@ public class JapanDuel : MonoBehaviour
     private float countdown;
     private string result;
     public float FloorY { get; private set; } = -0.32f;
-    public bool Fighting => countdown <= 0 && result == null;
+    public bool IsPaused { get; private set; } = false;
+    public bool Fighting => countdown <= 0 && result == null && !IsPaused;
+
+    private AudioSource bgmSource;
+    private AudioSource sfxSource;
+    private AudioClip cursorSfx;
+    private AudioClip confirmSfx;
+    private int pauseSelectedIndex = 0;
+    private readonly string[] pauseOptions = { "REANUDAR", "REINICIAR RONDA", "VOLVER AL MENÚ" };
 
     private void Start()
     {
@@ -23,6 +31,23 @@ public class JapanDuel : MonoBehaviour
             BoxCollider2D floor = ground.GetComponent<BoxCollider2D>();
             if (floor != null) ground.position += Vector3.up * (FloorY - floor.bounds.max.y);
         }
+
+        // BGM de Pelea (Suzaku Castle - Japón)
+        AudioClip bgmClip = Resources.Load<AudioClip>("Audio/BGM_Japan");
+        if (bgmClip != null)
+        {
+            bgmSource = gameObject.AddComponent<AudioSource>();
+            bgmSource.clip = bgmClip;
+            bgmSource.loop = true;
+            bgmSource.volume = 0.55f;
+            bgmSource.playOnAwake = true;
+            bgmSource.Play();
+        }
+
+        cursorSfx = Resources.Load<AudioClip>("Audio/Menu_Cursor_Select");
+        confirmSfx = Resources.Load<AudioClip>("Audio/Menu_Confirm_Start");
+        sfxSource = gameObject.AddComponent<AudioSource>();
+
         ken = Create("Ken", roster.ken, true);
         ryu = Create("Ryu", roster.ryu, false);
         ken.opponent = ryu;
@@ -39,24 +64,89 @@ public class JapanDuel : MonoBehaviour
         return fighter;
     }
 
-    private void Restart()
+    public void Restart()
     {
+        IsPaused = false;
+        Time.timeScale = 1f;
         result = null;
         countdown = 2f;
         ken.ResetFighter(-1.35f);
         ryu.ResetFighter(1.35f);
     }
 
+    public void TogglePause()
+    {
+        IsPaused = !IsPaused;
+        Time.timeScale = IsPaused ? 0f : 1f;
+        pauseSelectedIndex = 0;
+        if (IsPaused && cursorSfx != null && sfxSource != null)
+        {
+            sfxSource.PlayOneShot(cursorSfx, 0.8f);
+        }
+    }
+
+    public void ReturnToMainMenu()
+    {
+        Time.timeScale = 1f;
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu_Scene");
+    }
+
     private void Update()
     {
         if (ken == null || ryu == null) return;
+
+        // Toggle Pausa con Escape o P
+        if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P))
+        {
+            TogglePause();
+        }
+
+        if (IsPaused)
+        {
+            // Navegación en Menú de Pausa
+            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
+            {
+                pauseSelectedIndex = (pauseSelectedIndex - 1 + pauseOptions.Length) % pauseOptions.Length;
+                if (cursorSfx != null && sfxSource != null) sfxSource.PlayOneShot(cursorSfx, 0.7f);
+            }
+            else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
+            {
+                pauseSelectedIndex = (pauseSelectedIndex + 1) % pauseOptions.Length;
+                if (cursorSfx != null && sfxSource != null) sfxSource.PlayOneShot(cursorSfx, 0.7f);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            {
+                ConfirmPauseOption(pauseSelectedIndex);
+            }
+            return;
+        }
+
         countdown = Mathf.Max(0, countdown - Time.deltaTime);
-        if (Input.GetKeyDown(KeyCode.Return)) Restart();
+        if (Input.GetKeyDown(KeyCode.Return) && !IsPaused) Restart();
         if (result == null && (ken.Health <= 0 || ryu.Health <= 0))
         {
             result = ken.Health == ryu.Health ? "DOUBLE K.O." : ken.Health > 0 ? "KEN WINS" : "RYU WINS";
             ken.EndRound(ken.Health > 0);
             ryu.EndRound(ryu.Health > 0);
+        }
+    }
+
+    private void ConfirmPauseOption(int index)
+    {
+        if (confirmSfx != null && sfxSource != null) sfxSource.PlayOneShot(confirmSfx, 0.8f);
+
+        switch (index)
+        {
+            case 0: // Reanudar
+                TogglePause();
+                break;
+            case 1: // Reiniciar Ronda
+                Restart();
+                break;
+            case 2: // Volver al Menú
+                ReturnToMainMenu();
+                break;
         }
     }
 
@@ -67,6 +157,78 @@ public class JapanDuel : MonoBehaviour
         Matrix4x4 old = GUI.matrix;
         GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 960 * scale) / 2, 0), Quaternion.identity, Vector3.one * scale);
         GUIStyle label = new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold };
+
+        if (IsPaused)
+        {
+            // Fondo oscuro semitransparente completo
+            GUI.color = new Color(0.02f, 0.03f, 0.06f, 0.85f);
+            GUI.DrawTexture(new Rect(0, 0, 960, 540), Texture2D.whiteTexture);
+
+            // Marco central del Menú de Pausa
+            GUI.color = new Color(0.08f, 0.10f, 0.16f, 0.95f);
+            GUI.DrawTexture(new Rect(280, 95, 400, 340), Texture2D.whiteTexture);
+
+            // Borde dorado
+            GUI.color = new Color(1f, 0.82f, 0.15f, 0.9f);
+            GUI.DrawTexture(new Rect(280, 95, 400, 4), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(280, 431, 400, 4), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(280, 95, 4, 340), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(676, 95, 4, 340), Texture2D.whiteTexture);
+
+            // Título
+            GUIStyle pauseTitleStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 32,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter
+            };
+            pauseTitleStyle.normal.textColor = new Color(1f, 0.85f, 0.2f);
+            GUI.Label(new Rect(280, 115, 400, 45), "— PAUSA —", pauseTitleStyle);
+
+            // Opciones
+            GUIStyle optionStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 20,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter
+            };
+
+            for (int i = 0; i < pauseOptions.Length; i++)
+            {
+                bool isSel = (i == pauseSelectedIndex);
+                optionStyle.normal.textColor = isSel ? new Color(1f, 0.9f, 0.2f) : new Color(0.75f, 0.8f, 0.85f);
+
+                Rect optRect = new Rect(300, 180 + i * 65, 360, 48);
+                if (isSel)
+                {
+                    GUI.color = new Color(0.2f, 0.25f, 0.35f, 0.75f);
+                    GUI.DrawTexture(optRect, Texture2D.whiteTexture);
+                }
+
+                string prefix = isSel ? ">>  " : "    ";
+                string suffix = isSel ? "  <<" : "";
+                if (GUI.Button(optRect, prefix + pauseOptions[i] + suffix, optionStyle))
+                {
+                    pauseSelectedIndex = i;
+                    ConfirmPauseOption(i);
+                }
+            }
+
+            // Pie de página de ayuda
+            GUIStyle hintStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 13,
+                fontStyle = FontStyle.Normal,
+                alignment = TextAnchor.MiddleCenter
+            };
+            hintStyle.normal.textColor = new Color(0.6f, 0.65f, 0.75f);
+            GUI.Label(new Rect(280, 390, 400, 30), "[W/S/Flechas]: Navegar | [ENTER]: Elegir | [ESC/P]: Reanudar", hintStyle);
+
+            GUI.color = Color.white;
+            GUI.matrix = old;
+            return;
+        }
+
         GUI.color = new Color(0.04f, 0.04f, 0.04f, 0.85f);
         GUI.DrawTexture(new Rect(20, 8, 400, 61), Texture2D.whiteTexture);
         GUI.DrawTexture(new Rect(540, 8, 400, 61), Texture2D.whiteTexture);

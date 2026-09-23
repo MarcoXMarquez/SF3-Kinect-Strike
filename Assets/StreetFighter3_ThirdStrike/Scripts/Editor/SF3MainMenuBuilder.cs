@@ -173,13 +173,13 @@ namespace StreetFighter3.Editor
 
             // Header Loading
             Text loadingStatusText = CreateText("Text_LoadingTitle", loadingCanvasObj.transform, "NOW LOADING...", retroFont, 46, FontStyle.Bold,
-                new Color(0.2f, 0.9f, 1f, 1f), new Vector2(0f, 380f), new Vector2(800f, 60f));
+                new Color(0.2f, 0.9f, 1f, 1f), new Vector2(0f, 410f), new Vector2(900f, 60f));
 
-            // Barra de Carga
+            // Barra de Carga (Más amplia)
             GameObject barBgObj = CreateUIElement("ProgressBar_BG", loadingCanvasObj.transform);
             RectTransform barBgRt = barBgObj.GetComponent<RectTransform>();
-            barBgRt.anchoredPosition = new Vector2(0f, 320f);
-            barBgRt.sizeDelta = new Vector2(820f, 26f);
+            barBgRt.anchoredPosition = new Vector2(0f, 350f);
+            barBgRt.sizeDelta = new Vector2(960f, 26f);
             Image barBgImg = barBgObj.AddComponent<Image>();
             barBgImg.color = new Color(0.12f, 0.15f, 0.22f, 1f);
 
@@ -193,28 +193,28 @@ namespace StreetFighter3.Editor
             barFillImg.color = new Color(1f, 0.82f, 0.15f, 1f);
 
             Text progressPercentText = CreateText("Text_Percentage", loadingCanvasObj.transform, "15%", retroFont, 24, FontStyle.Bold,
-                new Color(1f, 0.9f, 0.3f, 1f), new Vector2(0f, 280f), new Vector2(200f, 35f));
+                new Color(1f, 0.9f, 0.3f, 1f), new Vector2(0f, 310f), new Vector2(200f, 35f));
 
             Text promptContinueText = CreateText("Text_PromptContinue", loadingCanvasObj.transform, "ROUND READY! PRESIONA ENTER", retroFont, 24, FontStyle.Bold,
-                new Color(0.3f, 1f, 0.4f, 1f), new Vector2(0f, 245f), new Vector2(800f, 35f));
+                new Color(0.3f, 1f, 0.4f, 1f), new Vector2(0f, 275f), new Vector2(800f, 35f));
             promptContinueText.gameObject.SetActive(false);
 
-            // 9. Contenedor del Minijuego (DBZ Budokai Tenkaichi 3 Style)
+            // 9. Contenedor del Minijuego (DBZ Budokai Tenkaichi 3 Style - ÁREA AMPLIADA)
             GameObject minigameContainer = CreateUIElement("Minigame_Arena", loadingCanvasObj.transform);
             RectTransform miniRt = minigameContainer.GetComponent<RectTransform>();
-            miniRt.anchoredPosition = new Vector2(0f, -50f);
-            miniRt.sizeDelta = new Vector2(1000f, 440f);
+            miniRt.anchoredPosition = new Vector2(0f, -40f);
+            miniRt.sizeDelta = new Vector2(1460f, 580f);
 
             Image miniArenaImg = minigameContainer.AddComponent<Image>();
-            miniArenaImg.color = new Color(0.08f, 0.1f, 0.15f, 0.85f);
+            miniArenaImg.color = new Color(0.08f, 0.1f, 0.15f, 0.88f);
 
             // Línea de suelo del dojo
             GameObject floorLine = CreateUIElement("Arena_Floor", minigameContainer.transform);
             RectTransform floorRt = floorLine.GetComponent<RectTransform>();
-            floorRt.anchoredPosition = new Vector2(0f, -145f);
-            floorRt.sizeDelta = new Vector2(980f, 4f);
+            floorRt.anchoredPosition = new Vector2(0f, -220f);
+            floorRt.sizeDelta = new Vector2(1420f, 4f);
             Image floorImg = floorLine.AddComponent<Image>();
-            floorImg.color = new Color(0.3f, 0.4f, 0.6f, 0.9f);
+            floorImg.color = new Color(0.3f, 0.45f, 0.65f, 0.9f);
 
             // Cargar Sprites de Ryu para el MiniFighter
             Sprite[] ryuIdle = LoadSpriteSequence("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/01_Movement/idle_stance");
@@ -222,17 +222,18 @@ namespace StreetFighter3.Editor
             Sprite[] ryuPunch = LoadSpriteSequence("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/02_Normals/light_punch");
             Sprite[] ryuJump = LoadSpriteSequence("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/01_Movement/jump_neutral");
 
-            // Avatar del Jugador (MiniFighter)
+            // Avatar del Jugador (MiniFighter - Escalado y con mayor rango de movimiento)
             GameObject playerFighterObj = CreateUIElement("MiniFighter_Player", minigameContainer.transform);
             RectTransform playerRt = playerFighterObj.GetComponent<RectTransform>();
-            playerRt.anchoredPosition = new Vector2(0f, -140f);
-            playerRt.sizeDelta = new Vector2(110f, 150f);
+            playerRt.anchoredPosition = new Vector2(0f, -215f);
+            playerRt.sizeDelta = new Vector2(130f, 175f);
             Image playerImg = playerFighterObj.AddComponent<Image>();
             if (ryuIdle != null && ryuIdle.Length > 0) playerImg.sprite = ryuIdle[0];
             playerImg.preserveAspect = true;
 
             MiniFighterController miniFighter = playerFighterObj.AddComponent<MiniFighterController>();
             miniFighter.SetupSprites(ryuIdle, ryuWalk, ryuPunch, ryuJump);
+            miniFighter.ConfigureBoundsAndGround(-215f, new Vector2(-670f, 670f), 650f, 400f);
 
             // Sprites de orbes y perseguidor
             Sprite orbSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/StreetFighter3_ThirdStrike/Effects/13_Hadouken_Energy_Aura_Blue/3.png");
@@ -243,17 +244,17 @@ namespace StreetFighter3.Editor
 
             // Textos del Minijuego
             Text scoreText = CreateText("Text_Score", minigameContainer.transform, "PUNTOS DBZ: 0000", retroFont, 24, FontStyle.Bold,
-                new Color(1f, 0.85f, 0.15f, 1f), new Vector2(-340f, 185f), new Vector2(300f, 40f));
+                new Color(1f, 0.85f, 0.15f, 1f), new Vector2(-510f, 250f), new Vector2(360f, 40f));
             scoreText.alignment = TextAnchor.MiddleLeft;
 
-            Text algoBadgeText = CreateText("Text_AlgoBadge", minigameContainer.transform, "⚡ CINEMÁTICA IA: [Wandering: 3 Orbes] + [Seeking: Perseguidor]",
-                retroFont, 18, FontStyle.Bold, new Color(0.2f, 0.9f, 1f, 1f), new Vector2(160f, 185f), new Vector2(650f, 40f));
+            Text algoBadgeText = CreateText("Text_AlgoBadge", minigameContainer.transform, "⚡ CINEMÁTICA IA: [Wandering: 3 Orbes] + [Seeking: Perseguidor Hadouken]",
+                retroFont, 18, FontStyle.Bold, new Color(0.2f, 0.9f, 1f, 1f), new Vector2(240f, 250f), new Vector2(800f, 40f));
             algoBadgeText.alignment = TextAnchor.MiddleRight;
 
             Text hintText = CreateText("Text_ControlsHint", minigameContainer.transform, "🎮 CONTROLES: [A / D] Moverse  |  [W] Saltar  |  [J / F / ESPACIO] Golpear Orbes",
-                retroFont, 17, FontStyle.Normal, new Color(0.75f, 0.8f, 0.9f, 0.9f), new Vector2(0f, -185f), new Vector2(900f, 35f));
+                retroFont, 18, FontStyle.Normal, new Color(0.75f, 0.8f, 0.9f, 0.95f), new Vector2(0f, -255f), new Vector2(1200f, 35f));
 
-            // LoadingMinigameManager
+            // LoadingMinigameManager (Área ampliada a 670 x 240)
             LoadingMinigameManager minigameMgr = minigameContainer.AddComponent<LoadingMinigameManager>();
             AssignField(minigameMgr, "minigameContainer", miniRt);
             AssignField(minigameMgr, "playerFighter", miniFighter);
@@ -264,6 +265,7 @@ namespace StreetFighter3.Editor
             AssignField(minigameMgr, "chaserSprite", chaserSprite);
             AssignField(minigameMgr, "collectSound", collectSfx);
             AssignField(minigameMgr, "punchSound", punchSfx);
+            AssignField(minigameMgr, "areaBounds", new Vector2(670f, 240f));
 
             // LoadingScreenController
             LoadingScreenController loadingCtrl = loadingCanvasObj.AddComponent<LoadingScreenController>();
@@ -273,6 +275,39 @@ namespace StreetFighter3.Editor
             AssignField(loadingCtrl, "progressPercentageText", progressPercentText);
             AssignField(loadingCtrl, "continuePromptText", promptContinueText);
             AssignField(loadingCtrl, "minigameManager", minigameMgr);
+
+            // 10. Modal "PRÓXIMAMENTE" para Modo Historia
+            GameObject modalObj = CreateUIElement("Modal_Proximamente", canvasObj.transform);
+            StretchFull(modalObj.GetComponent<RectTransform>());
+            Image modalBg = modalObj.AddComponent<Image>();
+            modalBg.color = new Color(0.02f, 0.03f, 0.05f, 0.88f);
+
+            GameObject modalBox = CreateUIElement("Modal_Box", modalObj.transform);
+            RectTransform boxRt = modalBox.GetComponent<RectTransform>();
+            boxRt.sizeDelta = new Vector2(880f, 460f);
+            Image boxImg = modalBox.AddComponent<Image>();
+            boxImg.color = new Color(0.08f, 0.10f, 0.16f, 0.98f);
+
+            // Bordes dorados de la ventana
+            CreateBorder(modalBox.transform, new Vector2(0f, 228f), new Vector2(880f, 4f), new Color(1f, 0.82f, 0.15f, 0.9f));
+            CreateBorder(modalBox.transform, new Vector2(0f, -228f), new Vector2(880f, 4f), new Color(1f, 0.82f, 0.15f, 0.9f));
+            CreateBorder(modalBox.transform, new Vector2(-438f, 0f), new Vector2(4f, 460f), new Color(1f, 0.82f, 0.15f, 0.9f));
+            CreateBorder(modalBox.transform, new Vector2(438f, 0f), new Vector2(4f, 460f), new Color(1f, 0.82f, 0.15f, 0.9f));
+
+            CreateText("Modal_Title", modalBox.transform, "MODO HISTORIA", retroFont, 40, FontStyle.Bold,
+                new Color(1f, 0.85f, 0.15f, 1f), new Vector2(0f, 155f), new Vector2(800f, 50f));
+
+            CreateText("Modal_Subtitle", modalBox.transform, "¡PRÓXIMAMENTE!", retroFont, 30, FontStyle.Bold,
+                new Color(0.2f, 0.9f, 1f, 1f), new Vector2(0f, 105f), new Vector2(800f, 40f));
+
+            CreateText("Modal_Description", modalBox.transform,
+                "El Modo Historia integrará el control somatosensorial por hardware con Azure Kinect DK e IA Adaptativa.\n\nEn este modo enfrentarás la campaña ejecutando golpes, patadas y bloqueos con tu propio cuerpo en tiempo real.\n\nActualmente en desarrollo para el Sprint 2.",
+                retroFont, 21, FontStyle.Normal, new Color(0.85f, 0.88f, 0.92f, 1f), new Vector2(0f, -10f), new Vector2(780f, 160f));
+
+            CreateText("Modal_DismissPrompt", modalBox.transform, "[ PRESIONA ENTER, ESPACIO O ESC PARA VOLVER ]", retroFont, 20, FontStyle.Bold,
+                new Color(1f, 0.88f, 0.2f, 1f), new Vector2(0f, -180f), new Vector2(800f, 35f));
+
+            modalObj.SetActive(false);
 
             // 10. Audio Manager del Menú
             GameObject audioMgrObj = new GameObject("Menu_Audio");
@@ -309,6 +344,7 @@ namespace StreetFighter3.Editor
             AssignField(menuCtrl, "cancelBackSfx", cursorSfx);
             AssignField(menuCtrl, "loadingScreenController", loadingCtrl);
             AssignField(menuCtrl, "duelSceneName", "Sandbox_Sebas");
+            AssignField(menuCtrl, "comingSoonModalPanel", modalObj);
 
             // 12. Guardar Escena
             if (!Directory.Exists(SceneFolder)) Directory.CreateDirectory(SceneFolder);
@@ -317,6 +353,16 @@ namespace StreetFighter3.Editor
 
             // 13. Sincronizar Build Settings
             EnsureBuildSettings(ScenePath, DuelScenePath);
+        }
+
+        private static void CreateBorder(Transform parent, Vector2 pos, Vector2 size, Color color)
+        {
+            GameObject border = CreateUIElement("Border", parent);
+            RectTransform rt = border.GetComponent<RectTransform>();
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
+            Image img = border.AddComponent<Image>();
+            img.color = color;
         }
 
         private static void EnsureBuildSettings(string menuPath, string duelPath)

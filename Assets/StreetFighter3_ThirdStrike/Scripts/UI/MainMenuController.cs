@@ -44,6 +44,9 @@ namespace StreetFighter3.UI
         [SerializeField] private LoadingScreenController loadingScreenController;
         [SerializeField] private string duelSceneName = "Sandbox_Sebas";
 
+        [Header("Modal Próximamente (Modo Historia)")]
+        [SerializeField] private GameObject comingSoonModalPanel;
+
         [Header("Configuración Visual")]
         [SerializeField] private Color normalColor = new Color(0.85f, 0.85f, 0.85f, 1f);
         [SerializeField] private Color selectedColor = new Color(1f, 0.88f, 0.15f, 1f);
@@ -52,6 +55,7 @@ namespace StreetFighter3.UI
 
         private MainMenuState currentState = MainMenuState.Root;
         private int selectedIndex = 0;
+        private bool isModalOpen = false;
         private readonly List<Button> currentButtons = new List<Button>();
         private readonly List<Vector3> originalScales = new List<Vector3>();
 
@@ -113,6 +117,17 @@ namespace StreetFighter3.UI
 
         private void HandleKeyboardInput()
         {
+            if (isModalOpen)
+            {
+                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) ||
+                    Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.Escape) ||
+                    Input.GetKeyDown(KeyCode.Backspace))
+                {
+                    CloseComingSoonModal();
+                }
+                return;
+            }
+
             if (currentButtons.Count == 0) return;
 
             // Navegación Vertical (W / S o Flechas)
@@ -142,6 +157,25 @@ namespace StreetFighter3.UI
             }
         }
 
+        public void OpenComingSoonModal()
+        {
+            isModalOpen = true;
+            if (comingSoonModalPanel != null)
+            {
+                comingSoonModalPanel.SetActive(true);
+            }
+        }
+
+        public void CloseComingSoonModal()
+        {
+            isModalOpen = false;
+            if (comingSoonModalPanel != null)
+            {
+                comingSoonModalPanel.SetActive(false);
+            }
+            PlaySFX(cancelBackSfx);
+        }
+
         private void Navigate(int direction)
         {
             if (currentButtons.Count == 0) return;
@@ -166,9 +200,9 @@ namespace StreetFighter3.UI
             {
                 switch (selectedIndex)
                 {
-                    case 0: // Modo Historia
-                        Debug.Log("[MainMenu] Iniciando Modo Historia...");
-                        LaunchLoadingScreen(duelSceneName, 4.0f);
+                    case 0: // Modo Historia -> Mostrar ventana PRÓXIMAMENTE
+                        Debug.Log("[MainMenu] Modo Historia seleccionado (Pendiente Azure Kinect). Mostrando 'Próximamente'...");
+                        OpenComingSoonModal();
                         break;
                     case 1: // Versus (Abrir Submenú)
                         EnterState(MainMenuState.VersusSubmenu);
