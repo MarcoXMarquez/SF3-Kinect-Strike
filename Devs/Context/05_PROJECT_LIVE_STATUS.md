@@ -42,6 +42,7 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 | `clean_dataset_outliers.py` | `Tools/` | Kevin | Limpiador de outliers e interpolador de discontinuidades ToF con filtro 1€ adaptativo. |
 | `test_live_gesture_classifier.py` | `Tools/` | Kevin | Testeador terminal interactivo de inferencia y auditor de sesgos/probabilidades por clase. |
 | `test_live_kinect_classifier.py` | `Tools/` | Kevin | Detector somatosensorial en vivo con Azure Kinect físico y panel visual HUD de sesgos (7 clases). |
+| `record_transition_graph.py` | `Tools/` | Kevin | Estudio de transiciones y combos con perspectiva DUAL (Frontal + Sagital), modo práctica libre, telemetría cinemática, creación ilimitada de nuevos sujetos en la UI y matriz 7x7 (42 aristas). |
 | `DuelFighter.cs` | `Scripts/Combat/` | Sebas | Controlador de combate 2D con Rigidbody2D, orientación, animaciones, bloqueo frontal y hurtboxes (cabeza, torso, piernas). |
 | `DuelRoster.cs` | `Scripts/Combat/` | Sebas | ScriptableObject que almacena 21 secuencias de sprites por personaje (230 Ken, 256 Ryu). |
 | `JapanDuel.cs` | `Scripts/Combat/` | Sebas | Gestor del duelo local Ken vs. Ryu en Suzaku Castle (rondas, HUD de vida, KO y revancha). |
@@ -72,6 +73,13 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 
 ### 🔄 Historial de Cambios Recientes (Changelog)
 
+* **2026-10-13 (Red de Transiciones Dirigidas 7x7 y Estudio de Grabación Cinemática):**
+  - **Estudio de Transiciones (`Tools/record_transition_graph.py`):** Creada herramienta especializada con interfaz gráfica OpenCV y renderizado sagital/frontal retro CPS-3 para capturar secuencias continuas entre movimientos sin retorno intermedio a reposo.
+  - **Matriz de Continuidad 7x7 (42 Aristas Dirigidas):** Modeladas todas las posibles transiciones entre las 7 acciones maestras (`idle`, `punch_right`, `punch_left`, `kick_right`, `kick_left`, `crouch`, `block`), con selector interactivo y contador de repeticiones en tiempo real.
+  - **Simulador Cinemático Procedural (`--mock`):** Generador de esqueleto continuo a 30 FPS que emula la curva bimodal de intercambio de energía cinética ($A_{\text{pico}} \rightarrow T_{A \rightarrow B} \rightarrow B_{\text{pico}}$) para pruebas inmediatas sin hardware físico.
+  - **Generador de Dataset Sintético (`--generate-synthetic`):** Función de generación en batch automatizada con almacenamiento estructurado en `Tools/dataset_transitions/` para alimentar los modelos predictivos de combos.
+  - **Artefacto de Arquitectura:** Generado plan exhaustivo con los 7 grafos Mermaid individuales y formalización matemática en `PLAN_ENTRENADOR_TRANSICIONES_KINECT.md`.
+
 * **2026-09-22 (Menú de Inicio Retro y Pantalla de Carga con Minijuego Cinemático DBZ Tenkaichi 3):**
   - **Menú Principal Arcade (`MainMenuController.cs`):** Navegación completa por teclado (`W`/`S`, `Flechas`, `Enter`/`Espacio`, `ESC`/`Backspace`), indicador animado con cursor retro (`>>`), escalado palpitante de opciones activas y efectos de sonido arcade (`Menu_Cursor_Select.wav`, `Menu_Confirm_Start.wav`).
   - **Ventana Modal "Próximamente" para Modo Historia:** Al seleccionar Modo Historia, se abre una ventana modal explicativa que indica que el modo requerirá el sensor Azure Kinect DK e IA somatosensorial en el Sprint 2, descartable con Enter/Espacio/Esc sin iniciar combate accidental.
@@ -83,6 +91,24 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
     2. **`SeekBehavior.cs` (Persecución):** Orbe/espíritu buscador que persigue activamente al orbe más cercano mediante vector de aceleración deseada $\vec{v}_{desired} - \vec{v}$.
     3. **Puntuación y SFX:** Marcador en tiempo real de orbes recolectados, SFX de impacto (`Bonus_Basketball_Bounce.wav`, `Hit_Punch_Light.wav`) y badges explicativos de algoritmos activos.
   - **Builder Automatizado de Escena (`SF3MainMenuBuilder.cs`):** Menú superior `SF3 Tools > Build Main Menu & Loading Scene`. Genera la escena `MainMenu_Scene.unity` completa y sincroniza `EditorBuildSettings` (Escena 0: Menú, Escena 2: Duelo Japón) con validación batchmode sin errores (Exit Code 0).
+
+* **2026-10-13 (Entrenador de Transiciones de Combate y Grafo Completo 7x7 - Kevin):**
+  - **Sistema de Transiciones y Cancel Windows:** Modelado del grafo dirigido completo $G=(V, E)$ de 7 acciones (`idle`, `punch_right`, `punch_left`, `kick_right`, `kick_left`, `crouch`, `block`) con 42 transiciones dirigidas en `Tools/record_transition_graph.py`.
+  - **Tabs de Destino en Verde Permanente:** Cada botón de **NODO DESTINO (B)** en el panel izquierdo se ilumina en **VERDE ESMERALDA PERMANENTE** (`(14, 85, 35)` con borde `(0, 210, 85)` y badge `[✓ OK]`) tan pronto como dicha transición $A \to B$ queda grabada y guardada en disco para el sujeto activo, impidiendo olvidos durante sesiones extensas de captura.
+  - **Indicadores de Progreso en Nodo Origen (A):** Visualización en tiempo real de cobertura de aristas salientes (`[6/6 OK]`, `[X/6]`, `[0/6]`).
+  - **Priorización de Teclado en Review:** Reordenamiento de eventos de teclado en bucle de replay: `ENTER` / `S` (Guardar), `R` (Reintentar de inmediato) y `ESC` (Descartar) evaluados con prioridad antes de los atajos alfanuméricos de selección de nodos.
+  - **Soporte Físico Azure Kinect DK:** Extracción corregida de coordenadas milimétricas 3D mediante `body.numpy()[:, :3]`, eliminando fallback espurio a mock por excepciones de API.
+
+* **2026-10-13 (Entrenamiento del Grafo Completo de 42 Transiciones - Sujeto 41 Marco & Live Transition Radar):**
+  - **Captura del Grafo de Transiciones 7x7:** Grabadas las 42 aristas de transición posibles entre las 7 posturas maestras (`idle`, `punch_right`, `punch_left`, `kick_right`, `kick_left`, `crouch`, `block`) con Marco (`subject_41`).
+  - **Limpieza Cinemática (`Tools/clean_dataset_outliers.py`):** Filtrado Hampel + $1€$ adaptativo aplicado a los 84 clips de transición en `Tools/dataset_cleaned/transitions/` (218 correcciones de salto ToF).
+  - **Ventanas de Llegada y Salida Cinemática (`Tools/train_gesture_classifier.py`):** Aumento temporal dinámico extrayendo ventanas de aterrizaje (frames 15..50) y ventanas de lanzamiento (frames 0..35), expandiendo el dataset de 98 a **266 muestras cinemáticas activas**.
+  - **Re-entrenamiento ML & Sincronización Sentis:** Random Forest con GroupKFold alcanzó **97.74% de exactitud global** (F1-score: 0.9753). Modelos exportados a `Tools/gesture_classifier.joblib`, `Tools/gesture_classifier.onnx` y `Assets/StreetFighter3_ThirdStrike/Models/gesture_classifier.onnx`.
+  - **Probador Somatosensorial en Vivo Actualizado (`Tools/test_live_kinect_classifier.py`):**
+    1. Gráfico de barras en tiempo real con porcentajes de confianza exactos (`%`) para las 7 acciones.
+    2. Radar de Transiciones Rápidas que mide la latencia de cambio $A \to B$ en milisegundos y registra historial de combos en cadena (`combo_history`).
+    3. Detección de impulso dinámico en ventana corta (6 frames) que elimina la latencia de retorno en combos rápidos.
+    4. Soporte híbrido: Detección automática de hardware Azure Kinect DK o simulación procedural (`--mock` / teclas `1-7`).
 
 * **2026-09-22 (Integración Rama Sebas - Escenario Japón Suzaku Castle y Duelo Local Ken vs. Ryu):**
   - **Fusión de `feature/sp1-sebas-japan-stage`:** Incorporados los commits `a55f8e8ce` y `e3f89b646` de Sebas.

@@ -182,8 +182,8 @@ def generate_synthetic_dataset(output_dir: str, n_subjects: int = 10, reps_per_c
 
 def build_dataset_features(data_dir: str, processed_csv_path: str) -> pd.DataFrame:
     """
-    Recorre recursivamente todos los clips CSV en dataset_raw/, extrae las 26 features cinemáticas
-    y compila el dataset maestro tabular.
+    Recorre recursivamente todos los clips CSV en data_dir (tanto clips estáticos como clips de transición),
+    extrae las 44 features cinemáticas y compila el dataset maestro tabular.
     """
     print(f"🔍 Escaneando clips en '{data_dir}'...")
 
@@ -195,9 +195,63 @@ def build_dataset_features(data_dir: str, processed_csv_path: str) -> pd.DataFra
         for f in csv_files:
             full_path = os.path.join(root, f)
             try:
-                # Deducir sujeto y acción de la estructura de carpetas o metadatos
-                # Formato Set:  data_dir/set_XX/subject_YY/action_name/sample_ZZZ.csv
-                # Formato Flat: data_dir/subject_YY/action_name/sample_ZZZ.csv
+                df_raw = pd.read_csv(full_path, nrows=2)
+
+                # =============================================================
+                # CASO 1: CLIP DE TRANSICIÓN DE COMBATE (origin_action -> target_action)
+                # =============================================================
+                if "origin_action" in df_raw.columns and "target_action" in df_raw.columns:
+                    orig_act = str(df_raw["origin_action"].iloc[0]).strip()
+                    targ_act = str(df_raw["target_action"].iloc[0]).strip()
+                    subj = str(df_raw["subject_id"].iloc[0]).strip() if "subject_id" in df_raw.columns else "unknown"
+
+                    df_full = pd.read_csv(full_path)
+                    j_cols = [c for c in df_full.columns if c.startswith("joint_")]
+                    if len(j_cols) != 32 * 3:
+                        skipped += 1
+                        continue
+
+                    coords = df_full[j_cols].values.reshape((len(df_full), 32, 3))
+
+                    # 1. Ventana de Llegada / Asentamiento del Destino (últimos 35 frames)
+                    # Enseña cómo se ve y ejecuta la postura destino proviniendo desde cualquier origen
+                    if targ_act in ACTION_NAME_TO_ID and len(coords) >= 35:
+                        w_targ = coords[-35:]
+                        feats_targ = extract_clip_features(w_targ, fps=30.0)
+                        rows.append({
+                            "subject_id": subj,
+                            "action_name": targ_act,
+                            "label": ACTION_NAME_TO_ID[targ_act],
+                            **feats_targ
+                        })
+
+                    # 2. Ventana de Lanzamiento Dinámico o Cancelación (primeros 35 frames o ventana central)
+                    if orig_act in ACTION_NAME_TO_ID and len(coords) >= 35:
+                        if orig_act == "idle" and targ_act != "idle" and len(coords) >= 43:
+                            # Lanzamiento dinámico desde reposo hacia golpe: ventana centrada (frames 8..43)
+                            w_dyn = coords[8:43]
+                            feats_dyn = extract_clip_features(w_dyn, fps=30.0)
+                            rows.append({
+                                "subject_id": subj,
+                                "action_name": targ_act,
+                                "label": ACTION_NAME_TO_ID[targ_act],
+                                **feats_dyn
+                            })
+                        else:
+                            # Postura de salida antes de la cancelación hacia destino
+                            w_orig = coords[:35]
+                            feats_orig = extract_clip_features(w_orig, fps=30.0)
+                            rows.append({
+                                "subject_id": subj,
+                                "action_name": orig_act,
+                                "label": ACTION_NAME_TO_ID[orig_act],
+                                **feats_orig
+                            })
+                    continue
+
+                # =============================================================
+                # CASO 2: CLIP ESTÁTICO ESTÁNDAR (sample_XXX.csv)
+                # =============================================================
                 rel_parts = os.path.relpath(full_path, data_dir).replace("\\", "/").split("/")
 
                 subject_id = "unknown"
@@ -212,20 +266,17 @@ def build_dataset_features(data_dir: str, processed_csv_path: str) -> pd.DataFra
                 elif len(rel_parts) == 2:
                     action_name = rel_parts[0]
 
-                # Cargar frames y extraer features
-                frames = load_clip_from_csv(full_path)
-                feats = extract_clip_features(frames, fps=30.0)
-
-                # Si el CSV tenía columnas de metadatos, usarlas
-                df_raw = pd.read_csv(full_path, nrows=1)
                 if "action_id" in df_raw.columns:
-                    action_name = str(df_raw["action_id"].iloc[0])
+                    action_name = str(df_raw["action_id"].iloc[0]).strip()
                 if "subject_id" in df_raw.columns:
-                    subject_id = str(df_raw["subject_id"].iloc[0])
+                    subject_id = str(df_raw["subject_id"].iloc[0]).strip()
 
                 if action_name not in ACTION_NAME_TO_ID:
                     skipped += 1
                     continue
+
+                frames = load_clip_from_csv(full_path)
+                feats = extract_clip_features(frames, fps=30.0)
 
                 row = {
                     "subject_id": subject_id,
@@ -338,9 +389,13 @@ def train_and_export(df: pd.DataFrame, output_onnx: str, unity_output: str = Non
 
 
 def main():
+    default_dir = os.path.join(os.path.dirname(__file__), "dataset_cleaned")
+    if not os.path.exists(default_dir):
+        default_dir = os.path.join(os.path.dirname(__file__), "dataset_raw")
+
     parser = argparse.ArgumentParser(description="SF3 Azure Kinect - Entrenador ML Cinemático")
-    parser.add_argument("--data-dir", type=str, default=os.path.join(os.path.dirname(__file__), "dataset_raw"),
-                        help="Directorio raíz con los clips brutos organizados por sujeto y acción")
+    parser.add_argument("--data-dir", type=str, default=default_dir,
+                        help="Directorio raíz con los clips (dataset_cleaned o dataset_raw)")
     parser.add_argument("--processed-csv", type=str, default=os.path.join(os.path.dirname(__file__), "dataset_processed.csv"),
                         help="Ruta de guardado del dataset procesado con características tabulares")
     parser.add_argument("--output-onnx", type=str, default=os.path.join(os.path.dirname(__file__), "gesture_classifier.onnx"),

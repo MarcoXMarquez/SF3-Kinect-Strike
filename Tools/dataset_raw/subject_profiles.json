@@ -2,7 +2,7 @@
   "1": {
     "id": 1,
     "folder": "subject_01",
-    "name": "jeremy",
+    "name": "andersin",
     "height_cm": 174,
     "gender": "M",
     "calibrated_biometrics": {
@@ -483,6 +483,13 @@
     "folder": "subject_40",
     "name": "Persona 40",
     "height_cm": 172,
+    "gender": "M"
+  },
+  "41": {
+    "id": 41,
+    "folder": "subject_41",
+    "name": "marco",
+    "height_cm": 180,
     "gender": "M"
   }
 }
