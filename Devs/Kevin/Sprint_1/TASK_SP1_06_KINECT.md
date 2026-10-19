@@ -32,10 +32,10 @@ Copia y pega este prompt a tu asistente para que te enseñe a programarlo tú mi
 ---
 
 ### 📋 4. Criterios de Aceptación (Definition of Done)
-- [ ] Interfaz IFighterInput.cs creada y compilando.
-- [ ] KeyboardFighterInput.cs permite mover y atacar con teclas.
-- [ ] Estructura lista para recibir datos de Kinect en Lab los martes.
-- [ ] Escena de prueba Test_AzureKinect_Body.unity creada.
+- [x] Interfaz IFighterInput.cs creada y compilando.
+- [x] KeyboardFighterInput.cs permite mover y atacar con teclas.
+- [x] Estructura lista para recibir datos de Kinect en Lab los martes.
+- [x] Escena de prueba Test_AzureKinect_Body.unity creada.
 
 ---
 

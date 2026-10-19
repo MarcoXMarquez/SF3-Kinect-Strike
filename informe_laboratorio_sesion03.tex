@@ -1,0 +1,368 @@
+\documentclass[10pt,a4paper]{article}
+
+% --- Paquetes requeridos ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[margin=1.5cm, top=1.2cm, bottom=1.4cm]{geometry}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{url}
+
+% Configuración para código fuente
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{gray},
+    stringstyle=\color{red!70!black},
+    numbers=left,
+    numberstyle=\tiny\color{gray}
+}
+
+% Carpeta para buscar image1 e image2
+\graphicspath{{./}{./images/}}
+
+% --- Colores oficiales del documento ---
+\definecolor{colorRojo}{HTML}{C8310E}   % Rojo institucional de las barras
+\definecolor{borderGray}{HTML}{808080} % Gris de bordes del encabezado
+\definecolor{azulLlenado}{HTML}{1A365D}  % Azul profesional para texto
+
+% --- Configuración de celdas ---
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\renewcommand{\arraystretch}{1.2}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+
+% --- TABLA DE ENCABEZADO OFICIAL UNSA ---
+\newcommand{\EncabezadoUNSA}[1]{%
+    \arrayrulecolor{borderGray}%
+    \setlength{\arrayrulewidth}{0.75pt}%
+    \setlength{\tabcolsep}{6pt}%
+    \noindent%
+    \begin{tabularx}{\textwidth}{|m{4.6cm}|Y|m{3.2cm}|}
+    \hline
+    % Fila 1: Logo 1 | Texto institucional | Logo 2
+    \centering \vspace{0.12cm}\IfFileExists{image1.png}{\includegraphics[width=3.8cm, height=1.35cm, keepaspectratio]{image1}}{\textbf{UNSA}}\vspace{0.12cm} &
+    \parbox[c][1.65cm][c]{\linewidth}{%
+        \centering \fontsize{8pt}{10.5pt}\selectfont \bfseries
+        UNIVERSIDAD NACIONAL DE SAN AGUSTIN \\[0.08cm]
+        FACULTAD DE INGENIERÍA DE PRODUCCIÓN Y SERVICIOS \\[0.08cm]
+        ESCUELA PROFESIONAL DE INGENIERÍA DE SISTEMAS
+    } &
+    \centering \vspace{0.12cm}\IfFileExists{image2.png}{\includegraphics[width=1.8cm, height=1.35cm, keepaspectratio]{image2}}{\textbf{EPIS}}\vspace{0.12cm} \tabularnewline
+    \hline
+    % Fila 2: Formato
+    \multicolumn{3}{|c|}{\rule{0pt}{2.7ex}\rule[-1.0ex]{0pt}{0pt}\fontsize{7.5pt}{9pt}\selectfont \textbf{Formato:} Guía de Práctica de Laboratorio / Talleres / Centros de Simulación} \tabularnewline
+    \hline
+    % Fila 3: Aprobación | Código | Página
+    \centering \rule{0pt}{2.6ex}\rule[-1.0ex]{0pt}{0pt}\fontsize{7.5pt}{9pt}\selectfont \textbf{Aprobación:} 2022/03/01 & 
+    \centering \fontsize{7.5pt}{9pt}\selectfont \textbf{Código:} GUIA-PRLE-001 & 
+    \raggedleft \fontsize{7.5pt}{9pt}\selectfont \textbf{Página:} #1\hspace*{0.35cm} \tabularnewline
+    \hline
+    \end{tabularx}%
+    \arrayrulecolor{black}%
+    \setlength{\arrayrulewidth}{0.6pt}%
+}
+
+\begin{document}
+
+% ==============================================================================
+% PÁGINA 1
+% ==============================================================================
+\EncabezadoUNSA{1}
+
+\vspace{0.35cm}
+
+% ==============================================================================
+% TÍTULO ÚNICO
+% ==============================================================================
+{\centering
+    \fontsize{15pt}{16.5pt}\selectfont\bfseries
+    INFORME DEL PRIMER AVANCE DEL PROYECTO DE VIDEOJUEGO\par
+    \vspace{6pt}
+}
+
+% ==============================================================================
+% TABLA 1: INFORMACIÓN BÁSICA
+% ==============================================================================
+{
+\setlength{\tabcolsep}{0.19cm}
+\setlength{\arrayrulewidth}{0.5pt}
+\arrayrulecolor{black}
+\fontsize{9pt}{11pt}\selectfont
+
+\noindent
+\begin{tabularx}{\textwidth}{|p{3.0cm}|X|p{2.8cm}|p{1.8cm}|p{2.4cm}|p{1.8cm}|}
+\hline
+\rowcolor{colorRojo} 
+\multicolumn{6}{|c|}{\color{white}\rule{0pt}{2.5ex}\rule[-1.0ex]{0pt}{0pt}\textbf{\fontsize{10pt}{12pt}\selectfont INFORMACIÓN BÁSICA}} \tabularnewline
+\hline
+\textbf{ASIGNATURA:} & \multicolumn{5}{l|}{Laboratorio de Desarrollo de Software para Juegos} \tabularnewline
+\hline
+\makecell[l]{\textbf{TÍTULO DEL}\\\textbf{PROYECTO:}} & \multicolumn{5}{l|}{Street Fighter III: 3rd Strike -- Kinect Strike (Unity + Azure Kinect DK + ML)} \tabularnewline
+\hline
+\makecell[l]{\textbf{ENTREGABLE:}} & Primer Avance (Sprint 1) & 
+\textbf{AÑO LECTIVO:} & 2026 & 
+\makecell[l]{\textbf{SEMESTRE:}} & B \tabularnewline
+\hline
+\rule[-0.2cm]{0pt}{0.8cm}\makecell[l]{\textbf{FECHA DE}\\\textbf{PRESENTACIÓN:}} & 22 de Septiembre de 2026 & 
+\makecell[l]{\textbf{HORA DE}\\\textbf{PRESENTACIÓN:}} & \multicolumn{3}{l|}{23:59} \tabularnewline
+\hline
+\multicolumn{4}{|l|}{\parbox[t][1.3cm][t]{10.5cm}{\raggedright\textbf{INTEGRANTE(S):}\par\normalfont\footnotesize
+$\bullet$ Callo Quispe, Kevin (kcalloc@unsa.edu.pe) -- 20210678\par
+$\bullet$ Marquez Herrera, Marco (mmarquezhe@unsa.edu.pe) -- 20210689\par
+$\bullet$ Puma Apaza, Sebastian (spumaap@unsa.edu.pe) -- 20210695}} & 
+\parbox[t][1.3cm][t]{\linewidth}{\vspace*{0.3cm}\raggedright\textbf{NOTA:}} & \tabularnewline
+\hline
+\multicolumn{6}{|l|}{\parbox[t][0.9cm][t]{\dimexpr\textwidth-2\tabcolsep\relax}{\raggedright\textbf{DOCENTE(S):}\par\normalfont\footnotesize
+$\bullet$ Dr. José Sulla Torres\hspace{3cm} $\bullet$ Mg. Roxana Limache}} \tabularnewline
+\hline
+\end{tabularx}
+}
+
+\vspace{0.4cm}
+
+% ==============================================================================
+% TABLA 2: REPORTE DE PRIMER AVANCE (SECCIÓN PRINCIPAL)
+% ==============================================================================
+{
+\setlength{\tabcolsep}{0.19cm}
+\setlength{\arrayrulewidth}{0.5pt}
+\arrayrulecolor{black}
+\fontsize{9pt}{11pt}\selectfont
+
+\noindent
+\begin{tabularx}{\textwidth}{|X|}
+\hline
+\rowcolor{colorRojo} 
+\multicolumn{1}{|c|}{\color{white}\rule{0pt}{0.45cm}\rule[-0.2cm]{0pt}{0pt}\textbf{\fontsize{10pt}{12pt}\selectfont REPORTE TÉCNICO DE PRIMER AVANCE (SPRINT 1)}} \tabularnewline
+\hline
+\parbox[t]{\dimexpr\textwidth-2\tabcolsep\relax}{%
+    \vspace{0.15cm}
+    \raggedright\textbf{\large 1. Resumen Ejecutivo y Ficha de Concepto}\par\vspace{0.15cm}%
+    \normalfont\small
+
+    El proyecto \textbf{Street Fighter III: 3rd Strike -- Kinect Strike} desarrolla una adaptación somatosensorial interactiva del aclamado juego de lucha arcade de Capcom, combinando la recreación pixel-perfect CPS-3 a 14 FPS en Unity con la captura y clasificación cinemática de cuerpo completo en tiempo real mediante el sensor \textbf{Azure Kinect DK}.
+
+    \begin{center}
+    \fontsize{8pt}{9.5pt}\selectfont
+    \begin{tabular}{|p{3.8cm}|p{12cm}|}
+    \hline
+    \rowcolor{gray!20} \textbf{Elemento} & \textbf{Descripción Técnica de la Propuesta} \\ \hline
+    \textbf{Género y Estilo} & Lucha 2D Arcade / Exergaming Somatosensorial (Full-Body Tracking) \\ \hline
+    \textbf{Público Objetivo} & Jugadores de 14+ años, entusiastas de juegos de pelea arcade y experiencias interactivas físicas. \\ \hline
+    \textbf{Plataforma y Motor} & PC Windows 10/11 (x64) $|$ Unity 2022 LTS / Unity 6 con C\# (.NET Standard) \\ \hline
+    \textbf{Hardware \& Librerías} & Azure Kinect DK, Azure Kinect Body Tracking SDK v1.1.2, ONNX Runtime, Python 3.10, SQLite \\ \hline
+    \textbf{Core Loop Lúdico} & Tracking Postural 3D $\rightarrow$ Extracción de 44 Features $\rightarrow$ Clasificación ML ($\le 100$ ms) $\rightarrow$ Disparo de Acción en Frame 1 $\rightarrow$ Resolución Hurtbox/Hitbox $\rightarrow$ Victoria/Derrota \\ \hline
+    \textbf{Mecánica Diferencial} & Detección de golpes, patadas, bloqueo, agachado y proyectil (Hadouken) con el cuerpo del jugador en un motor de combate sin latencia perceptible ($\le 100$ ms) y 60 FPS estables. \\ \hline
+    \textbf{Alcance del Primer Avance} & Consolidación del pipeline somatosensorial, dataset jerárquico en 4 Sets, reemplazo determinista 1:1, extractor cinemático, máquina de estados desacoplada en Unity y \textbf{build ejecutable del minijuego de carga} (\texttt{LoadingMinigame.exe}). \\ \hline
+    \end{tabular}
+    \end{center}
+
+    \vspace{0.2cm}
+    \raggedright\textbf{\large 2. Módulos Técnicos Implementados y Entregados en el Sprint 1}\par\vspace{0.15cm}
+
+    \textbf{2.1. Arquitectura de Almacenamiento Somatosensorial en 4 Sets (40 Sujetos):}\par
+    Para garantizar balance y trazabilidad en el entrenamiento de Machine Learning, el dataset ubicado en \texttt{Tools/dataset\_raw/} fue reestructurado en 4 subcarpetas jerárquicas:
+    \begin{itemize}[noitemsep,topsep=2pt]
+        \item \texttt{set\_01/}: Sujetos 01 al 10 (S01 a S10) -- 70 clips de alta pureza auditados.
+        \item \texttt{set\_02/}: Sujetos 11 al 20 (S11 a S20) -- Reservado para ampliación de participantes.
+        \item \texttt{set\_03/}: Sujetos 21 al 30 (S21 a S30) -- Reservado para ampliación de participantes.
+        \item \texttt{set\_04/}: Sujetos 31 al 40 (S31 a S40) -- Reservado para validación externa.
+    \end{itemize}
+    Se expandió el archivo \texttt{Tools/dataset\_raw/subject\_profiles.json} a 40 perfiles con su respectivo \texttt{set\_id}, \texttt{set\_folder}, estatura (cm), sexo y calibración biométrica A-Pose (longitudes de brazo, pierna y torso).
+
+    \vspace{0.15cm}
+    \textbf{2.2. Solución Crítica del Guardado: Reemplazo Determinista Aislado 1:1:}\par
+    Se corrigió el error donde cada guardado generaba un nuevo archivo con marca de tiempo (\texttt{sample\_<timestamp>.csv}), lo que provocaba acumulación de duplicados y muestras corruptas. En \texttt{confirm\_save\_video()} de \texttt{Tools/sf3\_kinect\_sagittal\_visualizer.py}, el sistema ahora ejecuta una purga previa:
+    $$\text{Ruta: } \texttt{Tools/dataset\_raw/set\_XX/subject\_YY/action\_ZZ/} \implies \text{Elimina *.csv previos antes de guardar.}$$
+    \textbf{Aislamiento Garantizado:} El \textit{crouch} de un participante (ej. Jeremy) solo reemplaza al \textit{crouch} previo de Jeremy, dejando intactos sus otros movimientos y a los demás 39 participantes. Se sincronizó también la purga de snapshots PNG en \texttt{Tools/captured\_pose_reviews/}.
+
+    \vspace{0.15cm}
+    \textbf{2.3. Estudio Visualizador Sagital con Pestañas de Sets (\texttt{sf3\_kinect\_sagittal\_visualizer.py}):}\par
+    Se desarrolló una herramienta completa de captura y monitoreo que incluye:
+    \begin{itemize}[noitemsep,topsep=2pt]
+        \item 4 pestañas interactivas superiores clicables: \texttt{[SET 1]}, \texttt{[SET 2]}, \texttt{[SET 3]} y \texttt{[SET 4]}.
+        \item Matriz de 10 casillas para el Set activo con badges de estado: \texttt{[OK] GUARDADO (1)} o \texttt{[-] PENDIENTE}.
+        \item Controles de teclado: \texttt{[} y \texttt{]} para avanzar/retroceder secuencialmente entre los 40 sujetos con cambio automático de Set, y teclas \texttt{\{} y \texttt{\}} para alternar de Set.
+        \item Modo Mockup procedural (\texttt{--mock}) para pruebas de interfaz y flujo sin requerir hardware físico.
+    \end{itemize}
+} \tabularnewline
+\hline
+\end{tabularx}
+}
+
+\newpage
+\EncabezadoUNSA{2}
+
+\vspace{0.35cm}
+
+{
+\setlength{\tabcolsep}{0.19cm}
+\setlength{\arrayrulewidth}{0.5pt}
+\arrayrulecolor{black}
+\fontsize{9pt}{11pt}\selectfont
+
+\noindent
+\begin{tabularx}{\textwidth}{|X|}
+\hline
+\parbox[t]{\dimexpr\textwidth-2\tabcolsep\relax}{%
+    \vspace{0.15cm}
+    \textbf{2.4. Extractor Cinemático 3D de 44 Características Biomecánicas (\texttt{gesture\_feature\_extractor.py}):}\par
+    Se construyó el pipeline cinemático para clips temporales de 35 frames a 30 FPS (~1.1 s), abstrayendo el movimiento humano en 44 variables numéricas normalizadas:
+    \begin{itemize}[noitemsep,topsep=2pt]
+        \item \textbf{Brazos (Puños y Bloqueo):} Ángulos articulares en codos der./izq., velocidad angular máxima, extensión sagital frontal ($Z$) y distancia muñecas-pecho.
+        \item \textbf{Piernas (Patadas y Agachado):} Ángulos de rodillas, desplazamiento vertical de Pelvis (agachado) y extensión sagital/lateral de tobillos.
+        \item \textbf{Centro de Masa y Normalización:} Velocidad del centro de gravedad, normalización por estatura y selección estricta de columnas de articulaciones \texttt{joint\_*}, ignorando columnas textuales (\texttt{subject\_name}) para prevenir errores numéricos.
+    \end{itemize}
+
+    \vspace{0.15cm}
+    \textbf{2.5. Arquitectura Core en Unity y Convenciones Técnicas Arcade CPS-3:}\par
+    En el cliente de juego en Unity se implementaron los cimientos técnicos de combate:
+    \begin{itemize}[noitemsep,topsep=2pt]
+        \item \textbf{Pixel-Perfect a 100 PPU:} Sprites a 100 Pixels Per Unit, Filter Mode Point y compresión desactivada.
+        \item \textbf{Animación Fija a 14 FPS:} Todos los clips de animación arcade respetan \texttt{frameRate = 14}.
+        \item \textbf{Pivote BottomCenter ($Y=0$):} Suelo alineado a $Y=0$ con conservación del espacio transparente en saltos.
+        \item \textbf{Mecanim Desacoplado (Frame 1):} Prohibidas transiciones con flechas en Animator. Los ataques disparan en frame 1 exacto vía \texttt{animator.Play(clipName, 0, 0f)} con tiempo de transición cero.
+        \item \textbf{Separación Físico-Visual:} Raíz con \texttt{FighterPhysics.cs}, \texttt{FighterStateMachine.cs} y colisiones; hijo \texttt{Visuals} con \texttt{SpriteRenderer} para volteo \texttt{flipX} sin alterar el sistema de coordenadas 3D de Kinect.
+        \item \textbf{Entrada Desacoplada (\texttt{IFighterInput}):} Permite alternar de forma polimórfica entre \texttt{KeyboardFighterInput} (teclado) y \texttt{AzureKinectInput} (cuerpo humano).
+    \end{itemize}
+
+    \vspace{0.15cm}
+    \textbf{2.6. Minijuego Interactivo Jugable y Carga Asíncrona (\texttt{LoadingMinigame.exe}):}\par
+    Como hito concreto de software jugable e interactivo del Sprint 1, el equipo desarrolló y compiló un minijuego arcade de evasión integrado a la pantalla de carga asíncrona (\textit{namespace} \texttt{StreetFighter3.Loading}):
+    \begin{itemize}[noitemsep,topsep=2pt]
+        \item \textbf{Control de Carga Asíncrona (\texttt{LoadingScreenController.cs}):} Administra la carga en segundo plano de escenas mediante \texttt{AsyncOperation}, actualizando barra de progreso, porcentaje en tiempo real y banners de notificación sin congelar el hilo principal.
+        \item \textbf{Jugador Ryu (\texttt{LoadingPlayerRyu.cs}):} Control omnidireccional en 8 ejes (WASD / Flechas), aceleración con Boost temporal, contención dentro de los límites de la arena y animación por fotogramas.
+        \item \textbf{Perseguidor Autónomo Ken (\texttt{LoadingChaserKen.cs}):} Implementación de inteligencia artificial de persecución directa (\textit{Seeking AI}) que persigue a Ryu con aceleración gradual en el tiempo y detección de captura (\textit{catch distance}).
+        \item \textbf{Coleccionables Hadouken (\texttt{LoadingCollectible.cs} y \texttt{LoadingItemSpawner.cs}):} Spawner procedural de orbes de energía con animación senoidal flotante que otorgan puntuación (+100 pts) y potencian la velocidad de Ryu.
+        \item \textbf{Motor de Minijuego (\texttt{LoadingMinigameRunner.cs}):} Máquina de estados (\textit{Ready, Playing, Caught, Respawning}), control de tiempo de supervivencia, métricas de ronda y eventos C\# para desacoplamiento total con la interfaz.
+        \item \textbf{Animador Ligero (\texttt{SpriteFrameAnimator.cs}):} Reproductor eficiente de secuencias de sprites a 14 FPS sin sobrecarga de Mecanim.
+        \item \textbf{Build Ejecutable Compilada:} Se generó el ejecutable independiente de 64 bits \textbf{\texttt{LoadingMinigame.exe}} para Windows, validando el hito de software jugable incremental exigido por la metodología SUM.
+    \end{itemize}
+
+    \vspace{0.15cm}
+    \textbf{2.7. Especificación Técnica de Algoritmos Cinemáticos de IA: Seeking y Wandering:}\par
+    En concordancia con los fundamentos de comportamiento autónomo de la asignatura (\textit{Steering Behaviors} de Craig Reynolds y algoritmos del Laboratorio 02), se especificó e implementó la cinemática de IA del enemigo en dos modos complementarios:
+    \begin{itemize}[noitemsep,topsep=2pt]
+        \item \textbf{Algoritmo Seeking (Persecución Activa en \texttt{LoadingChaserKen.cs}):}
+        Es el comportamiento dominante del minijuego. Ken calcula en cada fotograma el vector dirección hacia la posición actual de Ryu:
+        $$\vec{d} = \vec{p}_{\text{Ryu}} - \vec{p}_{\text{Ken}}, \quad \hat{u} = \frac{\vec{d}}{\|\vec{d}\|}$$
+        La velocidad deseada se aplica a lo largo del vector unitario $\hat{u}$ escalada por una tasa de aceleración progresiva en el tiempo:
+        $$v(t) = v_{\text{base}} + \alpha \cdot t \quad (\alpha = 0.04\text{ m/s}^2), \quad \vec{p}_{\text{Ken}}(t + \Delta t) = \vec{p}_{\text{Ken}}(t) + \hat{u} \cdot v(t) \cdot \Delta t$$
+        Si la distancia cuadrática satisface $\|\vec{d}\|^2 \le d_{\text{catch}}^2$ ($d_{\text{catch}} = 0.95$ m), la IA detiene la persecución, ejecuta la animación de captura y dispara el evento de fin de ronda.
+        \item \textbf{Algoritmo Wandering (Deambulación y Patrullaje Autónomo):}
+        Diseñado para fases donde el jugador está fuera del radio de detección visual o en el estado neutral del juego principal (\textit{footsies}). Se basa en la proyección de un círculo imaginario de radio $r_w$ a una distancia $d_w$ por delante del vector de movimiento:
+        $$\vec{F}_{\text{wander}} = d_w \cdot \frac{\vec{v}}{\|\vec{v}\|} + r_w \cdot \begin{pmatrix} \cos \theta \\ \sin \theta \end{pmatrix}, \quad \theta(t + \Delta t) = \theta(t) + \mathcal{U}(-\Delta \phi, +\Delta \phi)$$
+        donde $\theta$ varía estocásticamente en cada intervalo para generar una trayectoria suave sin giros bruscos.
+        \item \textbf{Máquina de Estados Finita (FSM) WANDER $\leftrightarrow$ SEEK:}
+        El cambio de comportamiento se modela según la distancia euclidiana entre entidades:
+        $$\text{Estado}(t) = \begin{cases} \text{SEEKING}, & \text{si } \|\vec{p}_{\text{Ryu}} - \vec{p}_{\text{Ken}}\| \le R_{\text{visión}} \text{ (Ken persigue al jugador con aceleración progresiva)} \\ \text{WANDERING}, & \text{si } \|\vec{p}_{\text{Ryu}} - \vec{p}_{\text{Ken}}\| > R_{\text{visión}} \text{ (Ken patrulla el área delimitada de la arena)} \end{cases}$$
+        En el minijuego de carga actual, debido al tamaño acotado de la arena ($13 \times 7$ m), la distancia se mantiene dentro del rango visual, ejecutándose el modo \textbf{Seeking Puro}, mientras que la transición WANDER $\leftrightarrow$ SEEK opera en el motor de IA del combate principal (\texttt{FighterAgent.cs} / \texttt{AdaptiveAIManager.cs}).
+    \end{itemize}
+
+    \vspace{0.25cm}
+    \raggedright\textbf{\large 3. Estado de Avance del Backlog y Cumplimiento (Sprint 1)}\par\vspace{0.15cm}
+    \begin{center}
+    \fontsize{7.5pt}{9pt}\selectfont
+    \begin{tabular}{|c|p{4.5cm}|c|c|p{5.5cm}|c|}
+    \hline
+    \rowcolor{gray!20} \textbf{ID} & \textbf{Característica / Tarea Técnica} & \textbf{Responsable} & \textbf{Est.} & \textbf{Criterio de Aceptación Verificado} & \textbf{Estado} \\ \hline
+    HU-01 & Mapeo cinemático de puño der./izq. & Kevin Callo & 5 pts & Latencia $\le 100$ ms con buffer circular de 35 frames. & \textbf{100\% Hecho} \\ \hline
+    HU-02 & Detección de agachado (Crouch) y bloqueo & Kevin Callo & 5 pts & Descenso de Pelvis $> 15$ cm activa Crouch; brazos al pecho activa Block. & \textbf{100\% Hecho} \\ \hline
+    HU-03 & Pipeline de animación arcade CPS-3 & Marco / Sebas & 3 pts & 100 PPU, 14 FPS, pivote inferior en suelo ($Y=0$) para Ryu, Ken y Chun-Li. & \textbf{100\% Hecho} \\ \hline
+    HU-04 & Dataset en 4 Sets y Reemplazo 1:1 & Kevin / Marco & 8 pts & 4 Sets en disco, 40 perfiles, purga previa en guardado, 70 clips limpios en Set 1. & \textbf{100\% Hecho} \\ \hline
+    HU-05 & Máquina de estados desacoplada en C\# & Marco Marquez & 5 pts & \texttt{FighterStateMachine.cs} con estados Idle, Move, Attack, Hurt y Block. & \textbf{100\% Hecho} \\ \hline
+    HU-06 & Física arcade por impulsos (sin masa) & Marco Marquez & 5 pts & \texttt{FighterPhysics.cs} controlando aceleración $X/Y$, gravedad y colisión con suelo. & \textbf{100\% Hecho} \\ \hline
+    HU-07 & Minijuego ejecutable de carga asíncrona & Todo el equipo & 5 pts & Build funcional \texttt{LoadingMinigame.exe} con IA Seeking de Ken y Ryu jugable. & \textbf{100\% Hecho} \\ \hline
+    HU-08 & Protocolo de sincronización de contexto & Sebastian Puma & 3 pts & Memoria compartida activa en \texttt{Devs/Context/05\_PROJECT\_LIVE\_STATUS.md}. & \textbf{100\% Hecho} \\ \hline
+    \end{tabular}
+    \end{center}
+} \tabularnewline
+\hline
+\end{tabularx}
+}
+
+\newpage
+\EncabezadoUNSA{3}
+
+\vspace{0.35cm}
+
+{
+\setlength{\tabcolsep}{0.19cm}
+\setlength{\arrayrulewidth}{0.5pt}
+\arrayrulecolor{black}
+\fontsize{9pt}{11pt}\selectfont
+
+\noindent
+\begin{tabularx}{\textwidth}{|X|}
+\hline
+\parbox[t]{\dimexpr\textwidth-2\tabcolsep\relax}{%
+    \vspace{0.15cm}
+    \raggedright\textbf{\large 4. Evidencias de Pruebas y Validación Automatizada}\par\vspace{0.15cm}%
+    \normalfont\small
+
+    Se diseñaron y ejecutaron suites de pruebas y verificación técnica tanto en Python como en Unity:
+    \begin{enumerate}[noitemsep,topsep=2pt]
+        \item \textbf{Prueba de Mapeo y Perfiles (\texttt{test\_studio\_sets.py}):} Verificó la carga correcta de los 40 perfiles de sujetos, la indexación a carpetas (\texttt{set\_01} a \texttt{set\_04}) y la existencia de los 70 clips iniciales limpios. (\textbf{Resultado: EXITOSO}).
+        \item \textbf{Prueba de Simulación UI y Reemplazo (\texttt{test\_visualizer\_boot.py}):} Simuló en modo headless la conmutación entre pestañas de Sets, navegación de sujetos y verificó que un guardado duplicado en la misma acción purga la muestra previa dejando exactamente 1 archivo CSV activo. (\textbf{Resultado: EXITOSO}).
+        \item \textbf{Prueba de Extracción Cinemática (\texttt{test\_feature\_builder.py}):} Escaneó recursivamente \texttt{dataset\_raw/} y extrajo las 44 características biomecánicas en clips reales sin errores de tipos de datos ni conversión de cadenas. (\textbf{Resultado: EXITOSO}).
+        \item \textbf{Validación de Build Ejecutable (\texttt{LoadingMinigame.exe}):} Se probó el ejecutable en Windows x64, comprobando la fluidez sostenida a 60 FPS, la respuesta de controles con baja latencia en teclado y la transición de estados de la IA de Ken sin caídas de rendimiento. (\textbf{Resultado: EXITOSO}).
+    \end{enumerate}
+
+    \vspace{0.25cm}
+    \raggedright\textbf{\large 5. Planificación y Próximos Pasos (Sprint 2)}\par\vspace{0.15cm}
+    Para la siguiente iteración de desarrollo (Sprint 2: Sep 21 -- Oct 4), los objetivos trazados son:
+    \begin{itemize}[noitemsep,topsep=2pt]
+        \item Implementación de Hitboxes y Hurtboxes activas con el componente \texttt{FighterCombatColliders.cs}.
+        \item Resolución de impacto, cálculo de daño y aplicación de estados de aturdimiento (*hitstun* y *blockstun*).
+        \item Entrenamiento del modelo Random Forest con el dataset de 44 features y exportación a formato ONNX para Unity Sentis / ONNX Runtime.
+        \item Integración de los escenarios Parallax con capas de profundidad de Japón y China.
+    \end{itemize}
+
+    \vspace{0.25cm}
+    \raggedright\textbf{\large 6. Conclusiones del Primer Avance}\par\vspace{0.15cm}
+    \begin{enumerate}[noitemsep,topsep=2pt]
+        \item Se cumplió al 100\% el alcance planificado para el Sprint 1, consolidando los cimientos arquitectónicos de software, captura de hardware e ingeniería de datos del videojuego.
+        \item La reestructuración del dataset en 4 Sets y la corrección de sobreescritura determinista 1:1 garantizan la pureza matemática requerida para entrenar clasificadores cinemáticos sin sesgos ni archivos duplicados.
+        \item La integración del minijuego interactivo ejecutable (\texttt{LoadingMinigame.exe}) valida el principio ágil de entregar incrementos jugables funcionales desde las primeras etapas de producción, demostrando la viabilidad de la IA de persecución y el control reactivo del personaje.
+        \item Las convenciones técnicas de CPS-3 a 14 FPS y 100 PPU con transiciones instantáneas en frame 1 garantizan una respuesta de combate arcade fluida y reactiva a los movimientos corporales del usuario.
+    \end{enumerate}
+} \tabularnewline
+\hline
+\end{tabularx}
+}
+
+\vspace{0.4cm}
+
+% ==============================================================================
+% TABLA 3: RETROALIMENTACIÓN GENERAL
+% ==============================================================================
+{
+\setlength{\tabcolsep}{0.19cm}
+\setlength{\arrayrulewidth}{0.5pt}
+\arrayrulecolor{black}
+
+\noindent
+\begin{tabularx}{\textwidth}{|X|}
+\hline
+\rowcolor{colorRojo} 
+\multicolumn{1}{|c|}{\color{white}\rule{0pt}{0.45cm}\rule[-0.2cm]{0pt}{0pt}\textbf{\fontsize{10pt}{12pt}\selectfont RETROALIMENTACIÓN DOCENTE}} \tabularnewline
+\hline
+\parbox[t][2.2cm][t]{\dimexpr\textwidth-2\tabcolsep\relax}{~} \tabularnewline
+\hline
+\end{tabularx}
+}
+
+\end{document}

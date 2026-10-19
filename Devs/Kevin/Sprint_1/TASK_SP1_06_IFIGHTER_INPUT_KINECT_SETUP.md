@@ -39,10 +39,10 @@ Copia y pega este prompt a tu asistente para que te enseñe a programarlo tú mi
 ---
 
 ### 📋 4. Criterios de Aceptación (Definition of Done)
-- [ ] La interfaz `IFighterInput.cs` está creada y compila sin errores.
-- [ ] `KeyboardFighterInput.cs` permite mover y atacar al personaje con teclas (`WASD`, `J`, `K`, `L`, `U`).
-- [ ] El script de Azure Kinect está listo para recibir el esqueleto 3D en el laboratorio el martes.
-- [ ] La escena de prueba `Test_AzureKinect_Body.unity` compila correctamente.
+- [x] La interfaz `IFighterInput.cs` está creada y compila sin errores.
+- [x] `KeyboardFighterInput.cs` permite mover y atacar al personaje con teclas (`WASD`, `J`, `K`, `L`, `U`).
+- [x] El script de Azure Kinect está listo para recibir el esqueleto 3D en el laboratorio el martes.
+- [x] La escena de prueba `Test_AzureKinect_Body.unity` compila correctamente.
 
 ---
 
