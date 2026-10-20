@@ -2,13 +2,24 @@ using UnityEngine;
 
 /// <summary>
 /// Adaptador de entrada Somatosensorial (Kinect + Machine Learning) para Ryu en el Modo Historia de SF3.
-/// Implementa IFighterInput conectándose al flujo UDP de test_live_kinect_classifier.py (puerto 5005),
-/// con soporte para Auto-Spacing asistido y modo híbrido con teclado en paralelo (Fallback).
+/// Implementa IFighterInput con detección por Pose Sostenida (mínimo 2 a 3 segundos):
+/// - Al mantener una postura física (puño, patada, etc.) por 2 a 3 segundos, se dispara la animación.
+/// - Mientras se mantenga dicha postura, la animación se repite constantemente en bucle.
+/// - Al cambiar de posición física o volver a reposo, el bucle de ataque se detiene inmediatamente.
+/// - Soporta modo híbrido con teclado en paralelo (Fallback) y Auto-Spacing asistido.
 /// </summary>
 public class KinectFighterInput : MonoBehaviour, IFighterInput
 {
     [Header("Receptor de Telemetría UDP")]
     [SerializeField] private KinectUDPReceiver receiver;
+
+    [Header("Activación por Pose Sostenida (2 a 3 segundos)")]
+    [Tooltip("Tiempo en segundos que se debe mantener la postura continua para activar el ataque (default: 2.5s).")]
+    [Range(1.0f, 4.0f)]
+    [SerializeField] private float poseHoldDurationRequired = 2.5f;
+
+    [Tooltip("Umbral mínimo de certeza del clasificador para validar la pose (20%).")]
+    [SerializeField] private float minConfidenceThreshold = 0.20f;
 
     [Header("Auto-Spacing Asistido (Opción A)")]
     [Tooltip("El luchador ajusta suavemente su posición para mantenerse en rango óptimo de golpe.")]
@@ -18,19 +29,14 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
     [SerializeField] private float optimalDistanceMin = 0.90f;
     [SerializeField] private float optimalDistanceMax = 1.45f;
 
-    [Header("Parámetros de Clasificación de Gestos")]
-    [Tooltip("Umbral mínimo de certeza del modelo ML para registrar un ataque (20%).")]
-    [SerializeField] private float minConfidenceThreshold = 0.20f;
-    [Tooltip("Ventana de buffer para evitar spam de ataques durante la misma pose (segundos).")]
-    [SerializeField] private float attackCooldownSeconds = 0.28f;
-
     [Header("HUD de Telemetría Somatosensorial")]
     [SerializeField] private bool showHUD = true;
 
-    // Estados internos y temporizadores de gestos
-    private string prevAction = "idle";
-    private string lastTriggeredAttack = "";
-    private float lastAttackTimestamp = -999f;
+    // Estados de seguimiento de pose sostenida
+    [Header("Estado en Tiempo Real (Debug)")]
+    [SerializeField] private string currentHeldAction = "idle";
+    [SerializeField] private float currentHoldTimer = 0f;
+    [SerializeField] private bool isPoseActive = false;
     private bool jumpConsumed = false;
 
     // Caché de teclas de teclado (Fallback híbrido P2 / Ryu)
@@ -49,7 +55,6 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
         EnsureReceiver();
         if (opponent == null)
         {
-            // Intentar ubicar al oponente automáticamente si no fue asignado
             DuelFighter fighter = GetComponent<DuelFighter>();
             if (fighter != null && fighter.opponent != null)
             {
@@ -66,6 +71,11 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
     public void SetAutoSpacing(bool enabled)
     {
         autoSpacingEnabled = enabled;
+    }
+
+    public void SetPoseHoldRequiredTime(float seconds)
+    {
+        poseHoldDurationRequired = Mathf.Clamp(seconds, 0.5f, 5.0f);
     }
 
     private void EnsureReceiver()
@@ -87,27 +97,66 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
 
     private void Update()
     {
-        // Alternar visualización del HUD con [F1]
-        if (Input.GetKeyDown(KeyCode.F1))
+        // Atajos en tiempo de ejecución
+        if (Input.GetKeyDown(KeyCode.F1)) showHUD = !showHUD;
+        if (Input.GetKeyDown(KeyCode.F2)) autoSpacingEnabled = !autoSpacingEnabled;
+        if (Input.GetKeyDown(KeyCode.F3)) poseHoldDurationRequired = Mathf.Max(1.0f, poseHoldDurationRequired - 0.5f);
+        if (Input.GetKeyDown(KeyCode.F4)) poseHoldDurationRequired = Mathf.Min(4.0f, poseHoldDurationRequired + 0.5f);
+
+        UpdatePoseHoldTracking();
+    }
+
+    /// <summary>
+    /// Rastrea cuánto tiempo el jugador mantiene físicamente la misma posición.
+    /// Si supera poseHoldDurationRequired (2 a 3 segundos), activa la repetición constante.
+    /// Si el jugador cambia de postura o vuelve a reposo, el estado se desactiva inmediatamente.
+    /// </summary>
+    private void UpdatePoseHoldTracking()
+    {
+        if (receiver == null || !receiver.IsConnected || !receiver.HasBody)
         {
-            showHUD = !showHUD;
+            currentHeldAction = "idle";
+            currentHoldTimer = 0f;
+            isPoseActive = false;
+            jumpConsumed = false;
+            return;
         }
 
-        // Alternar Auto-Spacing con [F2]
-        if (Input.GetKeyDown(KeyCode.F2))
-        {
-            autoSpacingEnabled = !autoSpacingEnabled;
-        }
+        string detectedAction = receiver.CurrentAction;
+        float conf = receiver.CurrentConfidence;
 
-        // Reset del flag de salto cuando la acción ya no sea jump
-        if (receiver != null && receiver.CurrentAction != "jump")
+        // Si la postura física cambia o regresa a reposo (idle)
+        if (detectedAction != currentHeldAction)
         {
+            currentHeldAction = detectedAction;
+            currentHoldTimer = 0f;
+            isPoseActive = false;
             jumpConsumed = false;
         }
-
-        if (receiver != null)
+        else
         {
-            prevAction = receiver.CurrentAction;
+            // Se mantiene la misma postura física continua
+            if (detectedAction != "idle" && conf >= minConfidenceThreshold)
+            {
+                currentHoldTimer += Time.deltaTime;
+
+                // Sincronizar con el temporizador reportado por Python si está disponible
+                if (receiver.HoldDuration > currentHoldTimer)
+                {
+                    currentHoldTimer = receiver.HoldDuration;
+                }
+
+                if (currentHoldTimer >= poseHoldDurationRequired)
+                {
+                    isPoseActive = true;
+                }
+            }
+            else
+            {
+                currentHoldTimer = 0f;
+                isPoseActive = false;
+                jumpConsumed = false;
+            }
         }
     }
 
@@ -157,8 +206,8 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
 
     public bool IsCrouching()
     {
-        bool kinectCrouch = (receiver != null && receiver.IsConnected && receiver.HasBody &&
-                             receiver.CurrentAction == "crouch" && receiver.CurrentConfidence >= minConfidenceThreshold);
+        bool kinectCrouch = (isPoseActive && currentHeldAction == "crouch") ||
+                            (receiver != null && receiver.IsConnected && receiver.CurrentAction == "crouch" && currentHoldTimer >= 0.6f);
 
         bool kbdCrouch = Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S);
         return kinectCrouch || kbdCrouch;
@@ -167,14 +216,10 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
     public bool IsJumping()
     {
         bool kinectJump = false;
-        if (receiver != null && receiver.IsConnected && receiver.HasBody &&
-            receiver.CurrentAction == "jump" && receiver.CurrentConfidence >= minConfidenceThreshold)
+        if (isPoseActive && currentHeldAction == "jump" && !jumpConsumed)
         {
-            if (!jumpConsumed)
-            {
-                kinectJump = true;
-                jumpConsumed = true;
-            }
+            kinectJump = true;
+            jumpConsumed = true;
         }
 
         bool kbdJump = Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W);
@@ -183,8 +228,8 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
 
     public bool IsBlocking()
     {
-        bool kinectBlock = (receiver != null && receiver.IsConnected && receiver.HasBody &&
-                            receiver.CurrentAction == "block" && receiver.CurrentConfidence >= minConfidenceThreshold);
+        bool kinectBlock = (isPoseActive && currentHeldAction == "block") ||
+                           (receiver != null && receiver.IsConnected && receiver.CurrentAction == "block" && currentHoldTimer >= 0.6f);
 
         bool kbdBlock = Input.GetKey(KeyCode.RightShift) || Input.GetKey(KeyCode.Keypad0) ||
                         Input.GetKey(KeyCode.G) || Input.GetKey(KeyCode.P);
@@ -194,28 +239,32 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
 
     public bool WasLightPunchPressed()
     {
-        bool gesture = EvaluateAttackTrigger("punch_left");
+        // Se repite constantemente mientras la pose esté activa (sostenida >= 2-3s)
+        bool gesture = isPoseActive && currentHeldAction == "punch_left";
         bool kbd = CheckKeyList(ryuLightPunchKeys);
         return gesture || kbd;
     }
 
     public bool WasHeavyPunchPressed()
     {
-        bool gesture = EvaluateAttackTrigger("punch_right");
+        // Se repite constantemente mientras la pose esté activa (sostenida >= 2-3s)
+        bool gesture = isPoseActive && currentHeldAction == "punch_right";
         bool kbd = CheckKeyList(ryuHeavyPunchKeys);
         return gesture || kbd;
     }
 
     public bool WasLightKickPressed()
     {
-        bool gesture = EvaluateAttackTrigger("kick_left");
+        // Se repite constantemente mientras la pose esté activa (sostenida >= 2-3s)
+        bool gesture = isPoseActive && currentHeldAction == "kick_left";
         bool kbd = CheckKeyList(ryuLightKickKeys);
         return gesture || kbd;
     }
 
     public bool WasHeavyKickPressed()
     {
-        bool gesture = EvaluateAttackTrigger("kick_right");
+        // Se repite constantemente mientras la pose esté activa (sostenida >= 2-3s)
+        bool gesture = isPoseActive && currentHeldAction == "kick_right";
         bool kbd = CheckKeyList(ryuHeavyKickKeys);
         return gesture || kbd;
     }
@@ -237,33 +286,7 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
 
     #endregion
 
-    #region Evaluación de Disparo de Ataques
-
-    private bool EvaluateAttackTrigger(string targetAction)
-    {
-        if (receiver == null || !receiver.IsConnected || !receiver.HasBody)
-        {
-            return false;
-        }
-
-        if (receiver.CurrentAction != targetAction || receiver.CurrentConfidence < minConfidenceThreshold)
-        {
-            return false;
-        }
-
-        float now = Time.time;
-        bool isNewAction = (targetAction != lastTriggeredAttack);
-        bool cooldownExpired = (now - lastAttackTimestamp) >= attackCooldownSeconds;
-
-        if (isNewAction || cooldownExpired)
-        {
-            lastAttackTimestamp = now;
-            lastTriggeredAttack = targetAction;
-            return true;
-        }
-
-        return false;
-    }
+    #region Auxiliares de Teclado
 
     private static bool CheckKeyList(KeyCode[] keys)
     {
@@ -288,17 +311,23 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
         GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 960 * scale) / 2, 0), Quaternion.identity, Vector3.one * scale);
 
         bool online = (receiver != null && receiver.IsConnected);
-        string currentAction = receiver != null ? receiver.CurrentAction : "none";
         float confidence = receiver != null ? receiver.CurrentConfidence : 0f;
         float distZ = receiver != null ? receiver.ZDistance : 0f;
 
         // Tarjeta lateral derecha CPS-3
-        Rect hudRect = new Rect(670, 72, 270, 115);
-        GUI.color = new Color(0.04f, 0.05f, 0.08f, 0.88f);
+        Rect hudRect = new Rect(650, 72, 290, 135);
+        GUI.color = new Color(0.04f, 0.05f, 0.08f, 0.90f);
         GUI.DrawTexture(hudRect, Texture2D.whiteTexture);
 
-        // Borde superior de color dinámico (Verde si online, Ámbar si offline)
-        Color borderColor = online ? new Color(0.1f, 0.95f, 0.45f, 1f) : new Color(1f, 0.65f, 0.15f, 1f);
+        // Borde superior dinámico (Verde si pose activa, Ámbar si cargando, Azul si reposo/offline)
+        Color borderColor = !online
+            ? new Color(0.8f, 0.4f, 0.2f, 1f)
+            : isPoseActive
+                ? new Color(0.1f, 1.0f, 0.45f, 1f)
+                : currentHeldAction != "idle"
+                    ? new Color(1.0f, 0.85f, 0.2f, 1f)
+                    : new Color(0.4f, 0.75f, 1.0f, 1f);
+
         GUI.color = borderColor;
         GUI.DrawTexture(new Rect(hudRect.x, hudRect.y, hudRect.width, 3), Texture2D.whiteTexture);
         GUI.DrawTexture(new Rect(hudRect.x, hudRect.y + hudRect.height - 2, hudRect.width, 2), Texture2D.whiteTexture);
@@ -313,7 +342,7 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
         };
         titleStyle.normal.textColor = borderColor;
         string statusText = online ? "● KINECT STRIKE: ONLINE (UDP 5005)" : "○ KINECT STRIKE: ESPERANDO PYTHON...";
-        GUI.Label(new Rect(hudRect.x + 8, hudRect.y + 6, 255, 18), statusText, titleStyle);
+        GUI.Label(new Rect(hudRect.x + 8, hudRect.y + 6, 275, 18), statusText, titleStyle);
 
         GUIStyle bodyStyle = new GUIStyle(GUI.skin.label)
         {
@@ -323,27 +352,57 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
         bodyStyle.normal.textColor = Color.white;
 
         string gestureLine = online
-            ? $"Gesto ML: {currentAction.ToUpper()} ({confidence * 100:F0}%) | Z: {distZ:F2}m"
+            ? $"Pose Detectada: {currentHeldAction.ToUpper()} ({confidence * 100:F0}%) | Z: {distZ:F2}m"
             : "Ejecuta: python Tools/test_live_kinect_classifier.py";
-        GUI.Label(new Rect(hudRect.x + 8, hudRect.y + 28, 255, 16), gestureLine, bodyStyle);
+        GUI.Label(new Rect(hudRect.x + 8, hudRect.y + 26, 275, 16), gestureLine, bodyStyle);
+
+        // Barra de progreso de pose sostenida
+        float pct = Mathf.Clamp01(currentHoldTimer / Mathf.Max(0.1f, poseHoldDurationRequired));
+        Rect barBg = new Rect(hudRect.x + 8, hudRect.y + 46, 274, 14);
+        GUI.color = new Color(0.15f, 0.18f, 0.25f, 1f);
+        GUI.DrawTexture(barBg, Texture2D.whiteTexture);
+
+        Color barColor = isPoseActive
+            ? new Color(0.1f, 0.95f, 0.4f, 1f)
+            : new Color(1.0f, 0.75f, 0.15f, 1f);
+        GUI.color = barColor;
+        GUI.DrawTexture(new Rect(barBg.x, barBg.y, barBg.width * pct, barBg.height), Texture2D.whiteTexture);
+        GUI.color = Color.white;
+
+        string holdText = isPoseActive
+            ? $"¡POSE FIJADA! REPITIENDO EN BUCLE ({currentHoldTimer:F1}s)"
+            : currentHeldAction != "idle"
+                ? $"Manteniendo: {currentHoldTimer:F1}s / {poseHoldDurationRequired:F1}s ({pct * 100:F0}%)"
+                : $"Reposo: Mantén una pose por {poseHoldDurationRequired:F1}s para disparar";
+
+        GUIStyle holdStyle = new GUIStyle(bodyStyle)
+        {
+            fontSize = 9,
+            fontStyle = FontStyle.Bold
+        };
+        holdStyle.normal.textColor = isPoseActive ? new Color(0.2f, 1f, 0.5f) : (currentHeldAction != "idle" ? new Color(1f, 0.9f, 0.3f) : new Color(0.7f, 0.8f, 0.9f));
+        GUI.Label(new Rect(hudRect.x + 8, hudRect.y + 64, 275, 16), holdText, holdStyle);
 
         string spacingLine = autoSpacingEnabled
-            ? "Auto-Spacing: ON (Distancia Asistida)"
-            : "Auto-Spacing: OFF (Control Manual)";
+            ? "Auto-Spacing: ON (Asistido)"
+            : "Auto-Spacing: OFF (Manual)";
         GUIStyle spacingStyle = new GUIStyle(bodyStyle);
         spacingStyle.normal.textColor = autoSpacingEnabled ? new Color(0.4f, 0.85f, 1f) : new Color(0.7f, 0.7f, 0.7f);
-        GUI.Label(new Rect(hudRect.x + 8, hudRect.y + 48, 255, 16), spacingLine, spacingStyle);
+        GUI.Label(new Rect(hudRect.x + 8, hudRect.y + 82, 275, 16), spacingLine + " | Teclado: Fallback Activo", spacingStyle);
 
-        GUIStyle kbdStyle = new GUIStyle(bodyStyle);
-        kbdStyle.normal.textColor = new Color(1f, 0.88f, 0.35f);
-        GUI.Label(new Rect(hudRect.x + 8, hudRect.y + 68, 255, 16), "Teclado Fallback: ACTIVO [Flechas / NumPad]", kbdStyle);
+        GUIStyle hintStyle = new GUIStyle(bodyStyle)
+        {
+            fontSize = 8
+        };
+        hintStyle.normal.textColor = new Color(0.85f, 0.85f, 0.6f);
+        GUI.Label(new Rect(hudRect.x + 8, hudRect.y + 100, 275, 14), "Cambiar de posición detiene el ataque.", hintStyle);
 
         GUIStyle footerStyle = new GUIStyle(bodyStyle)
         {
-            fontSize = 9
+            fontSize = 8
         };
         footerStyle.normal.textColor = new Color(0.6f, 0.65f, 0.75f);
-        GUI.Label(new Rect(hudRect.x + 8, hudRect.y + 90, 255, 16), "[F1] Ocultar Telemetría | [F2] Toggle Spacing", footerStyle);
+        GUI.Label(new Rect(hudRect.x + 8, hudRect.y + 116, 275, 14), $"[F1] HUD | [F2] Spacing | [F3/F4] Tiempo ({poseHoldDurationRequired:F1}s)", footerStyle);
 
         GUI.matrix = old;
     }

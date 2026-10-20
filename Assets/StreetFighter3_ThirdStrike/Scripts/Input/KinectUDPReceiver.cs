@@ -16,6 +16,8 @@ public struct KinectGesturePacket
     public float confidence;
     public bool has_body;
     public double timestamp;
+    public float hold_duration;
+    public bool is_holding_active;
     public float z_distance;
 }
 
@@ -37,6 +39,8 @@ public class KinectUDPReceiver : MonoBehaviour
     [SerializeField] private float latestConfidence = 1.0f;
     [SerializeField] private bool bodyDetected = false;
     [SerializeField] private float playerDistanceZ = 0f;
+    [SerializeField] private float currentHoldDuration = 0f;
+    [SerializeField] private bool isHoldingActive = false;
     [SerializeField] private int totalPacketsReceived = 0;
 
     private UdpClient udpClient;
@@ -50,6 +54,8 @@ public class KinectUDPReceiver : MonoBehaviour
     public float CurrentConfidence => latestPacket.confidence;
     public bool HasBody => latestPacket.has_body;
     public float ZDistance => latestPacket.z_distance;
+    public float HoldDuration => latestPacket.hold_duration;
+    public bool IsHoldingActive => latestPacket.is_holding_active;
     public double Timestamp => latestPacket.timestamp;
     public int TotalPackets => totalPacketsReceived;
 
@@ -105,6 +111,8 @@ public class KinectUDPReceiver : MonoBehaviour
                     latestConfidence = pkt.confidence;
                     bodyDetected = pkt.has_body;
                     playerDistanceZ = pkt.z_distance;
+                    currentHoldDuration = pkt.hold_duration;
+                    isHoldingActive = pkt.is_holding_active;
                     lastPacketTime = Time.time;
                     totalPacketsReceived++;
                 }

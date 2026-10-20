@@ -198,55 +198,10 @@ def build_dataset_features(data_dir: str, processed_csv_path: str) -> pd.DataFra
                 df_raw = pd.read_csv(full_path, nrows=2)
 
                 # =============================================================
-                # CASO 1: CLIP DE TRANSICIÓN DE COMBATE (origin_action -> target_action)
+                # DESCARTAR CLIPS DE TRANSICIÓN (Solo entrenar con poses en solitario)
                 # =============================================================
-                if "origin_action" in df_raw.columns and "target_action" in df_raw.columns:
-                    orig_act = str(df_raw["origin_action"].iloc[0]).strip()
-                    targ_act = str(df_raw["target_action"].iloc[0]).strip()
-                    subj = str(df_raw["subject_id"].iloc[0]).strip() if "subject_id" in df_raw.columns else "unknown"
-
-                    df_full = pd.read_csv(full_path)
-                    j_cols = [c for c in df_full.columns if c.startswith("joint_")]
-                    if len(j_cols) != 32 * 3:
-                        skipped += 1
-                        continue
-
-                    coords = df_full[j_cols].values.reshape((len(df_full), 32, 3))
-
-                    # 1. Ventana de Llegada / Asentamiento del Destino (últimos 35 frames)
-                    # Enseña cómo se ve y ejecuta la postura destino proviniendo desde cualquier origen
-                    if targ_act in ACTION_NAME_TO_ID and len(coords) >= 35:
-                        w_targ = coords[-35:]
-                        feats_targ = extract_clip_features(w_targ, fps=30.0)
-                        rows.append({
-                            "subject_id": subj,
-                            "action_name": targ_act,
-                            "label": ACTION_NAME_TO_ID[targ_act],
-                            **feats_targ
-                        })
-
-                    # 2. Ventana de Lanzamiento Dinámico o Cancelación (primeros 35 frames o ventana central)
-                    if orig_act in ACTION_NAME_TO_ID and len(coords) >= 35:
-                        if orig_act == "idle" and targ_act != "idle" and len(coords) >= 43:
-                            # Lanzamiento dinámico desde reposo hacia golpe: ventana centrada (frames 8..43)
-                            w_dyn = coords[8:43]
-                            feats_dyn = extract_clip_features(w_dyn, fps=30.0)
-                            rows.append({
-                                "subject_id": subj,
-                                "action_name": targ_act,
-                                "label": ACTION_NAME_TO_ID[targ_act],
-                                **feats_dyn
-                            })
-                        else:
-                            # Postura de salida antes de la cancelación hacia destino
-                            w_orig = coords[:35]
-                            feats_orig = extract_clip_features(w_orig, fps=30.0)
-                            rows.append({
-                                "subject_id": subj,
-                                "action_name": orig_act,
-                                "label": ACTION_NAME_TO_ID[orig_act],
-                                **feats_orig
-                            })
+                if "origin_action" in df_raw.columns or "target_action" in df_raw.columns or "transitions" in root.replace("\\", "/"):
+                    skipped += 1
                     continue
 
                 # =============================================================

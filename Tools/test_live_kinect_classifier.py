@@ -208,6 +208,8 @@ def main():
                         help="Dirección IP de destino para transmisión UDP a Unity (default: 127.0.0.1)")
     parser.add_argument("--unity-port", type=int, default=5005,
                         help="Puerto UDP de destino para Unity (default: 5005)")
+    parser.add_argument("--hold-time", type=float, default=2.5,
+                        help="Tiempo en segundos manteniendo una pose continua para activarla en Unity (default: 2.5s)")
     parser.add_argument("--no-stream", action="store_true", default=False,
                         help="Desactivar transmisión de paquetes UDP a Unity")
     args = parser.parse_args()
@@ -307,6 +309,13 @@ def main():
     last_event_time = 0.0
     last_event_conf = 0.0
 
+    # Seguimiento de Pose Sostenida (Mínimo 2 a 3 segundos para activar ataque continuo)
+    current_held_action = "idle"
+    hold_start_time = time.time()
+    held_duration = 0.0
+    pose_activated = False
+    required_hold_time = max(0.5, float(args.hold_time))
+
     fps_timer = time.time()
     frame_count = 0
     display_fps = 30.0
@@ -382,7 +391,7 @@ def main():
                         recent_v_pelvis < 0.32
                     )
 
-                    # Inferencia del modelo Random Forest
+                    # Inferencia directa con el clasificador Random Forest (Dataset de poses en solitario)
                     raw_probs = model.predict_proba(feat_vec)[0]
                     sorted_p_idx = np.argsort(raw_probs)[::-1]
                     raw_top_idx = sorted_p_idx[0]
@@ -390,75 +399,25 @@ def main():
                     raw_action = ACTION_ID_TO_NAME.get(raw_class_id, "unknown")
                     raw_conf = float(raw_probs[raw_top_idx])
 
+                    pred_action = raw_action
+                    pred_conf = raw_conf
+                    pred_probs = raw_probs.copy()
+
                     # ---------------------------------------------------------
-                    # EVALUADOR DE TRANSICIÓN RÁPIDA / ESTADOS SOSTENIDOS
+                    # EVALUADOR DE POSE SOSTENIDA (2 a 3 segundos para activar ataque continuo)
                     # ---------------------------------------------------------
-                    if is_recent_calm:
-                        last_frame = buf_arr[-1]
-                        pelvis_y = last_frame[0, 1]
-                        knee_r_y = last_frame[23, 1]
-
-                        # Agachado sostenido
-                        is_holding_crouch = (current_feats.get("min_disp_pelvis_y", 0.0) < -0.15 and (pelvis_y - knee_r_y) > -0.42)
-
-                        # Bloqueo sostenido (muñecas frente a pecho)
-                        wrist_dist_now = np.linalg.norm(last_frame[14, :] - last_frame[7, :])
-                        wrist_elev_r = last_frame[0, 1] - last_frame[14, 1]
-                        wrist_elev_l = last_frame[0, 1] - last_frame[7, 1]
-                        is_holding_block = (wrist_dist_now < 0.38 and wrist_elev_r > 0.38 and wrist_elev_l > 0.38)
-
-                        if is_holding_crouch:
-                            pred_action = "crouch"
-                            pred_conf = 0.95
-                            c_idx = list(model_classes).index(ACTION_NAME_TO_ID["crouch"]) if ACTION_NAME_TO_ID["crouch"] in model_classes else raw_top_idx
-                            pred_probs = np.zeros_like(raw_probs)
-                            pred_probs[c_idx] = 0.95
-                            pred_probs[raw_top_idx] = max(0.01, 1.0 - 0.95)
-                        elif is_holding_block:
-                            pred_action = "block"
-                            pred_conf = 0.94
-                            b_idx = list(model_classes).index(ACTION_NAME_TO_ID["block"]) if ACTION_NAME_TO_ID["block"] in model_classes else raw_top_idx
-                            pred_probs = np.zeros_like(raw_probs)
-                            pred_probs[b_idx] = 0.94
-                            pred_probs[raw_top_idx] = max(0.01, 1.0 - 0.94)
-                        else:
-                            # Retorno a Idle / Guardia inmediata post-golpe
-                            pred_action = "idle"
-                            pred_conf = 0.96
-                            idle_idx = list(model_classes).index(ACTION_NAME_TO_ID["idle"]) if ACTION_NAME_TO_ID["idle"] in model_classes else 0
-                            pred_probs = np.zeros_like(raw_probs)
-                            pred_probs[idle_idx] = 0.96
-                            rem_idx = raw_top_idx if raw_top_idx != idle_idx else (1 if len(raw_probs) > 1 else 0)
-                            pred_probs[rem_idx] = 0.04
+                    if pred_action != current_held_action:
+                        # Si el jugador cambia de postura física o regresa a reposo
+                        current_held_action = pred_action
+                        hold_start_time = now
+                        held_duration = 0.0
+                        pose_activated = False
                     else:
-                        # Fase activa del movimiento o transición rápida de golpe
-                        pred_action = raw_action
-                        pred_conf = raw_conf
-                        pred_probs = raw_probs.copy()
-
-                    # ---------------------------------------------------------
-                    # RADAR DE TRANSICIÓN: Detectar cambio entre acciones (A -> B)
-                    # ---------------------------------------------------------
-                    if pred_action != prev_action:
-                        trans_dt = max(50, int((now - transition_start_time) * 1000))
-                        last_transition_event = {
-                            "from": prev_action,
-                            "to": pred_action,
-                            "latency_ms": trans_dt,
-                            "timestamp": now
-                        }
-                        if combo_history[-1] != pred_action:
-                            combo_history.append(pred_action)
-
-                        print(f"⚡ [TRANSICIÓN RÁPIDA]: {prev_action.upper():12s} ➔➔➔ {pred_action.upper():12s} ({trans_dt} ms)")
-                        prev_action = pred_action
-                        transition_start_time = now
-
-                    # Registrar eventos de impacto activo
-                    if pred_action not in ("idle", "unknown") and pred_conf >= 0.20:
-                        last_event_action = pred_action
-                        last_event_time = now
-                        last_event_conf = pred_conf
+                        held_duration = now - hold_start_time
+                        if held_duration >= required_hold_time and pred_action != "idle":
+                            if not pose_activated:
+                                print(f"🔥 [POSE FIJADA]: {pred_action.upper()} sostenida por {held_duration:.1f}s -> ¡Ataque continuo en Unity!")
+                            pose_activated = True
 
                     last_ml_time = now
                 except Exception as ex:
@@ -475,6 +434,8 @@ def main():
                     "confidence": float(round(pred_conf, 3)),
                     "has_body": bool(has_body),
                     "timestamp": float(now),
+                    "hold_duration": float(round(held_duration, 2)),
+                    "is_holding_active": bool(pose_activated),
                     "z_distance": float(round(joints_xyz_m[0, 2], 2)) if (has_body and joints_xyz_m is not None) else 0.0
                 }
                 try:
@@ -560,33 +521,37 @@ def main():
             cv2.putText(canvas, conf_str, (WIDTH - 230, 72),
                         cv2.FONT_HERSHEY_DUPLEX, 0.65, (255, 255, 255), 2, cv2.LINE_AA)
 
-            # 2. RADAR DE TRANSICIONES RÁPIDAS (COMBO FLOW & CANCEL WINDOWS)
+            # 2. CRONÓMETRO DE POSE SOSTENIDA (2 A 3 SEGUNDOS PARA ACTIVAR ATAQUE CONTINUO)
             trans_y = 12 + card_h + 10
             trans_h = 74
             cv2.rectangle(canvas, (LEFT_W + 12, trans_y), (WIDTH - 12, trans_y + trans_h), (22, 28, 38), -1)
 
-            is_recent_trans = (time.time() - last_transition_event["timestamp"]) < 2.8
-            trans_bdr_col = (0, 255, 220) if is_recent_trans else (50, 60, 75)
-            cv2.rectangle(canvas, (LEFT_W + 12, trans_y), (WIDTH - 12, trans_y + trans_h), trans_bdr_col, 2 if is_recent_trans else 1)
+            hold_bdr_col = (0, 255, 120) if pose_activated else ((0, 190, 255) if held_duration > 0.5 else (60, 70, 85))
+            cv2.rectangle(canvas, (LEFT_W + 12, trans_y), (WIDTH - 12, trans_y + trans_h), hold_bdr_col, 2 if pose_activated else 1)
 
-            if is_recent_trans:
-                f_from = last_transition_event["from"].upper()
-                f_to = last_transition_event["to"].upper()
-                lat_ms = last_transition_event["latency_ms"]
-                cv2.putText(canvas, "⚡ RADAR DE TRANSICIÓN RÁPIDA (COMBO ACTIVO):", (rx, trans_y + 22),
-                            cv2.FONT_HERSHEY_DUPLEX, 0.44, (0, 255, 220), 1, cv2.LINE_AA)
-                cv2.putText(canvas, f"[ {f_from} ]  ======>>  [ {f_to} ]  |  Latencia: {lat_ms} ms",
-                            (rx, trans_y + 45), cv2.FONT_HERSHEY_DUPLEX, 0.48, (0, 255, 140), 1, cv2.LINE_AA)
+            pct_hold = min(1.0, held_duration / max(0.1, required_hold_time))
+            bar_w = int((WIDTH - LEFT_W - 50) * pct_hold)
+            bar_color = (0, 240, 100) if pose_activated else (0, 200, 255)
+            # Barra de progreso de pose sostenida
+            cv2.rectangle(canvas, (rx, trans_y + 46), (rx + bar_w, trans_y + 62), bar_color, -1)
+            cv2.rectangle(canvas, (rx, trans_y + 46), (WIDTH - 30, trans_y + 62), (70, 80, 95), 1)
+
+            if pred_action != "idle":
+                if pose_activated:
+                    cv2.putText(canvas, f"🔥 ¡POSE FIJADA! REPITIENDO ATAQUE EN UNITY ({held_duration:.1f}s)",
+                                (rx, trans_y + 24), cv2.FONT_HERSHEY_DUPLEX, 0.44, (0, 255, 120), 1, cv2.LINE_AA)
+                    cv2.putText(canvas, "Bucle continuo activo. Cambiar de posición detiene el ataque.",
+                                (rx, trans_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (180, 230, 200), 1, cv2.LINE_AA)
+                else:
+                    cv2.putText(canvas, f"⏱️ MANTÉN LA POSE: {held_duration:.1f}s / {required_hold_time:.1f}s ({int(pct_hold*100)}%)",
+                                (rx, trans_y + 24), cv2.FONT_HERSHEY_DUPLEX, 0.44, (0, 210, 255), 1, cv2.LINE_AA)
+                    cv2.putText(canvas, f"Mantén la posición fija por {required_hold_time:.1f}s para disparar repetición constante.",
+                                (rx, trans_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (160, 180, 200), 1, cv2.LINE_AA)
             else:
-                cv2.putText(canvas, "🛡️ RADAR DE TRANSICIONES: Estado de combate estable", (rx, trans_y + 22),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.42, (150, 170, 190), 1, cv2.LINE_AA)
-                cv2.putText(canvas, f"Pose activa: {pred_action.upper()} (Listo para encadenar transición o cancel)",
-                            (rx, trans_y + 45), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (200, 215, 230), 1, cv2.LINE_AA)
-
-            # Cadena de combo reciente
-            combo_str = " ➔ ".join([c.upper() for c in combo_history])
-            cv2.putText(canvas, f"Secuencia: {combo_str}", (rx, trans_y + 64),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.36, (140, 160, 185), 1, cv2.LINE_AA)
+                cv2.putText(canvas, "🧍 REPOSO (IDLE): Adopta una pose de puño/patada y mantenla 2-3s",
+                            (rx, trans_y + 24), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (150, 170, 190), 1, cv2.LINE_AA)
+                cv2.putText(canvas, "El personaje permanece neutral a la espera de una pose sostenida.",
+                            (rx, trans_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (130, 145, 165), 1, cv2.LINE_AA)
 
             # 3. GRÁFICO DE BARRAS DE PROBABILIDAD (7 CLASES DE COMBATE)
             bar_start_y = trans_y + trans_h + 18
@@ -606,11 +571,11 @@ def main():
                 is_runner_up = (i == 1)
 
                 if is_winner:
-                    b_color = (0, 220, 120)      # Verde neón ganador
+                    b_color = (0, 220, 120) if pose_activated else (0, 200, 255) # Verde si fijada, Cian si cargando
                     txt_col = (255, 255, 255)
-                elif is_runner_up and is_recent_trans:
-                    b_color = (0, 180, 240)      # Cian para la pose en transición
-                    txt_col = (0, 220, 255)
+                elif is_runner_up:
+                    b_color = (0, 140, 200)      # Azul secundario
+                    txt_col = (0, 200, 240)
                 else:
                     b_color = (45, 60, 80)       # Azul grisáceo
                     txt_col = (160, 175, 190)
