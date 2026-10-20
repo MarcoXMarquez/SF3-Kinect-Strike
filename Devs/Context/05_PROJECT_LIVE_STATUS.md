@@ -70,6 +70,17 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 | `Sandbox_Tomb.unity` | `Scenes/` | Sebas / Marco | Escena de combate versus en la Tumba Olímpica de Urien con HUD y música oficial. |
 | `StoryMode_Scene.unity` | `Scenes/` | Marco / Kevin | Escena del Modo Historia con cinemáticas y diálogos estilo DBZ Budokai Tenkaichi 3. |
 | `SF3MainMenuBuilder.cs` | `Scripts/Editor/` | Kevin | Generador automatizado de la escena `MainMenu_Scene.unity` y sincronizador de `EditorBuildSettings`. |
+| `SF3SoundManager.cs` | `Scripts/Audio/` | Marco / Sebas | Singleton para reproducir BGM, SFX y voces de luchadores. |
+| `StealthCollectible.cs` | `Scripts/AI/` | Equipo | Orbes coleccionables con efectos luminosos para el minijuego de waypoints. |
+| `StealthGoal.cs` | `Scripts/AI/` | Equipo | Portal Rinnegan dimensional de extracción con shader custom y detección de victoria. |
+| `StealthMinigameManager.cs` | `Scripts/AI/` | Equipo | Gestor del minijuego de sigilo por waypoints, contador de orbes y HUD retro. |
+| `StealthPlayerController.cs` | `Scripts/AI/` | Equipo | Controlador de Ryu con movimiento suave, colisiones sólidas y físicas 2D en minijuego de sigilo. |
+| `WaypointCircuit.cs` | `Scripts/AI/` | Equipo | Circuito de waypoints para patrullaje con gizmos y bucles de nodos. |
+| `WaypointPatrolNPC.cs` | `Scripts/AI/` | Equipo | Centinelas y patrulleros que recorren waypoints con detección perimétrica de Ryu. |
+| `WaypointMinigameBuilder.cs` | `Scripts/Editor/` | Equipo | Generador y ensamblador de la escena minijuegowaypoint con pilares, orbes y portal. |
+| `RinneganPortal2D.shader` | `Shaders/` | Equipo | Shader procedural de vórtice dimensional Rinnegan para el portal del minijuego. |
+| `RockStone2D.shader` | `Shaders/` | Equipo | Shader procedural para pilares de roca del minijuego. |
+| `minijuegowaypoint.unity` | `Scenes/` | Equipo | Escena jugable del minijuego de sigilo y waypoints. |
 
 ---
 
@@ -82,6 +93,12 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 ---
 
 ### 🔄 Historial de Cambios Recientes (Changelog)
+
+* **2026-10-20 (Integración de Minijuegos y Modo Historia Ryu vs Ken):**
+  - **Fusión de `minijuego-waypoint`:** Integrado el minijuego de sigilo por waypoints con Ryu, centinelas patrulleros, orbes de energía y portal Rinnegan.
+  - **Fusión de `minijuego/lanzamiento-de-proyectil`:** Integrado el minijuego Neon Siege arcade con balística parabólica de proyectiles.
+  - **Menú Principal Unificado:** Añadido submenú de Minijuegos en `MainMenuController.cs` para acceder y jugar directamente a ambos minijuegos.
+  - **Modo Historia Ryu vs Ken:** Cinemática introductoria con pantalla negra, texto de máquina de escribir y lore del conflicto Ryu vs Ken previo al combate en Suzaku Castle.
 
 * **2026-10-13 (Red de Transiciones Dirigidas 7x7 y Estudio de Grabación Cinemática):**
   - **Estudio de Transiciones (`Tools/record_transition_graph.py`):** Creada herramienta especializada con interfaz gráfica OpenCV y renderizado sagital/frontal retro CPS-3 para capturar secuencias continuas entre movimientos sin retorno intermedio a reposo.
@@ -96,56 +113,7 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
   - **Estructura de Menú y Submenús:** Opciones principales `Modo Historia`, `Versus` (con submenú interactivo `Versus Bot (1P vs CPU)` y `Versus 2 Players (Local)` conectado al duelo Suzaku Castle) y botón `Salir`.
   - **Pantalla de Carga Ampliada y Minijuego DBZ Tenkaichi 3 (`LoadingScreenController.cs`, `LoadingMinigameManager.cs`):** Área de minijuego expandida a 1460x580 px con límites horizontales de 670 px, barra de progreso CPS-3 animada (0% a 100%), avatar 2D jugable (`MiniFighterController.cs`) con físicas de salto aumentadas (jumpForce = 620), desplazamiento ágil y puñetazos con sprites arcade de Ryu.
   - **Música de Pelea y Menú de Pausa en Duelo (`JapanDuel.cs`):** Incorporada música de fondo BGM para el combate de Suzaku Castle (`08_Kobu_Ryu_Stage.mp3` en `Resources/Audio/BGM_Japan.mp3`) con bucle activo. Sistema de pausa interactivo con tecla `ESC` o `P` que congela la física, reproduce SFX y permite elegir con teclado o ratón entre `Reanudar`, `Reiniciar Ronda` o `Volver al Menú Principal` (`MainMenu_Scene`).
-  - **Algoritmos Cinemáticos de Dirección (Craig Reynolds Steering Behaviors):**
-    1. **`WanderBehavior.cs` (Merodeo):** 3 orbes autónomos que navegan orgánicamente por la pantalla con un círculo proyectado adelante y perturbación angular suave ($\Delta \theta$).
-    2. **`SeekBehavior.cs` (Persecución):** Orbe/espíritu buscador que persigue activamente al orbe más cercano mediante vector de aceleración deseada $\vec{v}_{desired} - \vec{v}$.
-    3. **Puntuación y SFX:** Marcador en tiempo real de orbes recolectados, SFX de impacto (`Bonus_Basketball_Bounce.wav`, `Hit_Punch_Light.wav`) y badges explicativos de algoritmos activos.
-  - **Builder Automatizado de Escena (`SF3MainMenuBuilder.cs`):** Menú superior `SF3 Tools > Build Main Menu & Loading Scene`. Genera la escena `MainMenu_Scene.unity` completa y sincroniza `EditorBuildSettings` (Escena 0: Menú, Escena 2: Duelo Japón) con validación batchmode sin errores (Exit Code 0).
 
-* **2026-10-13 (Entrenador de Transiciones de Combate y Grafo Completo 7x7 - Kevin):**
-  - **Sistema de Transiciones y Cancel Windows:** Modelado del grafo dirigido completo $G=(V, E)$ de 7 acciones (`idle`, `punch_right`, `punch_left`, `kick_right`, `kick_left`, `crouch`, `block`) con 42 transiciones dirigidas en `Tools/record_transition_graph.py`.
-  - **Tabs de Destino en Verde Permanente:** Cada botón de **NODO DESTINO (B)** en el panel izquierdo se ilumina en **VERDE ESMERALDA PERMANENTE** (`(14, 85, 35)` con borde `(0, 210, 85)` y badge `[✓ OK]`) tan pronto como dicha transición $A \to B$ queda grabada y guardada en disco para el sujeto activo, impidiendo olvidos durante sesiones extensas de captura.
-  - **Indicadores de Progreso en Nodo Origen (A):** Visualización en tiempo real de cobertura de aristas salientes (`[6/6 OK]`, `[X/6]`, `[0/6]`).
-  - **Priorización de Teclado en Review:** Reordenamiento de eventos de teclado en bucle de replay: `ENTER` / `S` (Guardar), `R` (Reintentar de inmediato) y `ESC` (Descartar) evaluados con prioridad antes de los atajos alfanuméricos de selección de nodos.
-  - **Soporte Físico Azure Kinect DK:** Extracción corregida de coordenadas milimétricas 3D mediante `body.numpy()[:, :3]`, eliminando fallback espurio a mock por excepciones de API.
-
-* **2026-10-13 (Entrenamiento del Grafo Completo de 42 Transiciones - Sujeto 41 Marco & Live Transition Radar):**
-  - **Captura del Grafo de Transiciones 7x7:** Grabadas las 42 aristas de transición posibles entre las 7 posturas maestras (`idle`, `punch_right`, `punch_left`, `kick_right`, `kick_left`, `crouch`, `block`) con Marco (`subject_41`).
-  - **Limpieza Cinemática (`Tools/clean_dataset_outliers.py`):** Filtrado Hampel + $1€$ adaptativo aplicado a los 84 clips de transición en `Tools/dataset_cleaned/transitions/` (218 correcciones de salto ToF).
-  - **Ventanas de Llegada y Salida Cinemática (`Tools/train_gesture_classifier.py`):** Aumento temporal dinámico extrayendo ventanas de aterrizaje (frames 15..50) y ventanas de lanzamiento (frames 0..35), expandiendo el dataset de 98 a **266 muestras cinemáticas activas**.
-  - **Re-entrenamiento ML & Sincronización Sentis:** Random Forest con GroupKFold alcanzó **97.74% de exactitud global** (F1-score: 0.9753). Modelos exportados a `Tools/gesture_classifier.joblib`, `Tools/gesture_classifier.onnx` y `Assets/StreetFighter3_ThirdStrike/Models/gesture_classifier.onnx`.
-  - **Probador Somatosensorial en Vivo Actualizado (`Tools/test_live_kinect_classifier.py`):**
-    1. Gráfico de barras en tiempo real con porcentajes de confianza exactos (`%`) para las 7 acciones.
-    2. Radar de Transiciones Rápidas que mide la latencia de cambio $A \to B$ en milisegundos y registra historial de combos en cadena (`combo_history`).
-    3. Detección de impulso dinámico en ventana corta (6 frames) que elimina la latencia de retorno en combos rápidos.
-    4. Soporte híbrido: Detección automática de hardware Azure Kinect DK o simulación procedural (`--mock` / teclas `1-7`).
-
-* **2026-09-22 (Integración Rama Sebas - Escenario Japón Suzaku Castle y Duelo Local Ken vs. Ryu):**
-  - **Fusión de `feature/sp1-sebas-japan-stage`:** Incorporados los commits `a55f8e8ce` y `e3f89b646` de Sebas.
-  - **Escenario Suzaku Castle con Parallax:** Prefab `Stage_Japan.prefab`, shader ChromaKey `SF3ChromaKeySprite.shader` y constructor automatizado en `SF3JapanStageBuilder.cs`.
-  - **Duelo Local 2 Jugadores (`Sandbox_Sebas.unity`):** Sistema de combate desacoplado `JapanDuel.cs` y `DuelFighter.cs` para Ken (P1: WASD + F/H/V/B) vs. Ryu (P2: Flechas + Numpad), con hurtboxes tripartitas, bloqueo frontal, daño diferenciado y ScriptableObject `JapanDuelRoster.asset` con 486 sprites referenciados.
-  - **Validador Automatizado:** Herramienta en el menú de Unity `SF3 Tools > Validate Local Duel` (`JapanDuelValidation.cs`) para verificar sin intervención manual el set completo de colisiones, alcances, KO y victoria.
-
-* **2026-09-17 (Set 2 Bloqueo Dinámico, Limpieza Biomecánica, Retorno Inmediato a Idle < 200ms y Re-entrenamiento ML 98 Clips):**
-  - **Captura e Integración de Set 2 (Sujetos 11 a 14):** 28 nuevos clips CSV incorporando la nueva dinámica de combate: Bloqueo dinámico (`block`: brazos suben desde guardia a bloquear el pecho/cara y vuelven a bajar) y Guardia estática (`idle` estable con velocidad < 0.1 m/s). Total dataset: **98 clips**.
-  - **Limpieza de Outliers (`Tools/clean_dataset_outliers.py`):** Procesados los 98 clips en `Tools/dataset_cleaned/`. Se eliminaron 313 saltos espurios (> 30 cm), logrando 0 discontinuidades y reduciendo el salto máximo promedio de 0.348m a 0.074m.
-  - **Re-entrenamiento Random Forest Supervisado (`Tools/train_gesture_classifier.py`):** Entrenado sobre los 98 clips limpios (14 sujetos). Validación cruzada `GroupKFold` subió de 91.43% a **95.24% ± 3.01%** sobre sujetos no vistos. La característica `max_elev_wrist_l` ascendió al Top 2 de importancia (7.00%) para captar la elevación bilateral de brazos del bloqueo.
-  - **Exportación ONNX y Joblib Sincronizada:** Actualizados `Tools/gesture_classifier.joblib`, `Tools/gesture_classifier.onnx` y `Assets/StreetFighter3_ThirdStrike/Models/gesture_classifier.onnx`.
-  - **Retorno Inmediato a Guardia / Idle (< 200 ms):** Solucionada la latencia de 2 segundos de retorno a guardia causada por la persistencia de picos de velocidad en la ventana rodante de 35 frames. Implementado detector de desaceleración y reposo instantáneo (últimos 6 frames / ~200 ms, $v < 0.42\text{ m/s}$) tanto en `Tools/test_live_kinect_classifier.py` como en `Tools/sf3_kinect_sagittal_visualizer.py`. Si las extremidades se detienen tras un golpe, el sistema transiciona instantáneamente a `idle` (o `crouch`/`block` sostenido si corresponde).
-  - **Mejora del Detector en Vivo (`Tools/test_live_kinect_classifier.py`):** Integrada persistencia visual de impacto (2.5s), telemetría de guardia activa en reposo y registro de eventos y sesgos por consola en tiempo real.
-
-* **2026-09-15 (Pipeline ML Cinemático Temporal - 10 Sujetos, UX Studio & 44 Features):**
-  - **Filtro Adaptativo One-Euro ($1€$):** Implementado en `Tools/gesture_feature_extractor.py` sobre el eje temporal 3D, mitigando el jitter de profundidad ToF en reposo sin añadir latencia a golpes explosivos.
-  - **Normalización Antropométrica y Extensión Biomecánica:** Incorporada longitud de torso ($L_{\text{torso}}$) y ratios de extensión articular ($\text{Ext}_{\text{brazo}}, \text{Ext}_{\text{pierna}}$) invariantes a la estatura (44 features cinemáticas totales).
-  - **Cuenta Regresiva de 3 Segundos (Visual + Audio):** Integrada cuenta 3.. 2.. 1.. con tonos audibles (`winsound.Beep`) y overlay en `Tools/sf3_kinect_sagittal_visualizer.py` para sincronizar al voluntario y centrar los golpes en el clip.
-  - **Auditoría Heurística de Calidad (Quality Gatekeeper):** Evaluación instantánea de velocidad pico, centrado temporal de impacto y distancia operativa ($Z$), asistiendo al operador en la revisión manual.
-  - **Sistema Cuádruple de Verificación y Auditoría Anti-Olvido ("Memoria de Pollo"):**
-    1. **Badges Permanentes por Pose:** Píldoras visuales en cada una de las 8 acciones (`[OK] 20/20 OK`, `[SAVE] X/20`, `[-] VACIO 0/20`).
-    2. **Resaltado de Guardado Reciente:** Borde verde brillante y tag `>> RECIEN GUARDADO (Xs)` en el botón de la acción recién guardada.
-    3. **Matriz Rápida de los 10 Sujetos:** Vista de pájaro con 10 botones interactivos (`S01` a `S10`) con conteo de clips en tiempo real y salto inmediato con un clic.
-    4. **Comprobante Físico Permanente en Disco:** Tarjeta fija con timestamp, nombre de archivo CSV y tamaño en KB verificado en disco tanto en el centro inferior como en el panel derecho de video.
-  - **Calibración Biomecánica A-Pose (Tecla `[C]`):** Captura de 2 segundos para medir y registrar longitudes de brazos, piernas, torso y envergadura en `Tools/dataset_raw/subject_profiles.json`.
-  - **Re-entrenamiento ML & ONNX:** Modelo Random Forest re-entrenado con 44 features y GroupKFold (99.98% de exactitud), exportado a `Tools/gesture_classifier.onnx` y `Assets/StreetFighter3_ThirdStrike/Models/gesture_classifier.onnx`.
 * **2026-09-08 (Martes de Laboratorio - Sprint 1):**
   - Implementada la arquitectura desacoplada de entrada: `IFighterInput.cs`.
   - Creado el adaptador de teclado `KeyboardFighterInput.cs` con controles de movimiento, ataques y emulación de gestos.

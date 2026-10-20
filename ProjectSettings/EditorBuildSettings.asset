@@ -9,8 +9,8 @@ EditorBuildSettings:
     path: Assets/StreetFighter3_ThirdStrike/Scenes/MainMenu_Scene.unity
     guid: 00cf7d6ba590f9347beb95f4cfd0a86d
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
+    path: Assets/StreetFighter3_ThirdStrike/Scenes/StoryMode_Scene.unity
+    guid: 9de1e4dcfa734b06a3f6259ab2785b59
   - enabled: 1
     path: Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_Sebas.unity
     guid: 29eda5f305f7487295f8018102f4b620
@@ -21,8 +21,14 @@ EditorBuildSettings:
     path: Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_Tomb.unity
     guid: f0d6470177d64d9f9954c20a226f1ad6
   - enabled: 1
-    path: Assets/StreetFighter3_ThirdStrike/Scenes/StoryMode_Scene.unity
-    guid: 9de1e4dcfa734b06a3f6259ab2785b59
+    path: Assets/StreetFighter3_ThirdStrike/Scenes/minijuegowaypoint.unity
+    guid: 675cf80c1e40db245b3d0d8bb2d10a0b
+  - enabled: 1
+    path: Assets/Scenes/minijuegowaypoint.unity
+    guid: c70ab970f3a4bea428a8d51c9099a11e
+  - enabled: 1
+    path: Assets/Scenes/SampleScene.unity
+    guid: 8c9cfa26abfee488c85f1582747f6a02
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
