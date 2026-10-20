@@ -59,7 +59,7 @@ public class JapanDuel : MonoBehaviour
         // Integración Somatosensorial (Kinect + ML en Python) para Ryu en Modo Historia con Teclado en Paralelo
         KinectFighterInput kinectInput = ryu.gameObject.AddComponent<KinectFighterInput>();
         kinectInput.SetOpponent(ken.transform);
-        kinectInput.SetAutoSpacing(true);
+        kinectInput.SetAutoSpacing(false);
         ryu.inputProvider = kinectInput;
 
         Restart();

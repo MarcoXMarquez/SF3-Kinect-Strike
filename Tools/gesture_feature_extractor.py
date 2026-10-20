@@ -1,7 +1,8 @@
 """
-Street Fighter III: 3rd Strike - Kinect Kinematic Feature Extractor
-Módulo matemático para cálculo de características cinemáticas y espaciales
-a partir de secuencias temporales de articulaciones del Azure Kinect Body Tracking SDK.
+Street Fighter III: 3rd Strike - Kinect Static Posture & Kinematic Feature Extractor
+Módulo matemático para cálculo de características posturales y geométricas 3D
+a partir de secuencias de articulaciones del Azure Kinect Body Tracking SDK.
+Optimizado para detección de Poses Sostenidas (Held Poses) invariante a la velocidad.
 """
 
 import numpy as np
@@ -39,65 +40,58 @@ ACTION_CLASSES = [
     "kick_left",      # 4: Patada con pierna izquierda
     "crouch",         # 5: Agacharse / Posición baja
     "jump",           # 6: Salto vertical / aéreo
-    "block"           # 7: Bloqueo defensivo / Brazos cruzados al pecho
+    "block"           # 7: Bloqueo defensivo / Brazos levantados cubriendo pecho/rostro
 ]
 
 ACTION_NAME_TO_ID = {name: idx for idx, name in enumerate(ACTION_CLASSES)}
 ACTION_ID_TO_NAME = {idx: name for idx, name in enumerate(ACTION_CLASSES)}
 
+# 44 Características Geométricas de Postura Estática (Invariantes a estatura y velocidad)
 FEATURE_NAMES = [
-    # 1. Velocidades pico de extremidades (m/s)
-    "peak_vel_wrist_r",
-    "peak_vel_wrist_l",
-    "peak_vel_hand_r",
-    "peak_vel_hand_l",
-    "peak_vel_ankle_r",
-    "peak_vel_ankle_l",
-    "peak_vel_foot_r",
-    "peak_vel_foot_l",
-    "peak_vel_pelvis_y",
-    # 2. Desplazamientos netos (m)
-    "net_disp_pelvis_y",     # Negativo = Agacharse, Positivo = Salto
-    "max_disp_pelvis_y",
-    "min_disp_pelvis_y",
-    "net_reach_wrist_r_z",   # Alcance en profundidad hacia sensor (Z)
-    "net_reach_wrist_l_z",
-    "net_reach_hand_r_z",
-    "net_reach_hand_l_z",
-    "net_reach_ankle_r_z",
-    "net_reach_ankle_l_z",
-    # 3. Elevación máxima respecto a pelvis (m)
-    "max_elev_ankle_r",
-    "max_elev_ankle_l",
-    "max_elev_foot_r",
-    "max_elev_foot_l",
-    "max_elev_wrist_r",
-    "max_elev_wrist_l",
-    # 4. Rangos de ángulos articulares 3D (grados)
-    "min_elbow_angle_r",
-    "max_elbow_angle_r",
-    "min_elbow_angle_l",
-    "max_elbow_angle_l",
-    "min_knee_angle_r",
-    "max_knee_angle_r",
-    "min_knee_angle_l",
-    "max_knee_angle_l",
-    # 5. Inclinación y torsión del torso
-    "torso_pitch_lean",
-    "torso_roll_lean",
-    # 6. Asimetría de actividad de extremidades
-    "arm_activity_asymmetry",  # Positivo = Dominio Der, Negativo = Dominio Izq
-    "leg_activity_asymmetry",  # Positivo = Dominio Der, Negativo = Dominio Izq
-    # 7. Proximidad de muñecas y manos (detección de bloqueo / guardia)
-    "min_wrist_distance",
-    "mean_wrist_distance",
-    "min_hand_distance",
-    # 8. Normalización antropométrica y extensión biomecánica
-    "torso_length",
-    "max_arm_extension_r",
-    "max_arm_extension_l",
-    "max_leg_extension_r",
-    "max_leg_extension_l"
+    "horiz_wr_r_mean",
+    "horiz_wr_r_max",
+    "horiz_wr_l_mean",
+    "horiz_wr_l_max",
+    "horiz_hd_r_mean",
+    "horiz_hd_r_max",
+    "horiz_hd_l_mean",
+    "horiz_hd_l_max",
+    "horiz_pelvis_wr_r",
+    "horiz_pelvis_wr_l",
+    "arm_ext_r_mean",
+    "arm_ext_l_mean",
+    "elev_wr_r_mean",
+    "elev_wr_l_mean",
+    "elev_hd_r_mean",
+    "elev_hd_l_mean",
+    "wr_rel_chest_r",
+    "wr_rel_chest_l",
+    "wr_rel_head_r",
+    "wr_rel_head_l",
+    "min_wr_rel_chest",
+    "mean_wr_rel_chest",
+    "ank_depth_r",
+    "ank_depth_l",
+    "ft_depth_r",
+    "ft_depth_l",
+    "kn_depth_r",
+    "kn_depth_l",
+    "max_ank_depth",
+    "min_ank_depth",
+    "ank_elevation_asym",
+    "ft_elevation_asym",
+    "kn_elevation_asym",
+    "horiz_ank_r",
+    "horiz_ank_l",
+    "elbow_angle_r",
+    "elbow_angle_l",
+    "knee_angle_r",
+    "knee_angle_l",
+    "horiz_wr_asym",
+    "horiz_hd_asym",
+    "arm_ext_asym",
+    "elbow_angle_asym",
+    "wrist_distance_norm"
 ]
 
 
@@ -122,8 +116,6 @@ def compute_angle_3d(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> float:
 def one_euro_filter_3d_clip(frames_xyz: np.ndarray, fps: float = 30.0, min_cutoff: float = 1.0, beta: float = 0.007) -> np.ndarray:
     """
     Aplica el filtro adaptativo One-Euro ($1€$) a lo largo del eje temporal para cada articulación.
-    Filtra drásticamente el jitter de profundidad milimétrico en reposo/guardia sin retrasar
-    la respuesta de picos cinemáticos explosivos (puñetazos y patadas).
     """
     n_frames = len(frames_xyz)
     if n_frames < 3:
@@ -156,227 +148,280 @@ def one_euro_filter_3d_clip(frames_xyz: np.ndarray, fps: float = 30.0, min_cutof
     return filtered
 
 
+def extract_peak_pose_window(frames_xyz: np.ndarray, action_name: str, window_size: int = 6) -> np.ndarray:
+    """
+    Localiza el frame de máxima expresión postural (peak pose) dentro de un clip de 35 frames
+    y retorna una ventana estática de `window_size` frames centrada en la postura sostenida.
+    Esto permite entrenar el clasificador sobre la geometría exacta de la pose mantenida.
+    """
+    n_frames = len(frames_xyz)
+    if n_frames <= 1:
+        return np.repeat(frames_xyz, window_size, axis=0)
+
+    pelvis = frames_xyz[:, K4ABT_JOINT_PELVIS, :]
+    local = frames_xyz - pelvis[:, np.newaxis, :]
+
+    sh_r = local[:, K4ABT_JOINT_SHOULDER_RIGHT, :]
+    wr_r = local[:, K4ABT_JOINT_WRIST_RIGHT, :]
+    sh_l = local[:, K4ABT_JOINT_SHOULDER_LEFT, :]
+    wr_l = local[:, K4ABT_JOINT_WRIST_LEFT, :]
+    ank_r = local[:, K4ABT_JOINT_ANKLE_RIGHT, :]
+    ank_l = local[:, K4ABT_JOINT_ANKLE_LEFT, :]
+
+    horiz_r = np.linalg.norm(wr_r[:, [0, 2]] - sh_r[:, [0, 2]], axis=1)
+    horiz_l = np.linalg.norm(wr_l[:, [0, 2]] - sh_l[:, [0, 2]], axis=1)
+
+    if action_name == "punch_right":
+        idx = int(np.argmax(horiz_r - 0.5 * horiz_l))
+    elif action_name == "punch_left":
+        idx = int(np.argmax(horiz_l - 0.5 * horiz_r))
+    elif action_name == "kick_right":
+        idx = int(np.argmax(ank_l[:, 1] - ank_r[:, 1]))
+    elif action_name == "kick_left":
+        idx = int(np.argmax(ank_r[:, 1] - ank_l[:, 1]))
+    elif action_name == "crouch":
+        idx = int(np.argmin(0.5 * (ank_r[:, 1] + ank_l[:, 1])))
+    elif action_name == "block":
+        idx = int(np.argmin(wr_r[:, 1] + wr_l[:, 1]))
+    elif action_name == "jump":
+        idx = int(np.argmin(pelvis[:, 1]))
+    else:
+        idx = n_frames // 2
+
+    return np.repeat(frames_xyz[idx:idx + 1], window_size, axis=0)
+
+
 def extract_clip_features(frames_joints_xyz: np.ndarray, fps: float = 30.0, apply_filter: bool = True) -> dict:
     """
-    Extrae un vector tabular de características cinemáticas a partir de una secuencia temporal
-    de frames 3D de articulaciones.
-
-    Parámetros:
-    -----------
-    frames_joints_xyz : np.ndarray de forma (N_frames, 32, 3) o (N_frames, >=25, 3)
-                        Coordenadas (x, y, z) en metros de cada articulación en cada frame.
-    fps : float
-          Tasa de muestreo (default: 30.0 FPS del Azure Kinect).
-    apply_filter : bool
-          Aplica filtro One-Euro para eliminar jitter de profundidad antes de derivar.
-
-    Retorna:
-    --------
-    dict con las 44 características calculadas.
+    Extrae las 44 características geométricas de postura estática a partir de la ventana reciente
+    de frames 3D de articulaciones (evalúa los últimos 6 frames ~200ms para respuesta inmediata
+    al sostener una pose sin depender de la velocidad de transición).
     """
     n_frames = len(frames_joints_xyz)
-    if n_frames < 2:
-        raise ValueError(f"Se requieren al menos 2 frames para cinemática, recibidos: {n_frames}")
+    if n_frames < 1:
+        raise ValueError("Se requiere al menos 1 frame para extraer características posturales.")
 
-    dt = 1.0 / fps
-
-    # 0. Filtrado paso bajo adaptativo One-Euro contra jitter de sensor
     if apply_filter and n_frames >= 3:
         clean_frames = one_euro_filter_3d_clip(frames_joints_xyz, fps=fps)
     else:
         clean_frames = frames_joints_xyz
 
-    # 1. Normalización espacial local: P_local = P_joint - P_pelvis
-    pelvis = clean_frames[:, K4ABT_JOINT_PELVIS, :]
-    local_joints = clean_frames - pelvis[:, np.newaxis, :]
+    # Evaluar únicamente los últimos 6 frames (~0.2s) para que la postura sostenida
+    # sea independiente del historial antiguo del buffer
+    w = clean_frames[-6:] if len(clean_frames) > 6 else clean_frames
+    n_f = len(w)
 
-    # 2. Articulaciones clave en coordenadas locales
-    wrist_r = local_joints[:, K4ABT_JOINT_WRIST_RIGHT, :]
-    wrist_l = local_joints[:, K4ABT_JOINT_WRIST_LEFT, :]
-    elbow_r = local_joints[:, K4ABT_JOINT_ELBOW_RIGHT, :]
-    elbow_l = local_joints[:, K4ABT_JOINT_ELBOW_LEFT, :]
-    shoulder_r = local_joints[:, K4ABT_JOINT_SHOULDER_RIGHT, :]
-    shoulder_l = local_joints[:, K4ABT_JOINT_SHOULDER_LEFT, :]
+    pelvis = w[:, K4ABT_JOINT_PELVIS, :]
+    local = w - pelvis[:, np.newaxis, :]
 
-    ankle_r = local_joints[:, K4ABT_JOINT_ANKLE_RIGHT, :]
-    ankle_l = local_joints[:, K4ABT_JOINT_ANKLE_LEFT, :]
-    knee_r = local_joints[:, K4ABT_JOINT_KNEE_RIGHT, :]
-    knee_l = local_joints[:, K4ABT_JOINT_KNEE_LEFT, :]
-    hip_r = local_joints[:, K4ABT_JOINT_HIP_RIGHT, :]
-    hip_l = local_joints[:, K4ABT_JOINT_HIP_LEFT, :]
+    sh_r = local[:, K4ABT_JOINT_SHOULDER_RIGHT, :]
+    el_r = local[:, K4ABT_JOINT_ELBOW_RIGHT, :]
+    wr_r = local[:, K4ABT_JOINT_WRIST_RIGHT, :]
+    hd_r = local[:, K4ABT_JOINT_HAND_RIGHT, :]
 
-    hand_r = local_joints[:, K4ABT_JOINT_HAND_RIGHT, :]
-    hand_l = local_joints[:, K4ABT_JOINT_HAND_LEFT, :]
-    foot_r = local_joints[:, K4ABT_JOINT_FOOT_RIGHT, :]
-    foot_l = local_joints[:, K4ABT_JOINT_FOOT_LEFT, :]
-    chest = local_joints[:, K4ABT_JOINT_SPINE_CHEST, :]
+    sh_l = local[:, K4ABT_JOINT_SHOULDER_LEFT, :]
+    el_l = local[:, K4ABT_JOINT_ELBOW_LEFT, :]
+    wr_l = local[:, K4ABT_JOINT_WRIST_LEFT, :]
+    hd_l = local[:, K4ABT_JOINT_HAND_LEFT, :]
 
-    # 3. Velocidades instantáneas (m/s)
-    vel_wrist_r = np.linalg.norm(np.diff(wrist_r, axis=0), axis=1) / dt
-    vel_wrist_l = np.linalg.norm(np.diff(wrist_l, axis=0), axis=1) / dt
-    vel_hand_r = np.linalg.norm(np.diff(hand_r, axis=0), axis=1) / dt
-    vel_hand_l = np.linalg.norm(np.diff(hand_l, axis=0), axis=1) / dt
-    vel_ankle_r = np.linalg.norm(np.diff(ankle_r, axis=0), axis=1) / dt
-    vel_ankle_l = np.linalg.norm(np.diff(ankle_l, axis=0), axis=1) / dt
-    vel_foot_r = np.linalg.norm(np.diff(foot_r, axis=0), axis=1) / dt
-    vel_foot_l = np.linalg.norm(np.diff(foot_l, axis=0), axis=1) / dt
+    hip_r = local[:, K4ABT_JOINT_HIP_RIGHT, :]
+    kn_r = local[:, K4ABT_JOINT_KNEE_RIGHT, :]
+    ank_r = local[:, K4ABT_JOINT_ANKLE_RIGHT, :]
+    ft_r = local[:, K4ABT_JOINT_FOOT_RIGHT, :]
 
-    # Velocidad vertical de la pelvis (eje Y absoluto de la cámara)
-    # En Azure Kinect SDK, Y positivo es hacia abajo (+Y = descender hacia el suelo).
-    # Invertimos el signo de Y para que Y positivo represente subir / ascender (física estándar de Unity).
-    pelvis_y_unity = -pelvis[:, 1]
-    vel_pelvis_y = np.diff(pelvis_y_unity) / dt
+    hip_l = local[:, K4ABT_JOINT_HIP_LEFT, :]
+    kn_l = local[:, K4ABT_JOINT_KNEE_LEFT, :]
+    ank_l = local[:, K4ABT_JOINT_ANKLE_LEFT, :]
+    ft_l = local[:, K4ABT_JOINT_FOOT_LEFT, :]
 
-    # 4. Desplazamientos verticales de la pelvis respecto al frame inicial
-    disp_pelvis_y = pelvis_y_unity - pelvis_y_unity[0]
+    chest = local[:, K4ABT_JOINT_SPINE_CHEST, :]
+    head = local[:, K4ABT_JOINT_HEAD, :]
 
-    # 5. Alcance en profundidad Z respecto a la pelvis (menor Z en Kinect = más cerca de la cámara)
-    reach_wrist_r_z = -wrist_r[:, 2]
-    reach_wrist_l_z = -wrist_l[:, 2]
-    reach_hand_r_z = -hand_r[:, 2]
-    reach_hand_l_z = -hand_l[:, 2]
-    reach_ankle_r_z = -ankle_r[:, 2]
-    reach_ankle_l_z = -ankle_l[:, 2]
-
-    # 6. Elevación vertical respecto a la pelvis (en sistema Unity, pelvis = 0)
-    elev_wrist_r = -wrist_r[:, 1]
-    elev_wrist_l = -wrist_l[:, 1]
-    elev_ankle_r = -ankle_r[:, 1]
-    elev_ankle_l = -ankle_l[:, 1]
-    elev_foot_r = -foot_r[:, 1]
-    elev_foot_l = -foot_l[:, 1]
-
-    # 7. Ángulos articulares 3D en cada frame
-    angles_elbow_r = [
-        compute_angle_3d(shoulder_r[t], elbow_r[t], wrist_r[t])
-        for t in range(n_frames)
-    ]
-    angles_elbow_l = [
-        compute_angle_3d(shoulder_l[t], elbow_l[t], wrist_l[t])
-        for t in range(n_frames)
-    ]
-    angles_knee_r = [
-        compute_angle_3d(hip_r[t], knee_r[t], ankle_r[t])
-        for t in range(n_frames)
-    ]
-    angles_knee_l = [
-        compute_angle_3d(hip_l[t], knee_l[t], ankle_l[t])
-        for t in range(n_frames)
-    ]
-
-    # 8. Inclinación y torsión del torso respecto a la pelvis
-    torso_pitch = float(np.mean(-chest[:, 2]))  # Positivo = Inclinado al frente
-    torso_roll = float(np.mean(chest[:, 0]))    # Positivo = Inclinado a la derecha
-
-    # 9. Asimetría de actividad
-    peak_wr_r = float(np.max(vel_wrist_r))
-    peak_wr_l = float(np.max(vel_wrist_l))
-    peak_hd_r = float(np.max(vel_hand_r))
-    peak_hd_l = float(np.max(vel_hand_l))
-    peak_ak_r = float(np.max(vel_ankle_r))
-    peak_ak_l = float(np.max(vel_ankle_l))
-    peak_ft_r = float(np.max(vel_foot_r))
-    peak_ft_l = float(np.max(vel_foot_l))
-
-    arm_asym = (peak_hd_r - peak_hd_l) / (peak_hd_r + peak_hd_l + 1e-4)
-    leg_asym = (peak_ft_r - peak_ft_l) / (peak_ft_r + peak_ft_l + 1e-4)
-
-    # 10. Proximidad entre muñecas y manos (crucial para Bloqueo)
-    wrist_dist = np.linalg.norm(wrist_r - wrist_l, axis=1)
-    hand_dist = np.linalg.norm(hand_r - hand_l, axis=1)
-    min_wrist_d = float(np.min(wrist_dist))
-    mean_wrist_d = float(np.mean(wrist_dist))
-    min_hand_d = float(np.min(hand_dist))
-
-    # 11. Normalización Antropométrica y Extensión Biomecánica (Invariante a Estatura)
-    # Longitud media del torso entre Pelvis y Pecho
+    # Longitudes óseas para normalización antropométrica invariante a la estatura
     torso_len = float(np.mean(np.linalg.norm(chest, axis=1)))
     if torso_len < 0.15:
         torso_len = 0.45
 
-    # Longitudes de segmentos óseos en el clip
-    len_arm_r = float(np.mean(np.linalg.norm(shoulder_r - elbow_r, axis=1) + np.linalg.norm(elbow_r - wrist_r, axis=1)))
-    len_arm_l = float(np.mean(np.linalg.norm(shoulder_l - elbow_l, axis=1) + np.linalg.norm(elbow_l - wrist_l, axis=1)))
-    if len_arm_r < 0.20: len_arm_r = 0.65
-    if len_arm_l < 0.20: len_arm_l = 0.65
+    len_arm_r = float(np.mean(np.linalg.norm(sh_r - el_r, axis=1) + np.linalg.norm(el_r - wr_r, axis=1)))
+    len_arm_l = float(np.mean(np.linalg.norm(sh_l - el_l, axis=1) + np.linalg.norm(el_l - wr_l, axis=1)))
+    if len_arm_r < 0.20:
+        len_arm_r = 0.55
+    if len_arm_l < 0.20:
+        len_arm_l = 0.55
 
-    len_leg_r = float(np.mean(np.linalg.norm(hip_r - knee_r, axis=1) + np.linalg.norm(knee_r - ankle_r, axis=1)))
-    len_leg_l = float(np.mean(np.linalg.norm(hip_l - knee_l, axis=1) + np.linalg.norm(knee_l - ankle_l, axis=1)))
-    if len_leg_r < 0.30: len_leg_r = 0.85
-    if len_leg_l < 0.30: len_leg_l = 0.85
+    len_leg_r = float(np.mean(np.linalg.norm(hip_r - kn_r, axis=1) + np.linalg.norm(kn_r - ank_r, axis=1)))
+    len_leg_l = float(np.mean(np.linalg.norm(hip_l - kn_l, axis=1) + np.linalg.norm(kn_l - ank_l, axis=1)))
+    if len_leg_r < 0.30:
+        len_leg_r = 0.80
+    if len_leg_l < 0.30:
+        len_leg_l = 0.80
 
-    # Ratio de extensión del brazo (distancia hombro-muñeca / longitud total del brazo)
-    # Cerca de 1.0 en puño totalmente estirado, ~0.4 en guardia reposo
-    arm_ext_r = np.linalg.norm(wrist_r - shoulder_r, axis=1) / len_arm_r
-    arm_ext_l = np.linalg.norm(wrist_l - shoulder_l, axis=1) / len_arm_l
+    # 1. Extensión horizontal en el plano X-Z desde el hombro (evita confundir brazos caídos con puñetazos)
+    horiz_wr_r = np.linalg.norm(wr_r[:, [0, 2]] - sh_r[:, [0, 2]], axis=1) / len_arm_r
+    horiz_wr_l = np.linalg.norm(wr_l[:, [0, 2]] - sh_l[:, [0, 2]], axis=1) / len_arm_l
+    horiz_hd_r = np.linalg.norm(hd_r[:, [0, 2]] - sh_r[:, [0, 2]], axis=1) / len_arm_r
+    horiz_hd_l = np.linalg.norm(hd_l[:, [0, 2]] - sh_l[:, [0, 2]], axis=1) / len_arm_l
 
-    # Ratio de extensión de la pierna (distancia cadera-tobillo / longitud total de la pierna)
-    leg_ext_r = np.linalg.norm(ankle_r - hip_r, axis=1) / len_leg_r
-    leg_ext_l = np.linalg.norm(ankle_l - hip_l, axis=1) / len_leg_l
+    horiz_pelvis_wr_r = np.linalg.norm(wr_r[:, [0, 2]], axis=1) / len_arm_r
+    horiz_pelvis_wr_l = np.linalg.norm(wr_l[:, [0, 2]], axis=1) / len_arm_l
+
+    arm_ext_r = np.linalg.norm(wr_r - sh_r, axis=1) / len_arm_r
+    arm_ext_l = np.linalg.norm(wr_l - sh_l, axis=1) / len_arm_l
+
+    # 2. Elevación vertical de muñecas y manos (-Y es hacia arriba en Azure Kinect)
+    elev_wr_r = -wr_r[:, 1] / torso_len
+    elev_wr_l = -wr_l[:, 1] / torso_len
+    elev_hd_r = -hd_r[:, 1] / torso_len
+    elev_hd_l = -hd_l[:, 1] / torso_len
+
+    wr_rel_chest_r = (chest[:, 1] - wr_r[:, 1]) / torso_len
+    wr_rel_chest_l = (chest[:, 1] - wr_l[:, 1]) / torso_len
+    wr_rel_head_r = (head[:, 1] - wr_r[:, 1]) / torso_len
+    wr_rel_head_l = (head[:, 1] - wr_l[:, 1]) / torso_len
+    min_wr_rel_chest = np.minimum(wr_rel_chest_r, wr_rel_chest_l)
+    mean_wr_rel_chest = 0.5 * (wr_rel_chest_r + wr_rel_chest_l)
+
+    # 3. Métricas verticales y horizontales de piernas/tobillos (Crouch vs Kick vs Idle)
+    ank_depth_r = ank_r[:, 1] / len_leg_r
+    ank_depth_l = ank_l[:, 1] / len_leg_l
+    ft_depth_r = ft_r[:, 1] / len_leg_r
+    ft_depth_l = ft_l[:, 1] / len_leg_l
+    kn_depth_r = kn_r[:, 1] / len_leg_r
+    kn_depth_l = kn_l[:, 1] / len_leg_l
+
+    max_ank_depth = np.maximum(ank_depth_r, ank_depth_l)
+    min_ank_depth = np.minimum(ank_depth_r, ank_depth_l)
+    ank_elevation_asym = ank_depth_l - ank_depth_r
+    ft_elevation_asym = ft_depth_l - ft_depth_r
+    kn_elevation_asym = kn_depth_l - kn_depth_r
+
+    horiz_ank_r = np.linalg.norm(ank_r[:, [0, 2]], axis=1) / len_leg_r
+    horiz_ank_l = np.linalg.norm(ank_l[:, [0, 2]], axis=1) / len_leg_l
+
+    # 4. Ángulos articulares 3D
+    ang_el_r = np.array([compute_angle_3d(sh_r[t], el_r[t], wr_r[t]) for t in range(n_f)])
+    ang_el_l = np.array([compute_angle_3d(sh_l[t], el_l[t], wr_l[t]) for t in range(n_f)])
+    ang_kn_r = np.array([compute_angle_3d(hip_r[t], kn_r[t], ank_r[t]) for t in range(n_f)])
+    ang_kn_l = np.array([compute_angle_3d(hip_l[t], kn_l[t], ank_l[t]) for t in range(n_f)])
+
+    # 5. Asimetrías bilaterales y distancia entre muñecas
+    horiz_wr_asym = horiz_wr_r - horiz_wr_l
+    horiz_hd_asym = horiz_hd_r - horiz_hd_l
+    arm_ext_asym = arm_ext_r - arm_ext_l
+    el_ang_asym = ang_el_r - ang_el_l
+    wr_dist = np.linalg.norm(wr_r - wr_l, axis=1) / torso_len
 
     features = {
-        "peak_vel_wrist_r": peak_wr_r,
-        "peak_vel_wrist_l": peak_wr_l,
-        "peak_vel_hand_r": peak_hd_r,
-        "peak_vel_hand_l": peak_hd_l,
-        "peak_vel_ankle_r": peak_ak_r,
-        "peak_vel_ankle_l": peak_ak_l,
-        "peak_vel_foot_r": peak_ft_r,
-        "peak_vel_foot_l": peak_ft_l,
-        "peak_vel_pelvis_y": float(np.max(np.abs(vel_pelvis_y))),
-        "net_disp_pelvis_y": float(disp_pelvis_y[-1]),
-        "max_disp_pelvis_y": float(np.max(disp_pelvis_y)),
-        "min_disp_pelvis_y": float(np.min(disp_pelvis_y)),
-        "net_reach_wrist_r_z": float(np.max(reach_wrist_r_z)),
-        "net_reach_wrist_l_z": float(np.max(reach_wrist_l_z)),
-        "net_reach_hand_r_z": float(np.max(reach_hand_r_z)),
-        "net_reach_hand_l_z": float(np.max(reach_hand_l_z)),
-        "net_reach_ankle_r_z": float(np.max(reach_ankle_r_z)),
-        "net_reach_ankle_l_z": float(np.max(reach_ankle_l_z)),
-        "max_elev_ankle_r": float(np.max(elev_ankle_r)),
-        "max_elev_ankle_l": float(np.max(elev_ankle_l)),
-        "max_elev_foot_r": float(np.max(elev_foot_r)),
-        "max_elev_foot_l": float(np.max(elev_foot_l)),
-        "max_elev_wrist_r": float(np.max(elev_wrist_r)),
-        "max_elev_wrist_l": float(np.max(elev_wrist_l)),
-        "min_elbow_angle_r": float(np.min(angles_elbow_r)),
-        "max_elbow_angle_r": float(np.max(angles_elbow_r)),
-        "min_elbow_angle_l": float(np.min(angles_elbow_l)),
-        "max_elbow_angle_l": float(np.max(angles_elbow_l)),
-        "min_knee_angle_r": float(np.min(angles_knee_r)),
-        "max_knee_angle_r": float(np.max(angles_knee_r)),
-        "min_knee_angle_l": float(np.min(angles_knee_l)),
-        "max_knee_angle_l": float(np.max(angles_knee_l)),
-        "torso_pitch_lean": torso_pitch,
-        "torso_roll_lean": torso_roll,
-        "arm_activity_asymmetry": float(arm_asym),
-        "leg_activity_asymmetry": float(leg_asym),
-        "min_wrist_distance": min_wrist_d,
-        "mean_wrist_distance": mean_wrist_d,
-        "min_hand_distance": min_hand_d,
-        "torso_length": torso_len,
-        "max_arm_extension_r": float(np.max(arm_ext_r)),
-        "max_arm_extension_l": float(np.max(arm_ext_l)),
-        "max_leg_extension_r": float(np.max(leg_ext_r)),
-        "max_leg_extension_l": float(np.max(leg_ext_l))
+        "horiz_wr_r_mean": float(np.mean(horiz_wr_r)),
+        "horiz_wr_r_max": float(np.max(horiz_wr_r)),
+        "horiz_wr_l_mean": float(np.mean(horiz_wr_l)),
+        "horiz_wr_l_max": float(np.max(horiz_wr_l)),
+        "horiz_hd_r_mean": float(np.mean(horiz_hd_r)),
+        "horiz_hd_r_max": float(np.max(horiz_hd_r)),
+        "horiz_hd_l_mean": float(np.mean(horiz_hd_l)),
+        "horiz_hd_l_max": float(np.max(horiz_hd_l)),
+        "horiz_pelvis_wr_r": float(np.mean(horiz_pelvis_wr_r)),
+        "horiz_pelvis_wr_l": float(np.mean(horiz_pelvis_wr_l)),
+        "arm_ext_r_mean": float(np.mean(arm_ext_r)),
+        "arm_ext_l_mean": float(np.mean(arm_ext_l)),
+        "elev_wr_r_mean": float(np.mean(elev_wr_r)),
+        "elev_wr_l_mean": float(np.mean(elev_wr_l)),
+        "elev_hd_r_mean": float(np.mean(elev_hd_r)),
+        "elev_hd_l_mean": float(np.mean(elev_hd_l)),
+        "wr_rel_chest_r": float(np.mean(wr_rel_chest_r)),
+        "wr_rel_chest_l": float(np.mean(wr_rel_chest_l)),
+        "wr_rel_head_r": float(np.mean(wr_rel_head_r)),
+        "wr_rel_head_l": float(np.mean(wr_rel_head_l)),
+        "min_wr_rel_chest": float(np.mean(min_wr_rel_chest)),
+        "mean_wr_rel_chest": float(np.mean(mean_wr_rel_chest)),
+        "ank_depth_r": float(np.mean(ank_depth_r)),
+        "ank_depth_l": float(np.mean(ank_depth_l)),
+        "ft_depth_r": float(np.mean(ft_depth_r)),
+        "ft_depth_l": float(np.mean(ft_depth_l)),
+        "kn_depth_r": float(np.mean(kn_depth_r)),
+        "kn_depth_l": float(np.mean(kn_depth_l)),
+        "max_ank_depth": float(np.mean(max_ank_depth)),
+        "min_ank_depth": float(np.mean(min_ank_depth)),
+        "ank_elevation_asym": float(np.mean(ank_elevation_asym)),
+        "ft_elevation_asym": float(np.mean(ft_elevation_asym)),
+        "kn_elevation_asym": float(np.mean(kn_elevation_asym)),
+        "horiz_ank_r": float(np.mean(horiz_ank_r)),
+        "horiz_ank_l": float(np.mean(horiz_ank_l)),
+        "elbow_angle_r": float(np.mean(ang_el_r)),
+        "elbow_angle_l": float(np.mean(ang_el_l)),
+        "knee_angle_r": float(np.mean(ang_kn_r)),
+        "knee_angle_l": float(np.mean(ang_kn_l)),
+        "horiz_wr_asym": float(np.mean(horiz_wr_asym)),
+        "horiz_hd_asym": float(np.mean(horiz_hd_asym)),
+        "arm_ext_asym": float(np.mean(arm_ext_asym)),
+        "elbow_angle_asym": float(np.mean(el_ang_asym)),
+        "wrist_distance_norm": float(np.mean(wr_dist))
     }
 
     return features
 
 
+def validate_posture_biomechanics(action_name: str, feats: dict) -> bool:
+    """
+    Filtro biomecánico de seguridad para descartar falsos positivos cuando el jugador
+    entra en escena, camina o tiene los brazos relajados a los lados.
+    """
+    if action_name == "idle":
+        return True
+
+    horiz_r = feats.get("horiz_wr_r_mean", 0.0)
+    horiz_l = feats.get("horiz_wr_l_mean", 0.0)
+    wr_chest_r = feats.get("wr_rel_chest_r", 0.0)
+    wr_chest_l = feats.get("wr_rel_chest_l", 0.0)
+    min_wr_chest = feats.get("min_wr_rel_chest", -1.0)
+    mean_wr_chest = feats.get("mean_wr_rel_chest", -1.0)
+    max_ank_d = feats.get("max_ank_depth", 0.90)
+    ank_asym = feats.get("ank_elevation_asym", 0.0)
+
+    if action_name == "punch_right":
+        # Puño derecho extendido horizontalmente y por encima de la cintura
+        return horiz_r >= 0.48 and (horiz_r - horiz_l) >= 0.04 and wr_chest_r >= -0.35
+
+    if action_name == "punch_left":
+        # Puño izquierdo extendido horizontalmente y por encima de la cintura
+        return horiz_l >= 0.50 and (horiz_l - horiz_r) >= 0.04 and wr_chest_l >= -0.35
+
+    if action_name == "kick_right":
+        # Tobillo derecho más elevado que el izquierdo (en Idle está entre -0.03 y +0.04)
+        return ank_asym >= 0.06
+
+    if action_name == "kick_left":
+        # Tobillo izquierdo más elevado que el derecho (en Idle está entre -0.03 y +0.04)
+        return ank_asym <= -0.06
+
+    if action_name == "crouch":
+        # Pelvis descendida respecto a ambos tobillos (en Idle es >= 0.97, en Crouch <= 0.83)
+        return max_ank_d <= 0.86
+
+    if action_name == "block":
+        # Ambos brazos levantados frente al pecho/cabeza y de pie
+        return mean_wr_chest >= 0.35 and max_ank_d >= 0.80
+
+    return True
+
+
 def load_clip_from_csv(csv_path: str) -> np.ndarray:
     """
     Carga un archivo CSV grabado por el visualizador y lo convierte a un array (N_frames, 32, 3).
-    Soporta formato con columnas etiquetadas (joint_0_x...) o formato tabular numérico directo.
     """
     df = pd.read_csv(csv_path)
 
-    # Seleccionar columnas de articulaciones o filtrar columnas de metadatos
     joint_cols = [c for c in df.columns if c.startswith("joint_")]
     if joint_cols:
         data_df = df[joint_cols]
     else:
-        meta_cols = [c for c in ["frame_idx", "timestamp", "timestamp_s", "subject_id", "subject_name", "subject_height_cm", "subject_gender", "action_id", "label"] if c in df.columns]
+        meta_cols = [
+            c for c in [
+                "frame_idx", "timestamp", "timestamp_s", "subject_id",
+                "subject_name", "subject_height_cm", "subject_gender",
+                "action_id", "label"
+            ] if c in df.columns
+        ]
         data_df = df.drop(columns=meta_cols)
 
     arr = data_df.values.astype(np.float32)

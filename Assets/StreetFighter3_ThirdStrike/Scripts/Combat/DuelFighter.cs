@@ -249,7 +249,7 @@ public class DuelFighter : MonoBehaviour
         int index = (int)(motionTime * 14);
         if (attack >= 0) index = (int)(Mathf.Clamp01(attackTime / AttackDuration) * sequence.Length);
         else if (motion == "jump_neutral") index = (int)(Mathf.Clamp01((JumpSpeed - body.linearVelocity.y) / (2 * JumpSpeed)) * (sequence.Length - 1));
-        loop &= motion == "idle_stance" || motion == "walk_forward" || motion == "walk_backward";
+        loop &= motion == "idle_stance" || motion == "walk_forward" || motion == "walk_backward" || motion == "crouch_idle" || motion == "block_standing";
         visual.sprite = sequence[loop ? index % sequence.Length : Mathf.Min(index, sequence.Length - 1)];
         if (visual.sprite == null) return;
         visual.flipX = facing < 0;

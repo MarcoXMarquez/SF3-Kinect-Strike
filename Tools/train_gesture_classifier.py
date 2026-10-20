@@ -38,6 +38,7 @@ from gesture_feature_extractor import (
     ACTION_ID_TO_NAME,
     FEATURE_NAMES,
     extract_clip_features,
+    extract_peak_pose_window,
     load_clip_from_csv
 )
 
@@ -231,7 +232,8 @@ def build_dataset_features(data_dir: str, processed_csv_path: str) -> pd.DataFra
                     continue
 
                 frames = load_clip_from_csv(full_path)
-                feats = extract_clip_features(frames, fps=30.0)
+                peak_window = extract_peak_pose_window(frames, action_name, window_size=6)
+                feats = extract_clip_features(peak_window, fps=30.0, apply_filter=False)
 
                 row = {
                     "subject_id": subject_id,
@@ -276,20 +278,20 @@ def train_and_export(df: pd.DataFrame, output_onnx: str, unity_output: str = Non
 
     # 1. Validación cruzada agrupada por sujeto (GroupKFold)
     # Evalúa si el modelo generaliza con personas completamente nuevas no vistas en entrenamiento
-    n_splits = min(5, len(np.unique(subjects)))
+    n_splits = min(7, len(np.unique(subjects)))
     if n_splits > 1:
         gkf = GroupKFold(n_splits=n_splits)
-        clf_eval = RandomForestClassifier(n_estimators=100, max_depth=12, random_state=42)
+        clf_eval = RandomForestClassifier(n_estimators=200, max_depth=10, random_state=42)
         cv_scores = cross_val_score(clf_eval, X, y, groups=subjects, cv=gkf, scoring="accuracy")
         print(f"🎯 Exactitud Cross-Validation por Grupos (GroupKFold {n_splits} splits): {cv_scores.mean()*100:.2f}% ± {cv_scores.std()*100:.2f}%")
         print(f"   Scores individuales: {[round(s * 100, 1) for s in cv_scores]}%")
 
-    # 2. Entrenamiento del modelo final sobre todo el dataset
+    # 2. Entrenamiento del modelo final sobre todo el dataset de poses sostenidas
     clf = RandomForestClassifier(
-        n_estimators=120,
-        max_depth=14,
-        min_samples_split=4,
-        min_samples_leaf=2,
+        n_estimators=200,
+        max_depth=10,
+        min_samples_split=2,
+        min_samples_leaf=1,
         random_state=42,
         n_jobs=-1
     )

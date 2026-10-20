@@ -1,12 +1,10 @@
 """
-Street Fighter III: 3rd Strike - Live Azure Kinect Gesture & Fast Transition Classifier
+Street Fighter III: 3rd Strike - Live Azure Kinect Static Posture Classifier
 Detector somatosensorial en vivo con soporte para hardware físico Azure Kinect DK y simulador:
 - Esqueleto Dual en tiempo real (Vista Frontal X-Y + Vista Sagital Z-Y de Perfil).
-- Predicción cinemática continua con el modelo Random Forest actualizado con las 42 transiciones.
-- Radar de Transiciones Rápidas y Cancel Windows (mide latencia A -> B en ms y fluidez de combo).
-- Gráfico de barras con porcentajes de precisión exactos (%) para las 7 posturas de combate.
-- Auditor de sesgos y ambigüedades en vivo.
-- Telemetría cinemática de extremidades (velocidad de muñecas/tobillos en m/s, distancia de guardia, altura de pelvis).
+- Clasificación de Poses Sostenidas (Held Poses) invariante a la velocidad con 44 características geométricas.
+- Periodo de Calibración/Estabilización inicial (1.5s) al detectar al jugador para evitar animaciones espontáneas.
+- Validación biomecánica anti-falsos positivos y activación continua tras 0.5s de sostener la postura.
 """
 
 import os
@@ -28,14 +26,15 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-# Importar módulos cinemáticos locales
+# Importar módulos posturales locales
 sys.path.append(os.path.dirname(__file__))
 from gesture_feature_extractor import (
     ACTION_CLASSES,
     ACTION_ID_TO_NAME,
     ACTION_NAME_TO_ID,
     FEATURE_NAMES,
-    extract_clip_features
+    extract_clip_features,
+    validate_posture_biomechanics
 )
 
 # Intentar importar pykinect_azure
@@ -87,93 +86,73 @@ class MockKinematicSensor:
         self._init_base_pose()
         self.current_action = "idle"
         self.target_action = "idle"
-        self.transition_frame = 0
-        self.transition_total = 40
-        self.is_transitioning = False
 
     def _init_base_pose(self):
-        self.base_skeleton[0] = [0.0, 0.95, 2.2]     # Pelvis
-        self.base_skeleton[1] = [0.0, 0.80, 2.2]     # Spine Navel
-        self.base_skeleton[2] = [0.0, 0.65, 2.2]     # Spine Chest
-        self.base_skeleton[3] = [0.0, 0.50, 2.2]     # Neck
-        self.base_skeleton[26] = [0.0, 0.35, 2.2]    # Head
-        self.base_skeleton[5] = [-0.18, 0.52, 2.2]   # Shoulder Left
-        self.base_skeleton[6] = [-0.26, 0.72, 2.15]  # Elbow Left
-        self.base_skeleton[7] = [-0.24, 0.88, 2.05]  # Wrist Left
-        self.base_skeleton[8] = [-0.24, 0.96, 2.00]  # Hand Left
-        self.base_skeleton[12] = [0.18, 0.52, 2.2]   # Shoulder Right
-        self.base_skeleton[13] = [0.26, 0.72, 2.15]  # Elbow Right
-        self.base_skeleton[14] = [0.24, 0.88, 2.05]  # Wrist Right
-        self.base_skeleton[15] = [0.24, 0.96, 2.00]  # Hand Right
-        self.base_skeleton[18] = [-0.10, 0.98, 2.2]  # Hip Left
-        self.base_skeleton[19] = [-0.12, 1.35, 2.22] # Knee Left
-        self.base_skeleton[20] = [-0.13, 1.75, 2.25] # Ankle Left
-        self.base_skeleton[21] = [-0.13, 1.85, 2.18] # Foot Left
-        self.base_skeleton[22] = [0.10, 0.98, 2.2]   # Hip Right
-        self.base_skeleton[23] = [0.12, 1.35, 2.22]  # Knee Right
-        self.base_skeleton[24] = [0.13, 1.75, 2.25]  # Ankle Right
-        self.base_skeleton[25] = [0.13, 1.85, 2.18]  # Foot Right
+        # Coordenadas en metros estilo Azure Kinect (+Y hacia abajo, +Z profundidad)
+        self.base_skeleton[0] = [0.0, 0.05, 2.20]     # Pelvis
+        self.base_skeleton[1] = [0.0, -0.12, 2.19]    # Spine Navel
+        self.base_skeleton[2] = [0.0, -0.28, 2.18]    # Spine Chest
+        self.base_skeleton[3] = [0.0, -0.44, 2.18]    # Neck
+        self.base_skeleton[26] = [0.0, -0.58, 2.16]   # Head
+        # Brazo izquierdo en guardia neutral relajada
+        self.base_skeleton[5] = [-0.18, -0.38, 2.18]  # Shoulder Left
+        self.base_skeleton[6] = [-0.24, -0.12, 2.12]  # Elbow Left
+        self.base_skeleton[7] = [-0.18, -0.24, 1.98]  # Wrist Left
+        self.base_skeleton[8] = [-0.16, -0.26, 1.92]  # Hand Left
+        # Brazo derecho en guardia neutral relajada
+        self.base_skeleton[12] = [0.18, -0.38, 2.18]  # Shoulder Right
+        self.base_skeleton[13] = [0.24, -0.12, 2.12]  # Elbow Right
+        self.base_skeleton[14] = [0.18, -0.22, 2.02]  # Wrist Right
+        self.base_skeleton[15] = [0.16, -0.24, 1.96]  # Hand Right
+        # Piernas de pie
+        self.base_skeleton[18] = [-0.10, 0.05, 2.20]  # Hip Left
+        self.base_skeleton[19] = [-0.12, 0.44, 2.20]  # Knee Left
+        self.base_skeleton[20] = [-0.13, 0.82, 2.22]  # Ankle Left
+        self.base_skeleton[21] = [-0.13, 0.88, 2.12]  # Foot Left
+        self.base_skeleton[22] = [0.10, 0.05, 2.20]   # Hip Right
+        self.base_skeleton[23] = [0.12, 0.44, 2.20]   # Knee Right
+        self.base_skeleton[24] = [0.13, 0.82, 2.22]   # Ankle Right
+        self.base_skeleton[25] = [0.13, 0.88, 2.12]   # Foot Right
 
     def trigger_action(self, target_act: str):
-        self.current_action = self.target_action
+        self.current_action = target_act
         self.target_action = target_act
-        self.transition_frame = 0
-        self.is_transitioning = True
 
     def get_frame(self) -> np.ndarray:
         frame = self.base_skeleton.copy()
         t = time.time()
-        # Micro-respiración
-        frame[:, 1] += np.sin(t * 2.2) * 0.006
+        frame[:, 1] += np.sin(t * 2.2) * 0.003
 
-        if self.is_transitioning:
-            self.transition_frame += 1
-            progress = min(1.0, self.transition_frame / float(self.transition_total))
-            intensity = np.sin(np.pi * progress)
-
-            if progress >= 1.0:
-                self.is_transitioning = False
-                self.current_action = self.target_action
-        else:
-            intensity = 0.0
-
-        act = self.target_action if self.is_transitioning else self.current_action
-        # Aplicar deformación cinemática según acción
+        act = self.target_action
         if act == "punch_right":
-            p = intensity if self.is_transitioning else 1.0
-            frame[14, 2] -= 0.65 * p
-            frame[15, 2] -= 0.72 * p
-            frame[14, 1] -= 0.22 * p
+            frame[13] = [0.22, -0.36, 1.92]
+            frame[14] = [0.20, -0.38, 1.62]
+            frame[15] = [0.20, -0.38, 1.54]
         elif act == "punch_left":
-            p = intensity if self.is_transitioning else 1.0
-            frame[7, 2] -= 0.65 * p
-            frame[8, 2] -= 0.72 * p
-            frame[7, 1] -= 0.22 * p
+            frame[6] = [-0.22, -0.36, 1.92]
+            frame[7] = [-0.20, -0.38, 1.62]
+            frame[8] = [-0.20, -0.38, 1.54]
         elif act == "kick_right":
-            p = intensity if self.is_transitioning else 1.0
-            frame[24, 2] -= 0.75 * p
-            frame[25, 2] -= 0.85 * p
-            frame[24, 1] -= 0.60 * p
-            frame[25, 1] -= 0.65 * p
+            frame[23] = [0.14, 0.15, 1.92]
+            frame[24] = [0.15, 0.25, 1.65]
+            frame[25] = [0.15, 0.22, 1.55]
         elif act == "kick_left":
-            p = intensity if self.is_transitioning else 1.0
-            frame[20, 2] -= 0.75 * p
-            frame[21, 2] -= 0.85 * p
-            frame[20, 1] -= 0.60 * p
-            frame[21, 1] -= 0.65 * p
+            frame[19] = [-0.14, 0.15, 1.92]
+            frame[20] = [-0.15, 0.25, 1.65]
+            frame[21] = [-0.15, 0.22, 1.55]
         elif act == "crouch":
-            p = intensity if self.is_transitioning else 1.0
-            frame[0, 1] += 0.35 * p
-            frame[1, 1] += 0.35 * p
-            frame[2, 1] += 0.32 * p
-            frame[23, 1] += 0.15 * p
-            frame[19, 1] += 0.15 * p
+            # Pelvis y torso bajan (+Y), tobillos permanecen en el piso
+            frame[[0, 1, 2, 3, 5, 6, 7, 8, 12, 13, 14, 15, 18, 22, 26], 1] += 0.36
+            frame[19] = [-0.18, 0.58, 2.02]
+            frame[23] = [0.18, 0.58, 2.02]
         elif act == "block":
-            p = intensity if self.is_transitioning else 1.0
-            frame[14, 1] -= 0.45 * p
-            frame[7, 1] -= 0.45 * p
-            frame[14, 0] -= 0.14 * p
-            frame[7, 0] += 0.14 * p
+            # Ambos brazos arriba cubriendo pecho y cabeza
+            frame[13] = [0.22, -0.28, 1.95]
+            frame[14] = [0.10, -0.48, 1.90]
+            frame[15] = [0.08, -0.54, 1.88]
+            frame[6] = [-0.22, -0.28, 1.95]
+            frame[7] = [-0.10, -0.48, 1.90]
+            frame[8] = [-0.08, -0.54, 1.88]
 
         return frame
 
@@ -199,7 +178,7 @@ def draw_skeleton(canvas, joint_screen_pts):
 # PROGRAMA PRINCIPAL
 # -----------------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(description="SF3 Live Azure Kinect Gesture & Fast Transition Classifier")
+    parser = argparse.ArgumentParser(description="SF3 Live Azure Kinect Static Posture Classifier")
     parser.add_argument("--mock", action="store_true", default=False,
                         help="Forzar modo simulador procedural (sin sensor físico)")
     parser.add_argument("--model", type=str, default=os.path.join(os.path.dirname(__file__), "gesture_classifier.joblib"),
@@ -210,12 +189,16 @@ def main():
                         help="Puerto UDP de destino para Unity (default: 5005)")
     parser.add_argument("--hold-time", type=float, default=0.5,
                         help="Tiempo en segundos manteniendo una pose continua para activarla en Unity (default: 0.5s)")
+    parser.add_argument("--warmup-time", type=float, default=1.5,
+                        help="Tiempo de estabilización inicial al detectar cuerpo para evitar animaciones falsas (default: 1.5s)")
+    parser.add_argument("--min-conf", type=float, default=0.48,
+                        help="Confianza mínima requerida del clasificador postural (default: 0.48)")
     parser.add_argument("--no-stream", action="store_true", default=False,
                         help="Desactivar transmisión de paquetes UDP a Unity")
     args = parser.parse_args()
 
     print("=" * 80)
-    print("🥊 SF3 - DETECTOR EN VIVO: CLASIFICADOR DE POSES & RADAR DE TRANSICIONES RÁPIDAS")
+    print("🥊 SF3 - DETECTOR EN VIVO: CLASIFICADOR GEOMÉTRICO DE POSES SOSTENIDAS")
     print("=" * 80)
 
     # 1. Cargar modelo ML entrenado
@@ -278,43 +261,34 @@ def main():
     last_stream_time = 0.0
 
     # 3. Variables de ventana e inferencia
-    WINDOW_NAME = "KINET STRIKE - Live Gesture & Transition Studio"
+    WINDOW_NAME = "KINECT STRIKE - Static Posture Studio"
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_AUTOSIZE)
 
     WIDTH = 1380
     HEIGHT = 780
-    LEFT_W = 750   # Área de esqueletos (Frontal + Sagital)
-    RIGHT_W = 630  # Panel HUD de probabilidades, transiciones y métricas
+    LEFT_W = 750
+    RIGHT_W = 630
 
-    rolling_buffer = collections.deque(maxlen=35)
+    rolling_buffer = collections.deque(maxlen=12)
     last_ml_time = 0.0
 
-    # Estado actual y variables de transición
+    # Estado actual
     pred_action = "idle"
     pred_conf = 1.0
     pred_probs = np.zeros(len(model_classes), dtype=np.float32)
     current_feats = {}
 
-    prev_action = "idle"
-    transition_start_time = time.time()
-    last_transition_event = {
-        "from": "idle",
-        "to": "idle",
-        "latency_ms": 0,
-        "timestamp": time.time() - 10.0
-    }
-    combo_history = collections.deque(["idle"], maxlen=5)
+    # Estabilización inicial cuando el Kinect detecta un cuerpo por primera vez
+    body_detected_since = 0.0
+    warmup_duration = max(0.5, float(args.warmup_time))
+    is_calibrating = True
 
-    last_event_action = "idle"
-    last_event_time = 0.0
-    last_event_conf = 0.0
-
-    # Seguimiento de Pose Sostenida (Mínimo 2 a 3 segundos para activar ataque continuo)
+    # Seguimiento de Pose Sostenida (0.5s para activar ataque continuo)
     current_held_action = "idle"
     hold_start_time = time.time()
     held_duration = 0.0
     pose_activated = False
-    required_hold_time = max(0.5, float(args.hold_time))
+    required_hold_time = max(0.1, float(args.hold_time))
 
     fps_timer = time.time()
     frame_count = 0
@@ -322,18 +296,19 @@ def main():
 
     print("\n🟢 TRANSMISIÓN EN VIVO INICIADA.")
     if use_mock:
-        print("🎮 Teclas numéricas en ventana para probar transiciones:")
+        print("🎮 Teclas numéricas en ventana para probar poses sostenidas:")
         print("   [1] Idle  [2] Puño Der  [3] Puño Izq  [4] Patada Der  [5] Patada Izq  [6] Crouch  [7] Block")
     else:
-        print("🥋 Colócate frente al sensor a 1.8m - 2.8m y ejecuta golpes y combos rápidos.")
+        print("🥋 Colócate frente al sensor a 1.8m - 2.8m y mantén cualquier pose de combate por 0.5s.")
     print("Presiona [Q] o [ESC] para salir.\n")
 
     try:
         while True:
             frame_count += 1
-            if time.time() - fps_timer >= 1.0:
-                display_fps = frame_count / (time.time() - fps_timer)
-                fps_timer = time.time()
+            now = time.time()
+            if now - fps_timer >= 1.0:
+                display_fps = frame_count / (now - fps_timer)
+                fps_timer = now
                 frame_count = 0
 
             # Obtener articulaciones
@@ -355,87 +330,93 @@ def main():
                 joints_xyz_m = mock_sensor.get_frame()
 
             if has_body and joints_xyz_m is not None:
+                if body_detected_since <= 0.0:
+                    body_detected_since = now
+                    rolling_buffer.clear()
                 rolling_buffer.append(joints_xyz_m.copy())
+                is_calibrating = (now - body_detected_since) < warmup_duration
+            else:
+                body_detected_since = 0.0
+                is_calibrating = True
+                rolling_buffer.clear()
+                pred_action = "idle"
+                pred_conf = 1.0
+                current_held_action = "idle"
+                held_duration = 0.0
+                pose_activated = False
 
             # -------------------------------------------------------------
-            # MOTOR DE INFERENCIA CINEMÁTICA Y RADAR DE TRANSICIONES RÁPIDAS
+            # MOTOR DE INFERENCIA DE POSTURA ESTÁTICA (CADA ~50ms)
             # -------------------------------------------------------------
-            now = time.time()
-            if has_body and len(rolling_buffer) >= 20 and (now - last_ml_time) > 0.065:
+            if has_body and len(rolling_buffer) >= 4 and (now - last_ml_time) > 0.050:
                 try:
                     buf_arr = np.array(rolling_buffer, dtype=np.float32)
-
-                    # Si el buffer aún no tiene 35, replicar los primeros para completar ventana
-                    if len(buf_arr) < 35:
-                        pad_len = 35 - len(buf_arr)
-                        buf_arr = np.vstack([np.repeat(buf_arr[:1], pad_len, axis=0), buf_arr])
-
                     current_feats = extract_clip_features(buf_arr, fps=30.0)
                     feat_vec = np.array([[current_feats[fn] for fn in FEATURE_NAMES]], dtype=np.float32)
 
-                    # Medir velocidad en ventana reciente (últimos 6 frames ~ 200 ms)
-                    recent_frames = buf_arr[-6:]
-                    dt_r = 1.0 / 30.0
-                    recent_v_wr_r = np.max(np.linalg.norm(np.diff(recent_frames[:, 14, :], axis=0), axis=1)) / dt_r
-                    recent_v_wr_l = np.max(np.linalg.norm(np.diff(recent_frames[:, 7, :], axis=0), axis=1)) / dt_r
-                    recent_v_ank_r = np.max(np.linalg.norm(np.diff(recent_frames[:, 24, :], axis=0), axis=1)) / dt_r
-                    recent_v_ank_l = np.max(np.linalg.norm(np.diff(recent_frames[:, 20, :], axis=0), axis=1)) / dt_r
-                    recent_v_pelvis = np.max(np.abs(np.diff(recent_frames[:, 0, 1]))) / dt_r
-
-                    # ¿Extremidades en reposo instantáneo?
-                    is_recent_calm = (
-                        recent_v_wr_r < 0.40 and
-                        recent_v_wr_l < 0.40 and
-                        recent_v_ank_r < 0.40 and
-                        recent_v_ank_l < 0.40 and
-                        recent_v_pelvis < 0.32
-                    )
-
-                    # Inferencia directa con el clasificador Random Forest (Dataset de poses en solitario)
                     raw_probs = model.predict_proba(feat_vec)[0]
                     sorted_p_idx = np.argsort(raw_probs)[::-1]
                     raw_top_idx = sorted_p_idx[0]
                     raw_class_id = model_classes[raw_top_idx]
-                    raw_action = ACTION_ID_TO_NAME.get(raw_class_id, "unknown")
+                    raw_action = ACTION_ID_TO_NAME.get(raw_class_id, "idle")
                     raw_conf = float(raw_probs[raw_top_idx])
 
-                    pred_action = raw_action
-                    pred_conf = raw_conf
                     pred_probs = raw_probs.copy()
 
-                    # ---------------------------------------------------------
-                    # EVALUADOR DE POSE SOSTENIDA (2 a 3 segundos para activar ataque continuo)
-                    # ---------------------------------------------------------
-                    if pred_action != current_held_action:
-                        # Si el jugador cambia de postura física o regresa a reposo
-                        current_held_action = pred_action
+                    # 1. Bloqueo de seguridad durante la estabilización inicial del cuerpo (1.5s)
+                    if is_calibrating:
+                        pred_action = "idle"
+                        pred_conf = 1.0
+                        current_held_action = "idle"
                         hold_start_time = now
                         held_duration = 0.0
                         pose_activated = False
                     else:
-                        held_duration = now - hold_start_time
-                        if held_duration >= required_hold_time and pred_action != "idle":
-                            if not pose_activated:
-                                print(f"🔥 [POSE FIJADA]: {pred_action.upper()} sostenida por {held_duration:.1f}s -> ¡Ataque continuo en Unity!")
-                            pose_activated = True
+                        # 2. Validación de umbral de confianza + Geometría Biomecánica
+                        is_biomechanically_valid = validate_posture_biomechanics(raw_action, current_feats)
+                        if raw_action != "idle" and (raw_conf < args.min_conf or not is_biomechanically_valid):
+                            pred_action = "idle"
+                            pred_conf = float(raw_probs[list(model_classes).index(0)]) if 0 in model_classes else raw_conf
+                        else:
+                            pred_action = raw_action
+                            pred_conf = raw_conf
+
+                        # 3. Evaluador de Pose Sostenida (0.5s para activar bucle continuo en Unity)
+                        if pred_action != current_held_action:
+                            current_held_action = pred_action
+                            hold_start_time = now
+                            held_duration = 0.0
+                            pose_activated = False
+                        else:
+                            if pred_action != "idle":
+                                held_duration = now - hold_start_time
+                                if held_duration >= required_hold_time:
+                                    if not pose_activated:
+                                        print(f"🔥 [POSE FIJADA]: {pred_action.upper()} ({pred_conf*100:.0f}%) sostenida por {held_duration:.2f}s -> ¡Bucle continuo en Unity!")
+                                    pose_activated = True
+                            else:
+                                held_duration = 0.0
+                                pose_activated = False
 
                     last_ml_time = now
-                except Exception as ex:
+                except Exception:
                     pass
 
             # -------------------------------------------------------------
-            # TRANSMISIÓN UDP EN TIEMPO REAL HACIA UNITY (~30-33 FPS)
+            # TRANSMISIÓN UDP EN TIEMPO REAL HACIA UNITY (~30 FPS)
             # -------------------------------------------------------------
             if stream_sock is not None and (now - last_stream_time) >= 0.030:
                 last_stream_time = now
+                # Mientras no haya cumplido el tiempo de retención o esté calibrando,
+                # enviamos la acción actual pero marcamos is_holding_active según corresponda
                 payload = {
-                    "action": pred_action,
-                    "action_id": int(ACTION_NAME_TO_ID.get(pred_action, 0)),
+                    "action": "idle" if is_calibrating else pred_action,
+                    "action_id": 0 if is_calibrating else int(ACTION_NAME_TO_ID.get(pred_action, 0)),
                     "confidence": float(round(pred_conf, 3)),
-                    "has_body": bool(has_body),
+                    "has_body": bool(has_body and not is_calibrating),
                     "timestamp": float(now),
                     "hold_duration": float(round(held_duration, 2)),
-                    "is_holding_active": bool(pose_activated),
+                    "is_holding_active": bool(pose_activated and not is_calibrating),
                     "z_distance": float(round(joints_xyz_m[0, 2], 2)) if (has_body and joints_xyz_m is not None) else 0.0
                 }
                 try:
@@ -450,7 +431,6 @@ def main():
             canvas = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
             canvas[:] = (18, 22, 28)
 
-            # Separador vertical
             cv2.line(canvas, (LEFT_W, 0), (LEFT_W, HEIGHT), (50, 60, 75), 2)
 
             # -------------------------------------------------------------
@@ -458,7 +438,7 @@ def main():
             # -------------------------------------------------------------
             cv2.rectangle(canvas, (0, 0), (LEFT_W, 46), (28, 35, 48), -1)
             dist_z_str = f"Distancia Z: {joints_xyz_m[0, 2]:.2f}m" if (has_body and joints_xyz_m is not None) else "Buscando jugador..."
-            z_col = (0, 255, 200) if has_body and joints_xyz_m is not None and (1.7 <= joints_xyz_m[0, 2] <= 2.8) else (0, 180, 255)
+            z_col = (0, 255, 200) if has_body and joints_xyz_m is not None and (1.5 <= joints_xyz_m[0, 2] <= 3.0) else (0, 180, 255)
 
             mode_tag = "SIMULADOR (--mock)" if use_mock else "AZURE KINECT DK (ONLINE)"
             stream_tag = f"UDP: {args.unity_ip}:{args.unity_port}" if stream_sock is not None else "UDP: OFF"
@@ -473,7 +453,6 @@ def main():
                 cy = 410
                 half_left = LEFT_W // 2
 
-                # Línea divisoria Frontal / Sagital
                 cv2.line(canvas, (half_left, 46), (half_left, HEIGHT), (40, 48, 60), 1)
 
                 # 1. Vista Frontal (X-Y)
@@ -482,9 +461,9 @@ def main():
                             cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 255, 200), 1, cv2.LINE_AA)
                 f_pts = {}
                 for j_name, j_id in SIMPLIFIED_JOINTS.items():
-                    rx = (joints_xyz_m[j_id, 0] - pelvis_pos[0]) * scale
-                    ry = (joints_xyz_m[j_id, 1] - pelvis_pos[1]) * scale
-                    f_pts[j_name] = np.array([cx_front + rx, cy + ry])
+                    rx_pt = (joints_xyz_m[j_id, 0] - pelvis_pos[0]) * scale
+                    ry_pt = (joints_xyz_m[j_id, 1] - pelvis_pos[1]) * scale
+                    f_pts[j_name] = np.array([cx_front + rx_pt, cy + ry_pt])
                 draw_skeleton(canvas, f_pts)
 
                 # 2. Vista Sagital / Perfil (Z-Y)
@@ -493,69 +472,80 @@ def main():
                             cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 200, 255), 1, cv2.LINE_AA)
                 s_pts = {}
                 for j_name, j_id in SIMPLIFIED_JOINTS.items():
-                    rz = (joints_xyz_m[j_id, 2] - pelvis_pos[2]) * scale
-                    ry = (joints_xyz_m[j_id, 1] - pelvis_pos[1]) * scale
-                    s_pts[j_name] = np.array([cx_sag + rz, cy + ry])
+                    rz_pt = (joints_xyz_m[j_id, 2] - pelvis_pos[2]) * scale
+                    ry_pt = (joints_xyz_m[j_id, 1] - pelvis_pos[1]) * scale
+                    s_pts[j_name] = np.array([cx_sag + rz_pt, cy + ry_pt])
                 draw_skeleton(canvas, s_pts)
             else:
-                cv2.putText(canvas, "PÁRATE FRENTE AL AZURE KINECT PARA INICIAR", (80, 380),
+                cv2.putText(canvas, "PARATE FRENTE AL AZURE KINECT PARA INICIAR", (80, 380),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.62, (0, 150, 255), 2, cv2.LINE_AA)
 
             # -------------------------------------------------------------
-            # PANEL DERECHO: DETECCIÓN, RADAR DE TRANSICIONES Y PROBABILIDADES
+            # PANEL DERECHO: DETECCIÓN, BARRA DE RETENCIÓN Y PROBABILIDADES
             # -------------------------------------------------------------
             rx = LEFT_W + 16
 
             # 1. TARJETA PRINCIPAL DE DETECCIÓN
             card_h = 92
             cv2.rectangle(canvas, (LEFT_W + 12, 12), (WIDTH - 12, 12 + card_h), (25, 32, 45), -1)
-            conf_col = (0, 240, 120) if pred_conf >= 0.75 else ((0, 210, 255) if pred_conf >= 0.50 else (0, 100, 255))
+            conf_col = (0, 190, 255) if is_calibrating else ((0, 240, 120) if pred_conf >= 0.70 else (0, 210, 255))
             cv2.rectangle(canvas, (LEFT_W + 12, 12), (WIDTH - 12, 12 + card_h), conf_col, 2)
 
-            cv2.putText(canvas, "MOVIMIENTO DETECTADO EN VIVO:", (rx, 35),
+            cv2.putText(canvas, "POSTURA DETECTADA EN VIVO:", (rx, 35),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.42, (170, 185, 205), 1, cv2.LINE_AA)
-            cv2.putText(canvas, pred_action.upper(), (rx, 72),
-                        cv2.FONT_HERSHEY_DUPLEX, 1.05, conf_col, 2, cv2.LINE_AA)
+            disp_title = "CALIBRANDO..." if is_calibrating else pred_action.upper()
+            cv2.putText(canvas, disp_title, (rx, 72),
+                        cv2.FONT_HERSHEY_DUPLEX, 1.0, conf_col, 2, cv2.LINE_AA)
 
-            conf_str = f"Precisión: {pred_conf*100:.1f}%"
+            conf_str = f"Certeza: {pred_conf*100:.1f}%"
             cv2.putText(canvas, conf_str, (WIDTH - 230, 72),
-                        cv2.FONT_HERSHEY_DUPLEX, 0.65, (255, 255, 255), 2, cv2.LINE_AA)
+                        cv2.FONT_HERSHEY_DUPLEX, 0.62, (255, 255, 255), 2, cv2.LINE_AA)
 
-            # 2. CRONÓMETRO DE POSE SOSTENIDA (2 A 3 SEGUNDOS PARA ACTIVAR ATAQUE CONTINUO)
+            # 2. CRONÓMETRO DE POSE SOSTENIDA (0.5s PARA ACTIVAR BUCLE CONTINUO)
             trans_y = 12 + card_h + 10
             trans_h = 74
             cv2.rectangle(canvas, (LEFT_W + 12, trans_y), (WIDTH - 12, trans_y + trans_h), (22, 28, 38), -1)
 
-            hold_bdr_col = (0, 255, 120) if pose_activated else ((0, 190, 255) if held_duration > 0.5 else (60, 70, 85))
+            hold_bdr_col = (0, 255, 120) if pose_activated else ((0, 190, 255) if held_duration > 0.1 else (60, 70, 85))
             cv2.rectangle(canvas, (LEFT_W + 12, trans_y), (WIDTH - 12, trans_y + trans_h), hold_bdr_col, 2 if pose_activated else 1)
 
-            pct_hold = min(1.0, held_duration / max(0.1, required_hold_time))
-            bar_w = int((WIDTH - LEFT_W - 50) * pct_hold)
-            bar_color = (0, 240, 100) if pose_activated else (0, 200, 255)
-            # Barra de progreso de pose sostenida
-            cv2.rectangle(canvas, (rx, trans_y + 46), (rx + bar_w, trans_y + 62), bar_color, -1)
-            cv2.rectangle(canvas, (rx, trans_y + 46), (WIDTH - 30, trans_y + 62), (70, 80, 95), 1)
-
-            if pred_action != "idle":
-                if pose_activated:
-                    cv2.putText(canvas, f"🔥 ¡POSE FIJADA! REPITIENDO ATAQUE EN UNITY ({held_duration:.1f}s)",
-                                (rx, trans_y + 24), cv2.FONT_HERSHEY_DUPLEX, 0.44, (0, 255, 120), 1, cv2.LINE_AA)
-                    cv2.putText(canvas, "Bucle continuo activo. Cambiar de posición detiene el ataque.",
-                                (rx, trans_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (180, 230, 200), 1, cv2.LINE_AA)
-                else:
-                    cv2.putText(canvas, f"⏱️ MANTÉN LA POSE: {held_duration:.1f}s / {required_hold_time:.1f}s ({int(pct_hold*100)}%)",
-                                (rx, trans_y + 24), cv2.FONT_HERSHEY_DUPLEX, 0.44, (0, 210, 255), 1, cv2.LINE_AA)
-                    cv2.putText(canvas, f"Mantén la posición fija por {required_hold_time:.1f}s para disparar repetición constante.",
-                                (rx, trans_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (160, 180, 200), 1, cv2.LINE_AA)
+            if is_calibrating and has_body:
+                cal_elapsed = now - body_detected_since
+                pct_cal = min(1.0, cal_elapsed / warmup_duration)
+                bar_w = int((WIDTH - LEFT_W - 50) * pct_cal)
+                cv2.rectangle(canvas, (rx, trans_y + 46), (rx + bar_w, trans_y + 62), (0, 180, 255), -1)
+                cv2.rectangle(canvas, (rx, trans_y + 46), (WIDTH - 30, trans_y + 62), (70, 80, 95), 1)
+                cv2.putText(canvas, f"ESTABILIZANDO ESQUELETO INICIAL ({cal_elapsed:.1f}s / {warmup_duration:.1f}s)",
+                            (rx, trans_y + 24), cv2.FONT_HERSHEY_DUPLEX, 0.42, (0, 210, 255), 1, cv2.LINE_AA)
+                cv2.putText(canvas, "Evitando animaciones fantasma al entrar al campo del Kinect...",
+                            (rx, trans_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (160, 180, 200), 1, cv2.LINE_AA)
             else:
-                cv2.putText(canvas, "🧍 REPOSO (IDLE): Adopta una pose de puño/patada y mantenla 2-3s",
-                            (rx, trans_y + 24), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (150, 170, 190), 1, cv2.LINE_AA)
-                cv2.putText(canvas, "El personaje permanece neutral a la espera de una pose sostenida.",
-                            (rx, trans_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (130, 145, 165), 1, cv2.LINE_AA)
+                pct_hold = min(1.0, held_duration / max(0.1, required_hold_time))
+                bar_w = int((WIDTH - LEFT_W - 50) * pct_hold)
+                bar_color = (0, 240, 100) if pose_activated else (0, 200, 255)
+                cv2.rectangle(canvas, (rx, trans_y + 46), (rx + bar_w, trans_y + 62), bar_color, -1)
+                cv2.rectangle(canvas, (rx, trans_y + 46), (WIDTH - 30, trans_y + 62), (70, 80, 95), 1)
+
+                if pred_action != "idle":
+                    if pose_activated:
+                        cv2.putText(canvas, f"POSE FIJADA: REPITIENDO ATAQUE EN UNITY ({held_duration:.1f}s)",
+                                    (rx, trans_y + 24), cv2.FONT_HERSHEY_DUPLEX, 0.44, (0, 255, 120), 1, cv2.LINE_AA)
+                        cv2.putText(canvas, "Bucle continuo activo. Cambiar de posicion detiene el ataque.",
+                                    (rx, trans_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (180, 230, 200), 1, cv2.LINE_AA)
+                    else:
+                        cv2.putText(canvas, f"MANTEN LA POSE: {held_duration:.2f}s / {required_hold_time:.1f}s ({int(pct_hold*100)}%)",
+                                    (rx, trans_y + 24), cv2.FONT_HERSHEY_DUPLEX, 0.44, (0, 210, 255), 1, cv2.LINE_AA)
+                        cv2.putText(canvas, f"Sosteniendo postura por {required_hold_time:.1f}s para activar repeticion constante.",
+                                    (rx, trans_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (160, 180, 200), 1, cv2.LINE_AA)
+                else:
+                    cv2.putText(canvas, f"REPOSO (IDLE): Haz una pose y mantenla {required_hold_time:.1f}s",
+                                (rx, trans_y + 24), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (150, 170, 190), 1, cv2.LINE_AA)
+                    cv2.putText(canvas, "Ryu permanece en guardia neutral sin disparar golpes solos.",
+                                (rx, trans_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (130, 145, 165), 1, cv2.LINE_AA)
 
             # 3. GRÁFICO DE BARRAS DE PROBABILIDAD (7 CLASES DE COMBATE)
             bar_start_y = trans_y + trans_h + 18
-            cv2.putText(canvas, "DISTRIBUCIÓN DE PROBABILIDAD (% POR POSE):", (rx, bar_start_y),
+            cv2.putText(canvas, "DISTRIBUCION DE PROBABILIDAD (% POR POSE):", (rx, bar_start_y),
                         cv2.FONT_HERSHEY_DUPLEX, 0.44, (0, 220, 255), 1, cv2.LINE_AA)
 
             sorted_idx = np.argsort(pred_probs)[::-1]
@@ -571,77 +561,72 @@ def main():
                 is_runner_up = (i == 1)
 
                 if is_winner:
-                    b_color = (0, 220, 120) if pose_activated else (0, 200, 255) # Verde si fijada, Cian si cargando
+                    b_color = (0, 220, 120) if pose_activated else (0, 200, 255)
                     txt_col = (255, 255, 255)
                 elif is_runner_up:
-                    b_color = (0, 140, 200)      # Azul secundario
+                    b_color = (0, 140, 200)
                     txt_col = (0, 200, 240)
                 else:
-                    b_color = (45, 60, 80)       # Azul grisáceo
+                    b_color = (45, 60, 80)
                     txt_col = (160, 175, 190)
 
-                # Nombre de la pose
                 cv2.putText(canvas, f"{act_str:12s}", (rx, y_pos + 15),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.42, txt_col, 1, cv2.LINE_AA)
 
-                # Barra horizontal
                 bar_x = rx + 120
                 bar_w = int(prob * max_bar_w)
                 cv2.rectangle(canvas, (bar_x, y_pos), (bar_x + max_bar_w, y_pos + 18), (30, 36, 48), -1)
                 cv2.rectangle(canvas, (bar_x, y_pos), (bar_x + bar_w, y_pos + 18), b_color, -1)
                 cv2.rectangle(canvas, (bar_x, y_pos), (bar_x + max_bar_w, y_pos + 18), (55, 65, 80), 1)
 
-                # Porcentaje numérico exacto
                 pct_str = f"{prob*100:5.1f}%"
                 cv2.putText(canvas, pct_str, (bar_x + max_bar_w + 10, y_pos + 14),
                             cv2.FONT_HERSHEY_DUPLEX, 0.40, txt_col, 1, cv2.LINE_AA)
 
-            # 4. AUDITOR DE SESGO Y AMBIGÜEDAD
+            # 4. AUDITOR DE CERTEZA Y SEPARABILIDAD POSTURAL
             bias_y = bar_start_y + 14 + len(sorted_idx) * 32 + 10
-            top_prob = float(pred_probs[sorted_idx[0]])
+            top_prob = float(pred_probs[sorted_idx[0]]) if len(sorted_idx) > 0 else 0.0
             second_prob = float(pred_probs[sorted_idx[1]]) if len(sorted_idx) > 1 else 0.0
             margin = top_prob - second_prob
 
             cv2.rectangle(canvas, (LEFT_W + 12, bias_y), (WIDTH - 12, bias_y + 48), (25, 30, 42), -1)
 
-            if margin < 0.25:
-                second_name = ACTION_ID_TO_NAME.get(model_classes[sorted_idx[1]], "")
+            if margin < 0.20:
+                second_name = ACTION_ID_TO_NAME.get(model_classes[sorted_idx[1]], "") if len(sorted_idx) > 1 else ""
                 cv2.rectangle(canvas, (LEFT_W + 12, bias_y), (WIDTH - 12, bias_y + 48), (0, 140, 255), 2)
-                cv2.putText(canvas, f"⚠️ ALERTA DE AMBIGÜEDAD (Margen estrecho: {margin*100:.1f}%)", (rx, bias_y + 20),
+                cv2.putText(canvas, f"POSTURA EN TRANSICION (Margen: {margin*100:.1f}%)", (rx, bias_y + 20),
                             cv2.FONT_HERSHEY_DUPLEX, 0.42, (0, 180, 255), 1, cv2.LINE_AA)
-                cv2.putText(canvas, f"Transicionando entre '{pred_action}' ({top_prob*100:.0f}%) y '{second_name}' ({second_prob*100:.0f}%)",
+                cv2.putText(canvas, f"Entre '{pred_action}' ({top_prob*100:.0f}%) y '{second_name}' ({second_prob*100:.0f}%)",
                             (rx, bias_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (200, 215, 230), 1, cv2.LINE_AA)
             else:
                 cv2.rectangle(canvas, (LEFT_W + 12, bias_y), (WIDTH - 12, bias_y + 48), (0, 200, 100), 1)
-                second_name = ACTION_ID_TO_NAME.get(model_classes[sorted_idx[1]], "")
-                cv2.putText(canvas, f"🛡️ DECISIÓN FIRME (+{margin*100:.1f}% sobre la segunda opción)", (rx, bias_y + 20),
+                second_name = ACTION_ID_TO_NAME.get(model_classes[sorted_idx[1]], "") if len(sorted_idx) > 1 else ""
+                cv2.putText(canvas, f"POSTURA DEFINIDA (+{margin*100:.1f}% sobre '{second_name}')", (rx, bias_y + 20),
                             cv2.FONT_HERSHEY_DUPLEX, 0.42, (0, 255, 140), 1, cv2.LINE_AA)
-                cv2.putText(canvas, f"Pose dominante sobre '{second_name}'. Clasificación sólida.",
+                cv2.putText(canvas, "Geometria estatica validada (Invariante a velocidad).",
                             (rx, bias_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (170, 190, 205), 1, cv2.LINE_AA)
 
-            # 5. TELEMETRÍA CINEMÁTICA EN VIVO
+            # 5. TELEMETRÍA GEOMÉTRICA POSTURAL EN VIVO
             tele_y = bias_y + 60
-            cv2.putText(canvas, "MÉTRICAS CINEMÁTICAS EN VIVO:", (rx, tele_y),
-                        cv2.FONT_HERSHEY_DUPLEX, 0.42, (0, 220, 255), 1, cv2.LINE_AA)
+            cv2.putText(canvas, "GEOMETRIA POSTURAL EN VIVO (SIN DEPENDENCIA DE VELOCIDAD):", (rx, tele_y),
+                        cv2.FONT_HERSHEY_DUPLEX, 0.40, (0, 220, 255), 1, cv2.LINE_AA)
 
-            v_wr = current_feats.get("peak_vel_wrist_r", 0.0)
-            v_wl = current_feats.get("peak_vel_wrist_l", 0.0)
-            v_fr = current_feats.get("peak_vel_foot_r", 0.0)
-            v_fl = current_feats.get("peak_vel_foot_l", 0.0)
-            d_pelvis = current_feats.get("net_disp_pelvis_y", 0.0) * 100.0
-            w_dist = current_feats.get("min_wrist_distance", 0.0) * 100.0
-            asym_arm = current_feats.get("arm_activity_asymmetry", 0.0)
+            h_wr_r = current_feats.get("horiz_wr_r_mean", 0.0)
+            h_wr_l = current_feats.get("horiz_wr_l_mean", 0.0)
+            ank_asym = current_feats.get("ank_elevation_asym", 0.0)
+            max_ank_d = current_feats.get("max_ank_depth", 0.90)
+            wr_chest = current_feats.get("mean_wr_rel_chest", 0.0)
 
-            cv2.putText(canvas, f"• Puños : Der {v_wr:.2f} m/s | Izq {v_wl:.2f} m/s (Asim: {asym_arm:+.2f})",
+            cv2.putText(canvas, f"• Extension Horiz. Punos: Der {h_wr_r:.2f} | Izq {h_wr_l:.2f} (Umbral >= 0.50)",
                         (rx, tele_y + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (210, 220, 230), 1, cv2.LINE_AA)
-            cv2.putText(canvas, f"• Pies  : Der {v_fr:.2f} m/s | Izq {v_fl:.2f} m/s",
+            cv2.putText(canvas, f"• Asimetria Piernas (Patadas): {ank_asym:+.2f} (Der > +0.14 | Izq < -0.14)",
                         (rx, tele_y + 38), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (210, 220, 230), 1, cv2.LINE_AA)
-            cv2.putText(canvas, f"• Pelvis: {d_pelvis:+.1f} cm (Crouch < -15cm) | Dist. Guardia: {w_dist:.1f} cm",
+            cv2.putText(canvas, f"• Altura Pelvis-Piso: {max_ank_d:.2f} (Crouch <= 0.72) | Guardia Pecho: {wr_chest:+.2f}",
                         (rx, tele_y + 56), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (210, 220, 230), 1, cv2.LINE_AA)
 
             # Barra inferior con ayuda
             cv2.rectangle(canvas, (0, HEIGHT - 26), (WIDTH, HEIGHT), (14, 16, 22), -1)
-            help_txt = "SF3 Live Fast Transition Studio | [Q]/[ESC] Salir | En modo Mock: [1-7] Disparar transiciones de prueba"
+            help_txt = "SF3 Static Posture Studio | [Q]/[ESC] Salir | En modo Mock: [1-7] Fijar postura sostenida"
             cv2.putText(canvas, help_txt, (16, HEIGHT - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (140, 155, 175), 1, cv2.LINE_AA)
 
             cv2.imshow(WINDOW_NAME, canvas)
@@ -650,7 +635,6 @@ def main():
             if key in (ord('q'), 27):
                 break
 
-            # Si es modo mock o prueba interactiva, permitir cambiar pose con 1..7
             if use_mock:
                 action_keys = {
                     ord('1'): "idle",
