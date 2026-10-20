@@ -208,8 +208,8 @@ def main():
                         help="Dirección IP de destino para transmisión UDP a Unity (default: 127.0.0.1)")
     parser.add_argument("--unity-port", type=int, default=5005,
                         help="Puerto UDP de destino para Unity (default: 5005)")
-    parser.add_argument("--hold-time", type=float, default=2.5,
-                        help="Tiempo en segundos manteniendo una pose continua para activarla en Unity (default: 2.5s)")
+    parser.add_argument("--hold-time", type=float, default=0.5,
+                        help="Tiempo en segundos manteniendo una pose continua para activarla en Unity (default: 0.5s)")
     parser.add_argument("--no-stream", action="store_true", default=False,
                         help="Desactivar transmisión de paquetes UDP a Unity")
     args = parser.parse_args()

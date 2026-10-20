@@ -13,10 +13,10 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
     [Header("Receptor de Telemetría UDP")]
     [SerializeField] private KinectUDPReceiver receiver;
 
-    [Header("Activación por Pose Sostenida (2 a 3 segundos)")]
-    [Tooltip("Tiempo en segundos que se debe mantener la postura continua para activar el ataque (default: 2.5s).")]
-    [Range(1.0f, 4.0f)]
-    [SerializeField] private float poseHoldDurationRequired = 2.5f;
+    [Header("Activación por Pose Sostenida (0.5 segundos)")]
+    [Tooltip("Tiempo en segundos que se debe mantener la postura continua para activar el ataque (default: 0.5s).")]
+    [Range(0.1f, 4.0f)]
+    [SerializeField] private float poseHoldDurationRequired = 0.5f;
 
     [Tooltip("Umbral mínimo de certeza del clasificador para validar la pose (20%).")]
     [SerializeField] private float minConfidenceThreshold = 0.20f;
@@ -100,8 +100,8 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
         // Atajos en tiempo de ejecución
         if (Input.GetKeyDown(KeyCode.F1)) showHUD = !showHUD;
         if (Input.GetKeyDown(KeyCode.F2)) autoSpacingEnabled = !autoSpacingEnabled;
-        if (Input.GetKeyDown(KeyCode.F3)) poseHoldDurationRequired = Mathf.Max(1.0f, poseHoldDurationRequired - 0.5f);
-        if (Input.GetKeyDown(KeyCode.F4)) poseHoldDurationRequired = Mathf.Min(4.0f, poseHoldDurationRequired + 0.5f);
+        if (Input.GetKeyDown(KeyCode.F3)) poseHoldDurationRequired = Mathf.Max(0.1f, poseHoldDurationRequired - 0.1f);
+        if (Input.GetKeyDown(KeyCode.F4)) poseHoldDurationRequired = Mathf.Min(4.0f, poseHoldDurationRequired + 0.1f);
 
         UpdatePoseHoldTracking();
     }
@@ -207,7 +207,7 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
     public bool IsCrouching()
     {
         bool kinectCrouch = (isPoseActive && currentHeldAction == "crouch") ||
-                            (receiver != null && receiver.IsConnected && receiver.CurrentAction == "crouch" && currentHoldTimer >= 0.6f);
+                            (receiver != null && receiver.IsConnected && receiver.CurrentAction == "crouch" && currentHoldTimer >= Mathf.Min(0.25f, poseHoldDurationRequired));
 
         bool kbdCrouch = Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S);
         return kinectCrouch || kbdCrouch;
@@ -229,7 +229,7 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
     public bool IsBlocking()
     {
         bool kinectBlock = (isPoseActive && currentHeldAction == "block") ||
-                           (receiver != null && receiver.IsConnected && receiver.CurrentAction == "block" && currentHoldTimer >= 0.6f);
+                           (receiver != null && receiver.IsConnected && receiver.CurrentAction == "block" && currentHoldTimer >= Mathf.Min(0.25f, poseHoldDurationRequired));
 
         bool kbdBlock = Input.GetKey(KeyCode.RightShift) || Input.GetKey(KeyCode.Keypad0) ||
                         Input.GetKey(KeyCode.G) || Input.GetKey(KeyCode.P);
