@@ -381,7 +381,7 @@ def build():
 
     core = doc.core_properties
     core.title = "Patrullaje por Puntos de Ruta, Física Predictiva Balística y Control Corporal con Azure Kinect en un Videojuego de Lucha 2D"
-    core.author = "Kevin A. Callo Quispe; Marco B. Marquez Herrera; Sebastian C. Puma Apaza"
+    core.author = "Kevin Joel Callo Ccagiavilca; Marco Antonio Marquez Herrera; Alejandro Sebastian Alfonso Huacasi"
 
     # Página carta con márgenes estándar IEEE
     sec = doc.sections[0]
@@ -394,23 +394,75 @@ def build():
                   align=WD_ALIGN_PARAGRAPH.CENTER, first=0, after=0)
     add_rich(p_title, "Patrullaje por Puntos de Ruta, Física Predictiva Balística y Control Corporal con Azure Kinect en un Videojuego de Lucha 2D", 24)
 
-    # Salto de línea antes de la firma de autores
-    fmt(doc.add_paragraph(), align=WD_ALIGN_PARAGRAPH.CENTER, first=0)
+    # Espacio antes del bloque de autores
+    fmt(doc.add_paragraph(), align=WD_ALIGN_PARAGRAPH.CENTER, first=0, before=0, after=4)
 
-    # ---------------- 2. FIRMA DE AUTORES Y AFILIACIÓN (TNR 10 pt) ----------------
-    p_auth = fmt(doc.add_paragraph(), align=WD_ALIGN_PARAGRAPH.CENTER, first=0)
-    add_rich(p_auth, "Kevin A. Callo Quispe, Miembro, IEEE, Marco B. Marquez Herrera, Miembro, IEEE, y Sebastian C. Puma Apaza, Miembro del IEEE", 10)
+    # ---------------- 2. FIRMA DE AUTORES EN TRES COLUMNAS (Formato IEEE Conference) ----------------
+    authors_info = [
+        {
+            "name": "Kevin Joel Callo Ccagiavilca",
+            "dept": "Escuela Profesional de Ingeniería de Sistemas",
+            "org": "Universidad Nacional de San Agustín de Arequipa",
+            "loc": "Arequipa, Perú",
+            "email": "kcalloc@unsa.edu.pe",
+        },
+        {
+            "name": "Marco Antonio Marquez Herrera",
+            "dept": "Escuela Profesional de Ingeniería de Sistemas",
+            "org": "Universidad Nacional de San Agustín de Arequipa",
+            "loc": "Arequipa, Perú",
+            "email": "mmarquezhe@unsa.edu.pe",
+        },
+        {
+            "name": "Alejandro Sebastian Alfonso Huacasi",
+            "dept": "Escuela Profesional de Ingeniería de Sistemas",
+            "org": "Universidad Nacional de San Agustín de Arequipa",
+            "loc": "Arequipa, Perú",
+            "email": "aalfonso@unsa.edu.pe",
+        },
+    ]
 
-    p_aff = fmt(doc.add_paragraph(), align=WD_ALIGN_PARAGRAPH.CENTER, first=0)
-    add_rich(p_aff, "*Escuela Profesional de Ingeniería de Sistemas, Universidad Nacional de San Agustín de Arequipa, Arequipa, Perú*", 10)
+    tbl_auth = doc.add_table(rows=1, cols=3)
+    tblPr = tbl_auth._tbl.tblPr
+    tblW = tblPr.find(qn("w:tblW"))
+    if tblW is None:
+        tblW = OxmlElement("w:tblW")
+        tblPr.append(tblW)
+    tblW.set(qn("w:w"), str(FULL_W_DXA))
+    tblW.set(qn("w:type"), "dxa")
 
-    p_meta = fmt(doc.add_paragraph(), align=WD_ALIGN_PARAGRAPH.CENTER, first=0)
-    add_rich(p_meta, "Correos: kcalloc@unsa.edu.pe, mmarquezhe@unsa.edu.pe, spumaap@unsa.edu.pe", 10)
+    borders = OxmlElement("w:tblBorders")
+    for tag in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        borders.append(_border(tag, "nil", "0"))
+    tblPr.append(borders)
 
-    p_orcid = fmt(doc.add_paragraph(), align=WD_ALIGN_PARAGRAPH.CENTER, first=0)
-    add_rich(p_orcid, "ORCID: K. Callo Quispe (0009-0002-8412-1923), M. Marquez Herrera (0009-0007-4231-8891), S. Puma Apaza (0009-0005-1123-4567)", 10)
+    col_w_dxa = FULL_W_DXA // 3
+    for i, a in enumerate(authors_info):
+        cell = tbl_auth.cell(0, i)
+        cell.width = col_w_dxa * 635
+        tcPr = cell._tc.get_or_add_tcPr()
+        tcW = tcPr.find(qn("w:tcW"))
+        if tcW is None:
+            tcW = OxmlElement("w:tcW")
+            tcPr.append(tcW)
+        tcW.set(qn("w:w"), str(col_w_dxa))
+        tcW.set(qn("w:type"), "dxa")
 
-    fmt(doc.add_paragraph(), align=WD_ALIGN_PARAGRAPH.CENTER, first=0, after=6)
+        p0 = cell.paragraphs[0]
+        fmt(p0, align=WD_ALIGN_PARAGRAPH.CENTER, first=0, before=4, after=2)
+        r0 = p0.add_run(a["name"])
+        set_run_font(r0, 10)
+        r0.bold = True
+
+        for key, italic in (("dept", True), ("org", True), ("loc", False), ("email", False)):
+            p_line = cell.add_paragraph()
+            fmt(p_line, align=WD_ALIGN_PARAGRAPH.CENTER, first=0, before=0, after=1)
+            r_line = p_line.add_run(a[key])
+            set_run_font(r_line, 9.5)
+            r_line.italic = italic
+
+    p_post = doc.add_paragraph()
+    fmt(p_post, align=WD_ALIGN_PARAGRAPH.CENTER, first=0, before=2, after=6)
 
     # ---------------- 3. SECCIÓN A DOS COLUMNAS (3.5 in, 0.25 in espaciado) ----------------
     body = doc.add_section(WD_SECTION.CONTINUOUS)
@@ -729,7 +781,7 @@ def build():
               "estudios psicométricos de experiencia de usuario en torneos presenciales.")
 
     # ======================= VII. CONCLUSIONES =======================
-    h1(doc, "Conclusiones", page_break=True)
+    h1(doc, "Conclusiones", page_break=False)
     para(doc, "El desarrollo e integración de los tres subsistemas en *Kinect Strike* demuestra que es posible combinar técnicas "
               "avanzadas de visión por computador, física matemática discreta e inteligencia artificial en una arquitectura de "
               "videojuegos coherente y de alto rendimiento. En primer lugar, el sistema de navegación por puntos de ruta probó "
@@ -771,6 +823,8 @@ def build():
     doc.save(out_desktop)
     out_docs = os.path.join(ROOT_DIR, "Docs", OUT_NAME)
     shutil.copyfile(out_desktop, out_docs)
+    out_desktop_alt = os.path.join(DESKTOP, "Articulo_IEEE_KinectStrike_Autores_UNSA.docx")
+    shutil.copyfile(out_desktop, out_desktop_alt)
 
     print(f"Resumen: {len(abstract.split())} palabras (Límite: <= 200).")
     print(f"Referencias citadas: {len(cite_order)} / {len(REFERENCES)}.")
