@@ -455,7 +455,7 @@ def main():
                         transition_start_time = now
 
                     # Registrar eventos de impacto activo
-                    if pred_action not in ("idle", "unknown") and pred_conf >= 0.55:
+                    if pred_action not in ("idle", "unknown") and pred_conf >= 0.20:
                         last_event_action = pred_action
                         last_event_time = now
                         last_event_conf = pred_conf

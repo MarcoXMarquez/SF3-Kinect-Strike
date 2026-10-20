@@ -19,8 +19,8 @@ public class KinectFighterInput : MonoBehaviour, IFighterInput
     [SerializeField] private float optimalDistanceMax = 1.45f;
 
     [Header("Parámetros de Clasificación de Gestos")]
-    [Tooltip("Umbral mínimo de certeza del modelo ML para registrar un ataque.")]
-    [SerializeField] private float minConfidenceThreshold = 0.55f;
+    [Tooltip("Umbral mínimo de certeza del modelo ML para registrar un ataque (20%).")]
+    [SerializeField] private float minConfidenceThreshold = 0.20f;
     [Tooltip("Ventana de buffer para evitar spam de ataques durante la misma pose (segundos).")]
     [SerializeField] private float attackCooldownSeconds = 0.28f;
 
