@@ -18,7 +18,8 @@ public class DuelFighter : MonoBehaviour
     private int facing, attack = -1;
     private const float AttackDuration = 0.55f;
     private const float JumpSpeed = 7.5f;
-    private static readonly KeyCode[] KenAttacks = { KeyCode.F, KeyCode.H, KeyCode.V, KeyCode.B };
+    private static readonly KeyCode[] KenAttacksPrimary = { KeyCode.J, KeyCode.K, KeyCode.L, KeyCode.O };
+    private static readonly KeyCode[] KenAttacksSecondary = { KeyCode.F, KeyCode.H, KeyCode.V, KeyCode.B };
     private static readonly KeyCode[] RyuAttacks = { KeyCode.Keypad1, KeyCode.Keypad2, KeyCode.Keypad4, KeyCode.Keypad5 };
     private static readonly KeyCode[] RyuAlternates = { KeyCode.Alpha7, KeyCode.Alpha8, KeyCode.Alpha9, KeyCode.Alpha0 };
     private bool Grounded => body.position.y <= duel.FloorY + 0.035f && body.linearVelocity.y <= 0.1f;
@@ -95,18 +96,62 @@ public class DuelFighter : MonoBehaviour
         }
         if (stun <= 0 && attack < 0)
         {
-            move = (Input.GetKey(first ? KeyCode.D : KeyCode.RightArrow) ? 1 : 0)
-                - (Input.GetKey(first ? KeyCode.A : KeyCode.LeftArrow) ? 1 : 0);
-            crouching = Grounded && Input.GetKey(first ? KeyCode.S : KeyCode.DownArrow);
-            guarding = Grounded && Input.GetKey(first ? KeyCode.G : KeyCode.RightShift);
-            if (Grounded && !crouching && !guarding && Input.GetKeyDown(first ? KeyCode.W : KeyCode.UpArrow))
-                body.linearVelocity = new Vector2(body.linearVelocity.x, JumpSpeed);
-            if (!guarding)
+            if (first)
             {
-                KeyCode[] keys = first ? KenAttacks : RyuAttacks;
-                for (int i = 0; i < keys.Length; i++)
-                    if (Input.GetKeyDown(keys[i]) || (!first && Input.GetKeyDown(RyuAlternates[i]))) { BeginAttack(i); break; }
+                // Jugador 1 (Ken): EXCLUSIVAMENTE WASD
+                bool right = Input.GetKey(KeyCode.D);
+                bool left = Input.GetKey(KeyCode.A);
+                move = (right ? 1 : 0) - (left ? 1 : 0);
+                crouching = Grounded && Input.GetKey(KeyCode.S);
+                guarding = Grounded && (Input.GetKey(KeyCode.G) || Input.GetKey(KeyCode.P));
+                if (Grounded && !crouching && !guarding && Input.GetKeyDown(KeyCode.W))
+                    body.linearVelocity = new Vector2(body.linearVelocity.x, JumpSpeed);
+
+                if (!guarding)
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (Input.GetKeyDown(KenAttacksPrimary[i]) || Input.GetKeyDown(KenAttacksSecondary[i]))
+                        {
+                            BeginAttack(i);
+                            break;
+                        }
+                    }
+                    if (attack < 0 && (Input.GetKeyDown(KeyCode.U) || Input.GetKeyDown(KeyCode.I)))
+                    {
+                        BeginAttack(Input.GetKeyDown(KeyCode.U) ? 0 : 1);
+                    }
+                }
             }
+            else
+            {
+                // Jugador 2 (Ryu): EXCLUSIVAMENTE Flechas y Teclado Numérico
+                move = (Input.GetKey(KeyCode.RightArrow) ? 1 : 0) - (Input.GetKey(KeyCode.LeftArrow) ? 1 : 0);
+                crouching = Grounded && Input.GetKey(KeyCode.DownArrow);
+                guarding = Grounded && (Input.GetKey(KeyCode.RightShift) || Input.GetKey(KeyCode.Keypad0));
+                if (Grounded && !crouching && !guarding && Input.GetKeyDown(KeyCode.UpArrow))
+                    body.linearVelocity = new Vector2(body.linearVelocity.x, JumpSpeed);
+
+                if (!guarding)
+                {
+                    for (int i = 0; i < RyuAttacks.Length; i++)
+                    {
+                        if (Input.GetKeyDown(RyuAttacks[i]) || Input.GetKeyDown(RyuAlternates[i]))
+                        {
+                            BeginAttack(i);
+                            break;
+                        }
+                    }
+                    if (attack < 0)
+                    {
+                        if (Input.GetKeyDown(KeyCode.B)) BeginAttack(0);
+                        else if (Input.GetKeyDown(KeyCode.N)) BeginAttack(1);
+                        else if (Input.GetKeyDown(KeyCode.M)) BeginAttack(2);
+                        else if (Input.GetKeyDown(KeyCode.Comma)) BeginAttack(3);
+                    }
+                }
+            }
+
             if (attack < 0) Play(!Grounded ? "jump_neutral" : guarding ? "block_standing" : crouching ? "crouch_idle"
                 : move == 0 ? "idle_stance" : move * facing > 0 ? "walk_forward" : "walk_backward");
         }

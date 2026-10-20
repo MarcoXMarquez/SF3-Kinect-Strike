@@ -32,9 +32,9 @@ Copia y pega este prompt a tu asistente para que te enseñe a programarlo tú mi
 ---
 
 ### 📋 4. Criterios de Aceptación (Definition of Done)
-- [ ] Escenario de China montado con múltiples capas independientes.
-- [ ] Efecto Parallax configurado y suave al moverse los luchadores.
-- [ ] Colisionadores de esquinas (paredes invisibles) y suelo configurados.
+- [x] Escenario de China montado con múltiples capas independientes.
+- [x] Efecto Parallax configurado y suave al moverse los luchadores.
+- [x] Colisionadores de esquinas (paredes invisibles) y suelo configurados.
 
 ---
 

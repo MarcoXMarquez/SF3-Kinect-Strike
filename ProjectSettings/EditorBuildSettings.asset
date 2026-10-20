@@ -14,6 +14,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_Sebas.unity
     guid: 29eda5f305f7487295f8018102f4b620
+  - enabled: 1
+    path: Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_China.unity
+    guid: 2c01994b7f8841a182fa1077e382b6b0
+  - enabled: 1
+    path: Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_Tomb.unity
+    guid: f0d6470177d64d9f9954c20a226f1ad6
+  - enabled: 1
+    path: Assets/StreetFighter3_ThirdStrike/Scenes/StoryMode_Scene.unity
+    guid: 9de1e4dcfa734b06a3f6259ab2785b59
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

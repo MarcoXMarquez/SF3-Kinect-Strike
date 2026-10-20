@@ -1120,7 +1120,7 @@ def main():
 
     studio = GestureStudio(is_mock=use_mock, initial_subject=args.subject)
 
-    WINDOW_NAME = "SF3 - Kinect ML Gesture Studio (8 Clases + Mini-Video Replay)"
+    WINDOW_NAME = "KINET STRIKE - ML Gesture Studio (8 Clases + Mini-Video Replay)"
     cv2.namedWindow(WINDOW_NAME)
     cv2.setMouseCallback(WINDOW_NAME, studio.on_mouse_click)
 

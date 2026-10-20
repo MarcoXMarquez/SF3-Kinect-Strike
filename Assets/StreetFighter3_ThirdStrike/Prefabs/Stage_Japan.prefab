@@ -525,7 +525,7 @@ GameObject:
   - component: {fileID: 667651980339511179}
   - component: {fileID: 7007060469099551015}
   m_Layer: 0
-  m_Name: Foreground_Roof
+  m_Name: Battle_Ground_RoofTiles
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

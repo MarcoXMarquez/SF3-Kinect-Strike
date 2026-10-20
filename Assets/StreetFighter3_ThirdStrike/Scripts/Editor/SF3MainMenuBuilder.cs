@@ -100,13 +100,13 @@ namespace StreetFighter3.Editor
             titleRt.anchoredPosition = new Vector2(0f, -80f);
             titleRt.sizeDelta = new Vector2(1200f, 220f);
 
-            CreateText("Header_CPS3", titleObj.transform, "CAPCOM PLAY SYSTEM 3 — ARCADIA", retroFont, 20, FontStyle.Bold,
+            CreateText("Header_CPS3", titleObj.transform, "SOMATOSENSORY 3D COMBAT SYSTEM", retroFont, 20, FontStyle.Bold,
                 new Color(0.85f, 0.75f, 0.4f, 0.85f), new Vector2(0f, -20f), new Vector2(1000f, 30f));
 
-            CreateText("Title_SF3", titleObj.transform, "STREET FIGHTER III", retroFont, 76, FontStyle.Bold,
+            CreateText("Title_SF3", titleObj.transform, "KINET STRIKE", retroFont, 76, FontStyle.Bold,
                 new Color(1f, 0.82f, 0.15f, 1f), new Vector2(0f, -75f), new Vector2(1200f, 95f));
 
-            CreateText("Subtitle_Strike", titleObj.transform, "3rd STRIKE : KINECT STRIKE", retroFont, 36, FontStyle.Bold,
+            CreateText("Subtitle_Strike", titleObj.transform, "KINECT 3D & ADAPTIVE AI FIGHTING SYSTEM", retroFont, 36, FontStyle.Bold,
                 new Color(0.2f, 0.9f, 1f, 1f), new Vector2(0f, -145f), new Vector2(1000f, 50f));
 
             // 7. Contenedor de Botones de Menú
@@ -131,9 +131,10 @@ namespace StreetFighter3.Editor
             StretchFull(versusPanel.GetComponent<RectTransform>());
             versusPanel.SetActive(false);
 
-            Button btnVersusBot = CreateMenuButton("Btn_VersusBot", versusPanel.transform, "VERSUS BOT (1P vs CPU)", retroFont, new Vector2(0f, 70f));
-            Button btnVersus2P = CreateMenuButton("Btn_Versus2P", versusPanel.transform, "VERSUS 2 PLAYERS (Local)", retroFont, new Vector2(0f, -10f));
-            Button btnBackVersus = CreateMenuButton("Btn_Volver", versusPanel.transform, "VOLVER (Atrás)", retroFont, new Vector2(0f, -90f));
+            Button btnVersusBot = CreateMenuButton("Btn_VersusBot", versusPanel.transform, "VERSUS JAPÓN (Suzaku Castle)", retroFont, new Vector2(0f, 95f));
+            Button btnVersus2P = CreateMenuButton("Btn_Versus2P", versusPanel.transform, "VERSUS CHINA (Crowded Street)", retroFont, new Vector2(0f, 35f));
+            Button btnVersusTomb = CreateMenuButton("Btn_VersusTomb", versusPanel.transform, "VERSUS OLIMPO (Tomb of Urien)", retroFont, new Vector2(0f, -25f));
+            Button btnBackVersus = CreateMenuButton("Btn_Volver", versusPanel.transform, "VOLVER (Atrás)", retroFont, new Vector2(0f, -85f));
 
             // Cursor Indicador (>>)
             GameObject cursorObj = CreateUIElement("Cursor_Indicator", menuContainerObj.transform);
@@ -336,7 +337,10 @@ namespace StreetFighter3.Editor
             AssignField(menuCtrl, "exitButton", btnExit);
             AssignField(menuCtrl, "versusBotButton", btnVersusBot);
             AssignField(menuCtrl, "versus2PlayerButton", btnVersus2P);
+            AssignField(menuCtrl, "versusTombButton", btnVersusTomb);
             AssignField(menuCtrl, "backVersusButton", btnBackVersus);
+            AssignField(menuCtrl, "duelSceneChina", "Sandbox_China");
+            AssignField(menuCtrl, "duelSceneTomb", "Sandbox_Tomb");
             AssignField(menuCtrl, "bgmAudioSource", bgmSource);
             AssignField(menuCtrl, "sfxAudioSource", sfxSource);
             AssignField(menuCtrl, "cursorMoveSfx", cursorSfx);
@@ -378,6 +382,18 @@ namespace StreetFighter3.Editor
             if (!scenes.Any(s => s.path == duelPath) && File.Exists(duelPath))
             {
                 scenes.Add(new EditorBuildSettingsScene(duelPath, true));
+                changed = true;
+            }
+            string chinaDuelPath = "Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_China.unity";
+            if (!scenes.Any(s => s.path == chinaDuelPath) && File.Exists(chinaDuelPath))
+            {
+                scenes.Add(new EditorBuildSettingsScene(chinaDuelPath, true));
+                changed = true;
+            }
+            string tombDuelPath = "Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_Tomb.unity";
+            if (!scenes.Any(s => s.path == tombDuelPath) && File.Exists(tombDuelPath))
+            {
+                scenes.Add(new EditorBuildSettingsScene(tombDuelPath, true));
                 changed = true;
             }
 

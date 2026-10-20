@@ -1,5 +1,5 @@
 # 📡 Estado Vivo y Changelog del Proyecto (Live Synchronization)
-## Street Fighter III: 3rd Strike (Unity + Azure Kinect + IA Adaptativa)
+## KINET STRIKE (Unity + Azure Kinect + IA Adaptativa)
 
 Este documento es la **fuente única de verdad en tiempo real** del proyecto. Cada vez que un desarrollador (Marco, Sebas o Kevin) y su asistente de IA completen una tarea, creen un nuevo script, refactoricen o eliminen algo, **DEBEN actualizar este archivo**.
 
@@ -29,7 +29,11 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 | `FighterHitbox.cs` | `Scripts/Combat/` | Marco | Componente de ataque activo. |
 | `FighterCombatColliders.cs` | `Scripts/Combat/` | Marco | Coordinador de activación/desactivación de hitboxes y voces. |
 | `ParallaxBackground.cs` | `Scripts/Environment/` | Sebas / Marco | Scroll con efecto de profundidad 2.5D para escenarios. |
-| `SF3SoundManager.cs` | `Scripts/Audio/` | Marco / Sebas | Singleton para reproducir BGM, SFX y voces de luchadores. |
+| `SF3JapanStageBuilder.cs` | `Scripts/Editor/` | Sebas | Generador del escenario Suzaku Castle (Japón) con Parallax y suelo físico Y=0. |
+| `SF3ChinaStageBuilder.cs` | `Scripts/Editor/` | Sebas | Generador del escenario Crowded Street (China) con Parallax, límites de arena y props animados. |
+| `AnimatedSpriteProp.cs` | `Scripts/Environment/` | Sebas | Controlador de props y espectadores vivos a 14 FPS para escenarios CPS-3. |
+| `Stage_China.prefab` | `Prefabs/` | Sebas | Prefab oficial reutilizable del escenario de China con colisionadores y capas 2D. |
+| `Sandbox_China.unity` | `Scenes/` | Sebas | Escena de combate independiente para duelos en el escenario de China con BGM oficial. |
 | `IFighterInput.cs` | `Scripts/Input/` | Kevin | Interfaz desacoplada para desacoplar el origen de entrada (Teclado/Kinect/IA) del luchador. |
 | `KeyboardFighterInput.cs` | `Scripts/Input/` | Kevin | Adaptador de teclado para locomoción, ataques normales y emulación de gestos. |
 | `AzureKinectInput.cs` | `Scripts/Input/` | Kevin | Adaptador somatosensorial de Azure Kinect con cálculo cinemático de articulaciones 3D. |
@@ -59,6 +63,12 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 | `LoadingScreenController.cs` | `Scripts/UI/` | Kevin | Controlador de pantalla de carga asíncrona, barra de progreso y orquestador del minijuego. |
 | `LoadingMinigameManager.cs` | `Scripts/UI/` | Kevin | Administrador del minijuego estilo DBZ Tenkaichi 3 que coordina orbes Wandering y buscador Seeking. |
 | `MiniFighterController.cs` | `Scripts/UI/` | Kevin | Avatar 2D jugable en la pantalla de carga (movimiento horizontal, salto, golpe y animación de Ryu). |
+| `FightHUD.cs` | `Scripts/UI/` | Marco / Sebas | HUD de combate arcade (barras de vida P1/P2 con daño retardado y contador central de 99s). |
+| `TenkaichiDialogueManager.cs` | `Scripts/UI/` | Marco / Kevin | Sistema de cinemáticas y diálogos estilo DBZ Budokai Tenkaichi 3 con lore original de KINET STRIKE y selector de episodios. |
+| `Stage_Tomb.prefab` | `Prefabs/` | Sebas / Marco | Prefab oficial del escenario Tumba Olímpica (Grecia) con columnas de mármol y BGM de Urien. |
+| `Fighter_Urien.prefab` | `Prefabs/` | Marco | Prefab de Urien con Animator CPS-3 a 14 FPS, Aegis Reflector, Chariot Rush y Super Art. |
+| `Sandbox_Tomb.unity` | `Scenes/` | Sebas / Marco | Escena de combate versus en la Tumba Olímpica de Urien con HUD y música oficial. |
+| `StoryMode_Scene.unity` | `Scenes/` | Marco / Kevin | Escena del Modo Historia con cinemáticas y diálogos estilo DBZ Budokai Tenkaichi 3. |
 | `SF3MainMenuBuilder.cs` | `Scripts/Editor/` | Kevin | Generador automatizado de la escena `MainMenu_Scene.unity` y sincronizador de `EditorBuildSettings`. |
 
 ---

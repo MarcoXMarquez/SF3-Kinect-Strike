@@ -1,5 +1,5 @@
 # 🧠 Contexto de Arquitectura y Convenciones Técnicas del Proyecto
-## Street Fighter III: 3rd Strike (Unity + Azure Kinect + IA Adaptativa)
+## KINET STRIKE (Unity + Azure Kinect + IA Adaptativa)
 
 Este documento proporciona a los asistentes de IA (Antigravity) y desarrolladores el contexto técnico completo de la arquitectura del juego.
 

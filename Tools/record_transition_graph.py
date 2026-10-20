@@ -1089,7 +1089,7 @@ class TransitionStudio:
         # 1. Cabecera Arcade Superior con Diagnóstico de Hardware
         cv2.rectangle(canvas, (0, 0), (WIDTH, 56), (30, 22, 18), -1)
         cv2.line(canvas, (0, 56), (WIDTH, 56), (0, 160, 255), 2)
-        cv2.putText(canvas, "STREET FIGHTER III - KINECT TRANSITION STUDIO & PRACTICE", (20, 36),
+        cv2.putText(canvas, "KINET STRIKE - TRANSITION STUDIO & PRACTICE", (20, 36),
                     cv2.FONT_HERSHEY_DUPLEX, 0.72, (0, 220, 255), 1, cv2.LINE_AA)
 
         if self.use_mock:

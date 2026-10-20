@@ -255,7 +255,7 @@ def main():
         print("🎮 Iniciando en modo simulador procedural (--mock).")
 
     # 3. Variables de ventana e inferencia
-    WINDOW_NAME = "SF3 Live Kinect - Fast Transition & Gesture Studio"
+    WINDOW_NAME = "KINET STRIKE - Live Gesture & Transition Studio"
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_AUTOSIZE)
 
     WIDTH = 1380

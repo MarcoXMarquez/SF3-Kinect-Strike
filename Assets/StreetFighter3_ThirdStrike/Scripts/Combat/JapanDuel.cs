@@ -5,6 +5,7 @@ public class JapanDuel : MonoBehaviour
 {
     private DuelFighter ken, ryu;
     private float countdown;
+    private float roundTimer = 99f;
     private string result;
     public float FloorY { get; private set; } = -0.32f;
     public bool IsPaused { get; private set; } = false;
@@ -23,9 +24,11 @@ public class JapanDuel : MonoBehaviour
         if (roster == null) { Debug.LogError("JapanDuelRoster missing."); enabled = false; return; }
         StageParallaxTester tester = GetComponent<StageParallaxTester>();
         if (tester != null) tester.enabled = false;
+        bool isChinaStage = false;
         foreach (GameObject root in gameObject.scene.GetRootGameObjects())
         {
-            if (root.name != "Stage_Japan") continue;
+            if (!root.name.StartsWith("Stage_")) continue;
+            if (root.name.Contains("China")) isChinaStage = true;
             Transform ground = root.transform.Find("Ground_Collider");
             if (ground == null) continue;
             BoxCollider2D floor = ground.GetComponent<BoxCollider2D>();
@@ -33,7 +36,7 @@ public class JapanDuel : MonoBehaviour
         }
 
         // BGM de Pelea (Suzaku Castle - Japón)
-        AudioClip bgmClip = Resources.Load<AudioClip>("Audio/BGM_Japan");
+        AudioClip bgmClip = Resources.Load<AudioClip>(isChinaStage ? "Audio/BGM_China" : "Audio/BGM_Japan") ?? Resources.Load<AudioClip>("Audio/BGM_Japan");
         if (bgmClip != null)
         {
             bgmSource = gameObject.AddComponent<AudioSource>();
@@ -69,7 +72,8 @@ public class JapanDuel : MonoBehaviour
         IsPaused = false;
         Time.timeScale = 1f;
         result = null;
-        countdown = 2f;
+        countdown = 0.5f;
+        roundTimer = 99f;
         ken.ResetFighter(-1.35f);
         ryu.ResetFighter(1.35f);
     }
@@ -123,6 +127,17 @@ public class JapanDuel : MonoBehaviour
         }
 
         countdown = Mathf.Max(0, countdown - Time.deltaTime);
+        if (Fighting && roundTimer > 0f)
+        {
+            roundTimer -= Time.deltaTime;
+            if (roundTimer <= 0f && result == null)
+            {
+                roundTimer = 0f;
+                result = ken.Health == ryu.Health ? "DRAW GAME" : (ken.Health > ryu.Health ? "KEN WINS" : "RYU WINS");
+                ken.EndRound(ken.Health > ryu.Health);
+                ryu.EndRound(ryu.Health > ken.Health);
+            }
+        }
         if (Input.GetKeyDown(KeyCode.Return) && !IsPaused) Restart();
         if (result == null && (ken.Health <= 0 || ryu.Health <= 0))
         {
@@ -235,6 +250,27 @@ public class JapanDuel : MonoBehaviour
         GUI.color = Color.white;
         Bar(new Rect(30, 42, 380, 19), ken.Health, new Color(0.95f, 0.25f, 0.2f));
         Bar(new Rect(550, 42, 380, 19), ryu.Health, new Color(0.2f, 0.8f, 0.8f));
+
+        // Caja Central del Contador de Tiempo (99s)
+        Rect timerBox = new Rect(436, 12, 88, 54);
+        GUI.color = new Color(0.04f, 0.05f, 0.09f, 0.95f);
+        GUI.DrawTexture(timerBox, Texture2D.whiteTexture);
+        GUI.color = new Color(0.95f, 0.78f, 0.2f, 1f);
+        GUI.DrawTexture(new Rect(timerBox.x, timerBox.y, timerBox.width, 2), Texture2D.whiteTexture);
+        GUI.DrawTexture(new Rect(timerBox.x, timerBox.y + timerBox.height - 2, timerBox.width, 2), Texture2D.whiteTexture);
+        GUI.DrawTexture(new Rect(timerBox.x, timerBox.y, 2, timerBox.height), Texture2D.whiteTexture);
+        GUI.DrawTexture(new Rect(timerBox.x + timerBox.width - 2, timerBox.y, 2, timerBox.height), Texture2D.whiteTexture);
+        GUI.color = Color.white;
+
+        int secLeft = Mathf.CeilToInt(roundTimer);
+        GUIStyle tStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 32,
+            fontStyle = FontStyle.Bold,
+            alignment = TextAnchor.MiddleCenter
+        };
+        tStyle.normal.textColor = secLeft <= 15 ? new Color(1f, 0.22f, 0.2f) : new Color(1f, 0.88f, 0.15f);
+        GUI.Label(timerBox, secLeft.ToString("D2"), tStyle);
         GUI.Label(new Rect(30, 12, 300, 30), "KEN   " + ken.Health, label);
         label.alignment = TextAnchor.UpperRight;
         GUI.Label(new Rect(630, 12, 300, 30), "RYU   " + ryu.Health, label);
@@ -248,6 +284,20 @@ public class JapanDuel : MonoBehaviour
         }
         GUI.Label(new Rect(270, 80, 420, 60), result ?? (countdown > 0 ? "READY" : ""), label);
         if (result != null && GUI.Button(new Rect(410, 145, 140, 36), "Revancha")) Restart();
+
+        // Banner informativo de controles en vivo
+        GUI.color = new Color(0.04f, 0.05f, 0.08f, 0.85f);
+        GUI.DrawTexture(new Rect(80, 498, 800, 34), Texture2D.whiteTexture);
+        GUI.color = Color.white;
+        GUIStyle controlHint = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 12,
+            fontStyle = FontStyle.Bold,
+            alignment = TextAnchor.MiddleCenter
+        };
+        controlHint.normal.textColor = new Color(1f, 0.92f, 0.4f);
+        GUI.Label(new Rect(80, 498, 800, 34), "P1 (KEN): [WASD / Flechas] Mover/Saltar | [J / F] Puño D | [K / H] Puño F | [L / V] Patada D | [O / B] Patada F | [ESC] Pausa", controlHint);
+
         GUI.matrix = old;
     }
 

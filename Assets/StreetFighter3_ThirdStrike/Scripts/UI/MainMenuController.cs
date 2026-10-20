@@ -12,18 +12,18 @@ namespace StreetFighter3.UI
     }
 
     /// <summary>
-    /// Controlador del Menú Principal arcade de Street Fighter III.
-    /// Soporta navegación 100% por teclado, submenús jerárquicos (Versus Bot / Versus 2P),
-    /// efectos de cursor/pulsación CPS-3 y transición hacia la pantalla de carga.
+    /// Controlador del MenÃº Principal arcade de Street Fighter III.
+    /// Soporta navegaciÃ³n 100% por teclado, submenÃºs jerÃ¡rquicos (Versus Bot / Versus 2P),
+    /// efectos de cursor/pulsaciÃ³n CPS-3 y transiciÃ³n hacia la pantalla de carga.
     /// </summary>
     public class MainMenuController : MonoBehaviour
     {
-        [Header("Referencias de Menús")]
+        [Header("Referencias de MenÃºs")]
         [SerializeField] private GameObject rootMenuPanel;
         [SerializeField] private GameObject versusSubmenuPanel;
         [SerializeField] private RectTransform cursorIndicator;
 
-        [Header("Botones Menú Principal")]
+        [Header("Botones MenÃº Principal")]
         [SerializeField] private Button storyModeButton;
         [SerializeField] private Button versusButton;
         [SerializeField] private Button exitButton;
@@ -31,6 +31,7 @@ namespace StreetFighter3.UI
         [Header("Botones Submenú Versus")]
         [SerializeField] private Button versusBotButton;
         [SerializeField] private Button versus2PlayerButton;
+        [SerializeField] private Button versusTombButton;
         [SerializeField] private Button backVersusButton;
 
         [Header("Audio")]
@@ -43,11 +44,14 @@ namespace StreetFighter3.UI
         [Header("Controlador de Carga")]
         [SerializeField] private LoadingScreenController loadingScreenController;
         [SerializeField] private string duelSceneName = "Sandbox_Sebas";
+        [SerializeField] private string duelSceneChina = "Sandbox_China";
+        [SerializeField] private string duelSceneTomb = "Sandbox_Tomb";
+        [SerializeField] private string storyModeScene = "StoryMode_Scene";
 
-        [Header("Modal Próximamente (Modo Historia)")]
+        [Header("Modal PrÃ³ximamente (Modo Historia)")]
         [SerializeField] private GameObject comingSoonModalPanel;
 
-        [Header("Configuración Visual")]
+        [Header("ConfiguraciÃ³n Visual")]
         [SerializeField] private Color normalColor = new Color(0.85f, 0.85f, 0.85f, 1f);
         [SerializeField] private Color selectedColor = new Color(1f, 0.88f, 0.15f, 1f);
         [SerializeField] private float pulseSpeed = 7f;
@@ -92,6 +96,7 @@ namespace StreetFighter3.UI
 
                 if (versusBotButton != null) currentButtons.Add(versusBotButton);
                 if (versus2PlayerButton != null) currentButtons.Add(versus2PlayerButton);
+                if (versusTombButton != null) currentButtons.Add(versusTombButton);
                 if (backVersusButton != null) currentButtons.Add(backVersusButton);
             }
 
@@ -107,7 +112,7 @@ namespace StreetFighter3.UI
         {
             if (loadingScreenController != null && loadingScreenController.gameObject.activeSelf && loadingScreenController.GetComponent<CanvasGroup>() != null && loadingScreenController.GetComponent<CanvasGroup>().alpha > 0.01f)
             {
-                // Si la pantalla de carga está activa, suspender el menú
+                // Si la pantalla de carga estÃ¡ activa, suspender el menÃº
                 return;
             }
 
@@ -130,7 +135,7 @@ namespace StreetFighter3.UI
 
             if (currentButtons.Count == 0) return;
 
-            // Navegación Vertical (W / S o Flechas)
+            // NavegaciÃ³n Vertical (W / S o Flechas)
             if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
             {
                 Navigate(-1);
@@ -140,7 +145,7 @@ namespace StreetFighter3.UI
                 Navigate(1);
             }
 
-            // Confirmación (Enter / Espacio)
+            // ConfirmaciÃ³n (Enter / Espacio)
             if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.KeypadEnter))
             {
                 ConfirmSelection();
@@ -200,11 +205,11 @@ namespace StreetFighter3.UI
             {
                 switch (selectedIndex)
                 {
-                    case 0: // Modo Historia -> Mostrar ventana PRÓXIMAMENTE
-                        Debug.Log("[MainMenu] Modo Historia seleccionado (Pendiente Azure Kinect). Mostrando 'Próximamente'...");
-                        OpenComingSoonModal();
+                    case 0: // Modo Historia -> Cinemática y Diálogos DBZ Tenkaichi 3
+                        Debug.Log("[MainMenu] Modo Historia seleccionado. Iniciando Modo Historia y Cinemáticas DBZ Tenkaichi de KINET STRIKE...");
+                        LaunchLoadingScreen(storyModeScene, 2.5f);
                         break;
-                    case 1: // Versus (Abrir Submenú)
+                    case 1: // Versus (Abrir SubmenÃº)
                         EnterState(MainMenuState.VersusSubmenu);
                         break;
                     case 2: // Salir
@@ -214,19 +219,41 @@ namespace StreetFighter3.UI
             }
             else if (currentState == MainMenuState.VersusSubmenu)
             {
-                switch (selectedIndex)
+                if (currentButtons.Contains(versusTombButton))
                 {
-                    case 0: // Versus Bot
-                        Debug.Log("[MainMenu] Iniciando Versus Bot (1P vs CPU)...");
-                        LaunchLoadingScreen(duelSceneName, 4.5f);
-                        break;
-                    case 1: // Versus 2 Player
-                        Debug.Log("[MainMenu] Iniciando Versus 2 Jugadores (Ken vs Ryu)...");
-                        LaunchLoadingScreen(duelSceneName, 4.0f);
-                        break;
-                    case 2: // Volver
-                        EnterState(MainMenuState.Root);
-                        break;
+                    switch (selectedIndex)
+                    {
+                        case 0: // Japón (Suzaku Castle)
+                            Debug.Log("[MainMenu] Iniciando Duelo en Suzaku Castle (Japón)...");
+                            LaunchLoadingScreen(duelSceneName, 4.5f);
+                            break;
+                        case 1: // China (Crowded Street)
+                            Debug.Log("[MainMenu] Iniciando Duelo en Crowded Street (China)...");
+                            LaunchLoadingScreen(duelSceneChina, 4.0f);
+                            break;
+                        case 2: // Grecia (Tomb of Urien)
+                            Debug.Log("[MainMenu] Iniciando Duelo en Olympian Tomb (Grecia - Urien)...");
+                            LaunchLoadingScreen(duelSceneTomb, 4.0f);
+                            break;
+                        case 3: // Volver
+                            EnterState(MainMenuState.Root);
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (selectedIndex)
+                    {
+                        case 0:
+                            LaunchLoadingScreen(duelSceneName, 4.5f);
+                            break;
+                        case 1:
+                            LaunchLoadingScreen(duelSceneChina, 4.0f);
+                            break;
+                        case 2:
+                            EnterState(MainMenuState.Root);
+                            break;
+                    }
                 }
             }
         }
@@ -300,11 +327,11 @@ namespace StreetFighter3.UI
             Button activeBtn = currentButtons[selectedIndex];
             if (activeBtn == null || selectedIndex >= originalScales.Count) return;
 
-            // Pulsación de escala con onda senoidal
+            // PulsaciÃ³n de escala con onda senoidal
             float scaleMultiplier = 1f + Mathf.Sin(Time.unscaledTime * pulseSpeed) * pulseAmount;
             activeBtn.transform.localScale = originalScales[selectedIndex] * scaleMultiplier;
 
-            // Ligera oscilación horizontal del cursor
+            // Ligera oscilaciÃ³n horizontal del cursor
             if (cursorIndicator != null)
             {
                 float cursorOffset = Mathf.Sin(Time.unscaledTime * 8f) * 6f;

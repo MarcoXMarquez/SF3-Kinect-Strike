@@ -1,4 +1,4 @@
-# 🥋 Street Fighter III: 3rd Strike - Kinect & Adaptive AI Experience
+# 🥋 KINET STRIKE - Somatosensory Combat & Adaptive AI Experience
 ## Videojuego de Combate 2D Basado en Sprites con Control Somatosensorial 3D e Inteligencia Artificial Adaptativa
 **Proyecto Universitario de Desarrollo de Videojuegos e Inteligencia Artificial**  
 **Motor:** Unity 2022.3 LTS / Unity 6 (URP 2D) | **Hardware:** Sensor Microsoft Azure Kinect DK | **IA:** Unity ML-Agents + PyTorch CUDA (RTX 4060)
