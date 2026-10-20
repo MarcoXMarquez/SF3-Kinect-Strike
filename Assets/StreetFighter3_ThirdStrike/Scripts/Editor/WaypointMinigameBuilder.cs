@@ -22,10 +22,32 @@ namespace Minigame.Editor
         private const string SEAN_IDLE_PATH = "Assets/StreetFighter3_ThirdStrike/Characters/12_Sean/01_Movement/idle_stance";
         private const string SEAN_WALK_PATH = "Assets/StreetFighter3_ThirdStrike/Characters/12_Sean/01_Movement/walk_forward";
 
-        private const string HADOUKEN_PATH = "Assets/StreetFighter3_ThirdStrike/Effects/Projectiles_Ryu_Hadouken";
+        private const string ORB_SPARKS_PATH = "Assets/StreetFighter3_ThirdStrike/Effects/09_Guard_Block_Sparks";
+        private const string MATERIAL_PATH = "Assets/StreetFighter3_ThirdStrike/Materials/StonePillar_Material.mat";
 
         private const string SCENE_PATH_1 = "Assets/Scenes/minijuegowaypoint.unity";
         private const string SCENE_PATH_2 = "Assets/StreetFighter3_ThirdStrike/Scenes/minijuegowaypoint.unity";
+
+        [InitializeOnLoadMethod]
+        private static void RegisterAutoBuildWatcher()
+        {
+            EditorApplication.update += CheckAutoBuildFlag;
+        }
+
+        private static void CheckAutoBuildFlag()
+        {
+            string flagPath = "Temp/rebuild_waypoints.flag";
+            if (File.Exists(flagPath))
+            {
+                EditorApplication.update -= CheckAutoBuildFlag;
+                try
+                {
+                    File.Delete(flagPath);
+                }
+                catch {}
+                BuildMinigameScene();
+            }
+        }
 
         [MenuItem("Tools/Waypoints/Generar Escena Minijuego Waypoints")]
         public static void BuildMinigameScene()
@@ -44,50 +66,54 @@ namespace Minigame.Editor
             Sprite[] seanIdle = LoadSortedSprites(SEAN_IDLE_PATH);
             Sprite[] seanWalk = LoadSortedSprites(SEAN_WALK_PATH);
 
-            Sprite[] orbSprites = LoadSortedSprites(HADOUKEN_PATH);
+            // Cargar orbes desde 09_Guard_Block_Sparks
+            Sprite[] orbSparks = LoadSortedSprites(ORB_SPARKS_PATH);
 
-            // 2. Crear nueva escena vacia
+            // 2. Crear material con shader de rocas
+            Material stoneMaterial = GetOrCreateRockMaterial();
+
+            // 3. Crear nueva escena vacia
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-            // 3. GameObject Raiz
+            // 4. GameObject Raiz
             GameObject root = new GameObject("MinijuegoWaypoints_Root");
 
-            // 4. Camara Ortografica
+            // 5. Camara Ortografica
             GameObject camObj = new GameObject("MainCamera");
             camObj.transform.SetParent(root.transform);
             camObj.transform.localPosition = new Vector3(0f, 0f, -10f);
             Camera cam = camObj.AddComponent<Camera>();
             cam.orthographic = true;
-            cam.orthographicSize = 4.8f;
+            cam.orthographicSize = 4.85f;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.06f, 0.07f, 0.1f);
+            cam.backgroundColor = new Color(0.05f, 0.06f, 0.09f);
             camObj.AddComponent<AudioListener>();
 
-            // 5. Entorno visual y limites de la arena
+            // 6. Entorno visual y limites de la arena
             GameObject envRoot = new GameObject("Environment");
             envRoot.transform.SetParent(root.transform);
 
-            // Fondo retro oscuro
-            CreateVisualQuad(envRoot.transform, "ArenaBackground", Vector3.zero, new Vector3(16f, 9.5f, 1f), new Color(0.08f, 0.09f, 0.13f));
+            // Fondo retro oscuro amplio para que nada se pierda en ningun aspect ratio
+            CreateVisualQuad(envRoot.transform, "ArenaBackground", Vector3.zero, new Vector3(16.5f, 10.0f, 1f), new Color(0.07f, 0.08f, 0.12f));
 
             // Bordes delimitadores
-            CreateVisualQuad(envRoot.transform, "Border_Top", new Vector3(0f, 4.2f, 0f), new Vector3(15f, 0.12f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.8f));
-            CreateVisualQuad(envRoot.transform, "Border_Bottom", new Vector3(0f, -4.2f, 0f), new Vector3(15f, 0.12f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.8f));
-            CreateVisualQuad(envRoot.transform, "Border_Left", new Vector3(-7.5f, 0f, 0f), new Vector3(0.12f, 8.4f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.8f));
-            CreateVisualQuad(envRoot.transform, "Border_Right", new Vector3(7.5f, 0f, 0f), new Vector3(0.12f, 8.4f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.8f));
+            CreateVisualQuad(envRoot.transform, "Border_Top", new Vector3(0f, 4.0f, 0f), new Vector3(14.8f, 0.14f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.85f));
+            CreateVisualQuad(envRoot.transform, "Border_Bottom", new Vector3(0f, -4.0f, 0f), new Vector3(14.8f, 0.14f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.85f));
+            CreateVisualQuad(envRoot.transform, "Border_Left", new Vector3(-7.4f, 0f, 0f), new Vector3(0.14f, 8.14f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.85f));
+            CreateVisualQuad(envRoot.transform, "Border_Right", new Vector3(7.4f, 0f, 0f), new Vector3(0.14f, 8.14f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.85f));
 
-            // 6. Obstaculos que justifican la necesidad de Waypoints
+            // 7. Obstaculos con Shader y Material de Rocas
             GameObject obsRoot = new GameObject("Obstacles");
             obsRoot.transform.SetParent(envRoot.transform);
 
-            // Obstaculo 1 (Pilar Izquierdo)
-            CreateVisualQuad(obsRoot.transform, "Pillar_Left", new Vector3(-2.8f, 0.8f, 0f), new Vector3(1.6f, 3.2f, 1f), new Color(0.25f, 0.28f, 0.35f, 0.95f));
-            // Obstaculo 2 (Pilar Derecho)
-            CreateVisualQuad(obsRoot.transform, "Pillar_Right", new Vector3(2.8f, -0.8f, 0f), new Vector3(1.6f, 3.2f, 1f), new Color(0.25f, 0.28f, 0.35f, 0.95f));
-            // Obstaculo 3 (Muro Central)
-            CreateVisualQuad(obsRoot.transform, "Barrier_Center", new Vector3(0f, 0f, 0f), new Vector3(1.2f, 1.6f, 1f), new Color(0.3f, 0.22f, 0.28f, 0.95f));
+            // Obstaculo 1 (Pilar Izquierdo de Roca)
+            GameObject pillarLeft = CreateVisualQuad(obsRoot.transform, "Pillar_Left_Rock", new Vector3(-2.8f, 0.8f, 0f), new Vector3(1.8f, 3.2f, 1f), Color.white, stoneMaterial);
+            // Obstaculo 2 (Pilar Derecho de Roca)
+            GameObject pillarRight = CreateVisualQuad(obsRoot.transform, "Pillar_Right_Rock", new Vector3(2.8f, -0.8f, 0f), new Vector3(1.8f, 3.2f, 1f), Color.white, stoneMaterial);
+            // Obstaculo 3 (Muro Central de Roca)
+            GameObject barrierCenter = CreateVisualQuad(obsRoot.transform, "Barrier_Center_Rock", new Vector3(0f, 0f, 0f), new Vector3(1.4f, 1.8f, 1f), Color.white, stoneMaterial);
 
-            // 7. Circuitos de Waypoints
+            // 8. Circuitos de Waypoints
             GameObject circuitsRoot = new GameObject("WaypointCircuits");
             circuitsRoot.transform.SetParent(root.transform);
 
@@ -97,15 +123,15 @@ namespace Minigame.Editor
             WaypointCircuit circuitA = circuitAObj.AddComponent<WaypointCircuit>();
 
             Transform[] waypointsA = new Transform[6];
-            waypointsA[0] = CreateWaypointNode(circuitAObj.transform, "WP_A1", new Vector3(-5.8f, 3.0f, 0f));
-            waypointsA[1] = CreateWaypointNode(circuitAObj.transform, "WP_A2", new Vector3(0.0f, 3.2f, 0f));
-            waypointsA[2] = CreateWaypointNode(circuitAObj.transform, "WP_A3", new Vector3(5.8f, 3.0f, 0f));
-            waypointsA[3] = CreateWaypointNode(circuitAObj.transform, "WP_A4", new Vector3(5.8f, -3.0f, 0f));
-            waypointsA[4] = CreateWaypointNode(circuitAObj.transform, "WP_A5", new Vector3(0.0f, -3.2f, 0f));
-            waypointsA[5] = CreateWaypointNode(circuitAObj.transform, "WP_A6", new Vector3(-5.8f, -3.0f, 0f));
+            waypointsA[0] = CreateWaypointNode(circuitAObj.transform, "WP_A1", new Vector3(-5.6f, 2.7f, 0f));
+            waypointsA[1] = CreateWaypointNode(circuitAObj.transform, "WP_A2", new Vector3(0.0f, 2.8f, 0f));
+            waypointsA[2] = CreateWaypointNode(circuitAObj.transform, "WP_A3", new Vector3(5.6f, 2.7f, 0f));
+            waypointsA[3] = CreateWaypointNode(circuitAObj.transform, "WP_A4", new Vector3(5.6f, -2.7f, 0f));
+            waypointsA[4] = CreateWaypointNode(circuitAObj.transform, "WP_A5", new Vector3(0.0f, -2.8f, 0f));
+            waypointsA[5] = CreateWaypointNode(circuitAObj.transform, "WP_A6", new Vector3(-5.6f, -2.7f, 0f));
             circuitA.SetCustomWaypoints(waypointsA, WaypointTraversalMode.Loop);
 
-            // Circuito B: Patrulla Zig-zag esquivando obstaculos (Guardia 2 - Sean)
+            // Circuito B: Patrulla Zig-zag esquivando pilares de roca (Guardia 2 - Sean)
             GameObject circuitBObj = new GameObject("Circuit_ObstacleAvoidance");
             circuitBObj.transform.SetParent(circuitsRoot.transform);
             WaypointCircuit circuitB = circuitBObj.AddComponent<WaypointCircuit>();
@@ -117,10 +143,10 @@ namespace Minigame.Editor
             waypointsB[3] = CreateWaypointNode(circuitBObj.transform, "WP_B4_ReturnCenter", new Vector3(1.0f, 0.0f, 0f));
             circuitB.SetCustomWaypoints(waypointsB, WaypointTraversalMode.PingPong);
 
-            // 8. Jugador (Ryu)
+            // 9. Jugador (Ryu)
             GameObject playerObj = new GameObject("Player_Ryu");
             playerObj.transform.SetParent(root.transform);
-            playerObj.transform.localPosition = new Vector3(-6.2f, -3.0f, 0f);
+            playerObj.transform.localPosition = new Vector3(-6.0f, -2.8f, 0f);
 
             SpriteRenderer playerRenderer = playerObj.AddComponent<SpriteRenderer>();
             playerRenderer.sortingOrder = 10;
@@ -129,9 +155,10 @@ namespace Minigame.Editor
             SpriteFrameAnimator playerAnimator = playerObj.AddComponent<SpriteFrameAnimator>();
             StealthPlayerController playerController = playerObj.AddComponent<StealthPlayerController>();
             playerController.SetAnimationFrames(ryuIdle, ryuWalk, ryuHit);
-            playerController.SetBounds(new Rect(-7.2f, -3.9f, 14.4f, 7.8f));
+            // Limites estrictos para que nunca se pierda fuera de la vista
+            playerController.SetBounds(new Rect(-6.8f, -3.5f, 13.6f, 7.0f));
 
-            // 9. Guardias con Waypoints
+            // 10. Guardias con Waypoints
             GameObject guardsRoot = new GameObject("Guards");
             guardsRoot.transform.SetParent(root.transform);
 
@@ -177,56 +204,57 @@ namespace Minigame.Editor
             SetPrivateField(guard2, "waitTimeAtWaypoint", 1.2f);
             guardList.Add(guard2);
 
-            // 10. Orbes Coleccionables
+            // 11. Orbes Coleccionables usando 09_Guard_Block_Sparks
             GameObject itemsRoot = new GameObject("Collectibles");
             itemsRoot.transform.SetParent(root.transform);
 
             List<StealthCollectible> collectibleList = new List<StealthCollectible>();
             Vector3[] itemPositions = new Vector3[]
             {
-                new Vector3(-4.8f, 1.5f, 0f),
-                new Vector3(-1.2f, 2.4f, 0f),
-                new Vector3(1.2f, -2.4f, 0f),
-                new Vector3(4.8f, -1.5f, 0f)
+                new Vector3(-4.5f, 1.4f, 0f),
+                new Vector3(-1.0f, 2.2f, 0f),
+                new Vector3(1.0f, -2.2f, 0f),
+                new Vector3(4.5f, -1.4f, 0f)
             };
 
             for (int i = 0; i < itemPositions.Length; i++)
             {
-                GameObject itemObj = new GameObject($"Orb_Collectible_{i + 1}");
+                GameObject itemObj = new GameObject($"Orb_Sparks_Collectible_{i + 1}");
                 itemObj.transform.SetParent(itemsRoot.transform);
                 itemObj.transform.localPosition = itemPositions[i];
+                itemObj.transform.localScale = new Vector3(1.7f, 1.7f, 1f);
 
                 SpriteRenderer itemRenderer = itemObj.AddComponent<SpriteRenderer>();
                 itemRenderer.sortingOrder = 8;
-                if (orbSprites.Length > 0) itemRenderer.sprite = orbSprites[0];
+                if (orbSparks.Length > 0) itemRenderer.sprite = orbSparks[0];
 
                 SpriteFrameAnimator itemAnimator = itemObj.AddComponent<SpriteFrameAnimator>();
                 StealthCollectible collectible = itemObj.AddComponent<StealthCollectible>();
-                collectible.SetFrames(orbSprites);
+                collectible.SetFrames(orbSparks);
                 collectible.SetTargetPlayer(playerController);
                 collectibleList.Add(collectible);
             }
 
-            // 11. Portal de Extraccion / Meta
+            // 12. Portal de Extraccion / Meta
             GameObject goalObj = new GameObject("Goal_ExtractionPortal");
             goalObj.transform.SetParent(root.transform);
-            goalObj.transform.localPosition = new Vector3(6.2f, 3.0f, 0f);
+            goalObj.transform.localPosition = new Vector3(6.0f, 2.8f, 0f);
 
             CreateVisualQuad(goalObj.transform, "PortalVisual", Vector3.zero, new Vector3(1.2f, 1.2f, 1f), new Color(0.8f, 0.2f, 0.2f, 0.7f));
             StealthGoal goal = goalObj.AddComponent<StealthGoal>();
             goal.SetTargetPlayer(playerController);
 
-            // 12. UI Canvas
+            // 13. UI Canvas con formato amplio sin cortes en los bordes
             CanvasReferences ui = BuildMinigameUI(root.transform);
 
-            // 13. Manager del Minijuego
+            // 14. Manager del Minijuego
             GameObject managerObj = new GameObject("StealthMinigameManager");
             managerObj.transform.SetParent(root.transform);
             StealthMinigameManager manager = managerObj.AddComponent<StealthMinigameManager>();
             manager.SetReferences(playerController, guardList, collectibleList, goal);
             manager.SetUIReferences(ui.StatusText, ui.OrbsText, ui.TimerText, ui.ControlsText);
 
-            // 14. Guardar escena en ambas rutas para maxima compatibilidad
+            // 15. Guardar escena en ambas rutas para compatibilidad total
             EditorSceneManager.SaveScene(scene, SCENE_PATH_1);
             Debug.Log($"[Waypoint Builder] Escena guardada en: {SCENE_PATH_1}");
 
@@ -236,7 +264,35 @@ namespace Minigame.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log("[Waypoint Builder] Minijuego de Waypoints generado con exito.");
+            Debug.Log("[Waypoint Builder] Minijuego de Waypoints regenerado con exito.");
+        }
+
+        private static Material GetOrCreateRockMaterial()
+        {
+            Material mat = AssetDatabase.LoadAssetAtPath<Material>(MATERIAL_PATH);
+            if (mat == null)
+            {
+                Shader shader = Shader.Find("Custom/RockStone2D");
+                if (shader == null)
+                {
+                    Debug.LogWarning("[Waypoint Builder] Shader Custom/RockStone2D no encontrado en Shader.Find, usando Sprites/Default como respaldo.");
+                    shader = Shader.Find("Sprites/Default");
+                }
+
+                mat = new Material(shader);
+                mat.name = "StonePillar_Material";
+                mat.SetColor("_BaseRockColor", new Color(0.28f, 0.31f, 0.36f, 1f));
+                mat.SetColor("_HighlightRockColor", new Color(0.44f, 0.48f, 0.55f, 1f));
+                mat.SetColor("_CrackColor", new Color(0.11f, 0.12f, 0.15f, 1f));
+                mat.SetFloat("_Scale", 5.5f);
+                mat.SetFloat("_CrackIntensity", 0.7f);
+                mat.SetFloat("_EdgeDarkness", 0.45f);
+
+                AssetDatabase.CreateAsset(mat, MATERIAL_PATH);
+                AssetDatabase.SaveAssets();
+                Debug.Log($"[Waypoint Builder] Material de roca creado en: {MATERIAL_PATH}");
+            }
+            return mat;
         }
 
         private static Transform CreateWaypointNode(Transform parent, string name, Vector3 pos)
@@ -247,7 +303,7 @@ namespace Minigame.Editor
             return node.transform;
         }
 
-        private static void CreateVisualQuad(Transform parent, string name, Vector3 pos, Vector3 scale, Color color)
+        private static GameObject CreateVisualQuad(Transform parent, string name, Vector3 pos, Vector3 scale, Color color, Material customMat = null)
         {
             GameObject quad = new GameObject(name);
             quad.transform.SetParent(parent);
@@ -258,11 +314,18 @@ namespace Minigame.Editor
             sr.color = color;
             sr.sortingOrder = 2;
 
+            if (customMat != null)
+            {
+                sr.material = customMat;
+            }
+
             Texture2D tex = new Texture2D(1, 1);
             tex.SetPixel(0, 0, Color.white);
             tex.Apply();
             Sprite dummy = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
             sr.sprite = dummy;
+
+            return quad;
         }
 
         private struct CanvasReferences
@@ -294,52 +357,91 @@ namespace Minigame.Editor
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (font == null) font = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
-            // Cabecera
-            GameObject headerObj = CreateUIElement("HeaderPanel", canvasObj.transform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -50f), new Vector2(0f, 90f));
+            // 1. Panel de Cabecera (Anclado arriba en todo el ancho con fondo oscuro)
+            GameObject headerObj = new GameObject("HeaderPanel");
+            headerObj.transform.SetParent(canvasObj.transform, false);
+            RectTransform headerRt = headerObj.AddComponent<RectTransform>();
+            headerRt.anchorMin = new Vector2(0f, 1f);
+            headerRt.anchorMax = new Vector2(1f, 1f);
+            headerRt.pivot = new Vector2(0.5f, 1f);
+            headerRt.anchoredPosition = Vector2.zero;
+            headerRt.sizeDelta = new Vector2(0f, 100f);
 
-            refs.TitleText = CreateUIText("TitleText", headerObj.transform, "DOJO STEALTH: WAYPOINTS MISSION", font, 30, FontStyle.Bold, new Color(1f, 0.85f, 0.2f));
-            SetRectTransformAnchors(refs.TitleText.rectTransform, new Vector2(0.05f, 0.5f), new Vector2(0.45f, 0.5f), new Vector2(50f, 0f), new Vector2(400f, 40f));
+            Image headerBg = headerObj.AddComponent<Image>();
+            headerBg.color = new Color(0.04f, 0.05f, 0.08f, 0.90f);
+            headerBg.raycastTarget = false;
+
+            // Titulo principal
+            refs.TitleText = CreateSafeUIText("TitleText", headerObj.transform, "DOJO STEALTH: WAYPOINTS MISSION", font, 28, FontStyle.Bold, new Color(1f, 0.85f, 0.2f));
+            RectTransform titleRt = refs.TitleText.rectTransform;
+            titleRt.anchorMin = new Vector2(0f, 1f);
+            titleRt.anchorMax = new Vector2(0f, 1f);
+            titleRt.pivot = new Vector2(0f, 1f);
+            titleRt.anchoredPosition = new Vector2(35f, -15f);
+            titleRt.sizeDelta = new Vector2(800f, 40f);
             refs.TitleText.alignment = TextAnchor.MiddleLeft;
 
-            refs.StatusText = CreateUIText("StatusText", headerObj.transform, "OBJETIVO: EVITA LAS RUTAS DE WAYPOINTS Y RECOGE LOS ORBES", font, 20, FontStyle.Bold, Color.white);
-            SetRectTransformAnchors(refs.StatusText.rectTransform, new Vector2(0.05f, 0.1f), new Vector2(0.55f, 0.1f), new Vector2(50f, 0f), new Vector2(500f, 30f));
+            // Texto de estado / objetivo
+            refs.StatusText = CreateSafeUIText("StatusText", headerObj.transform, "OBJETIVO: EVITA LAS RUTAS DE WAYPOINTS Y RECOGE LOS ORBES", font, 20, FontStyle.Bold, Color.white);
+            RectTransform statusRt = refs.StatusText.rectTransform;
+            statusRt.anchorMin = new Vector2(0f, 1f);
+            statusRt.anchorMax = new Vector2(0f, 1f);
+            statusRt.pivot = new Vector2(0f, 1f);
+            statusRt.anchoredPosition = new Vector2(35f, -55f);
+            statusRt.sizeDelta = new Vector2(1000f, 35f);
             refs.StatusText.alignment = TextAnchor.MiddleLeft;
 
-            refs.TimerText = CreateUIText("TimerText", headerObj.transform, "TIEMPO: 00:00", font, 24, FontStyle.Bold, new Color(0.3f, 0.9f, 1f));
-            SetRectTransformAnchors(refs.TimerText.rectTransform, new Vector2(0.65f, 0.5f), new Vector2(0.95f, 0.5f), new Vector2(0f, 0f), new Vector2(250f, 35f));
+            // Temporizador
+            refs.TimerText = CreateSafeUIText("TimerText", headerObj.transform, "TIEMPO: 00:00", font, 26, FontStyle.Bold, new Color(0.3f, 0.9f, 1f));
+            RectTransform timerRt = refs.TimerText.rectTransform;
+            timerRt.anchorMin = new Vector2(1f, 1f);
+            timerRt.anchorMax = new Vector2(1f, 1f);
+            timerRt.pivot = new Vector2(1f, 1f);
+            timerRt.anchoredPosition = new Vector2(-35f, -15f);
+            timerRt.sizeDelta = new Vector2(400f, 40f);
             refs.TimerText.alignment = TextAnchor.MiddleRight;
 
-            refs.OrbsText = CreateUIText("OrbsText", headerObj.transform, "ORBES: 0 / 4", font, 24, FontStyle.Bold, new Color(1f, 0.7f, 0.2f));
-            SetRectTransformAnchors(refs.OrbsText.rectTransform, new Vector2(0.65f, 0.1f), new Vector2(0.95f, 0.1f), new Vector2(0f, 0f), new Vector2(250f, 30f));
+            // Contador de orbes
+            refs.OrbsText = CreateSafeUIText("OrbsText", headerObj.transform, "ORBES: 0 / 4", font, 22, FontStyle.Bold, new Color(1f, 0.7f, 0.2f));
+            RectTransform orbsRt = refs.OrbsText.rectTransform;
+            orbsRt.anchorMin = new Vector2(1f, 1f);
+            orbsRt.anchorMax = new Vector2(1f, 1f);
+            orbsRt.pivot = new Vector2(1f, 1f);
+            orbsRt.anchoredPosition = new Vector2(-35f, -55f);
+            orbsRt.sizeDelta = new Vector2(400f, 35f);
             refs.OrbsText.alignment = TextAnchor.MiddleRight;
 
-            // Pie con instrucciones
-            GameObject footerObj = CreateUIElement("FooterPanel", canvasObj.transform, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, 30f), new Vector2(0f, 50f));
-            refs.ControlsText = CreateUIText("ControlsText", footerObj.transform, "CONTROLES: [WASD / FLECHAS] Moverse  |  [R] Reiniciar", font, 20, FontStyle.Normal, new Color(0.8f, 0.8f, 0.8f, 0.9f));
-            SetRectTransformAnchors(refs.ControlsText.rectTransform, new Vector2(0.1f, 0.5f), new Vector2(0.9f, 0.5f), Vector2.zero, new Vector2(600f, 30f));
+            // 2. Panel de Pie (Anclado abajo en todo el ancho con controles)
+            GameObject footerObj = new GameObject("FooterPanel");
+            footerObj.transform.SetParent(canvasObj.transform, false);
+            RectTransform footerRt = footerObj.AddComponent<RectTransform>();
+            footerRt.anchorMin = new Vector2(0f, 0f);
+            footerRt.anchorMax = new Vector2(1f, 0f);
+            footerRt.pivot = new Vector2(0.5f, 0f);
+            footerRt.anchoredPosition = Vector2.zero;
+            footerRt.sizeDelta = new Vector2(0f, 50f);
+
+            Image footerBg = footerObj.AddComponent<Image>();
+            footerBg.color = new Color(0.04f, 0.05f, 0.08f, 0.90f);
+            footerBg.raycastTarget = false;
+
+            refs.ControlsText = CreateSafeUIText("ControlsText", footerObj.transform, "CONTROLES: [WASD / FLECHAS] Moverse  |  [R] Reiniciar Mision", font, 20, FontStyle.Normal, new Color(0.85f, 0.85f, 0.85f, 0.95f));
+            RectTransform controlsRt = refs.ControlsText.rectTransform;
+            controlsRt.anchorMin = new Vector2(0.5f, 0.5f);
+            controlsRt.anchorMax = new Vector2(0.5f, 0.5f);
+            controlsRt.pivot = new Vector2(0.5f, 0.5f);
+            controlsRt.anchoredPosition = Vector2.zero;
+            controlsRt.sizeDelta = new Vector2(1400f, 40f);
             refs.ControlsText.alignment = TextAnchor.MiddleCenter;
 
             return refs;
         }
 
-        private static GameObject CreateUIElement(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPos, Vector2 sizeDelta)
-        {
-            GameObject obj = new GameObject(name);
-            obj.transform.SetParent(parent, false);
-            RectTransform rt = obj.AddComponent<RectTransform>();
-            rt.anchorMin = anchorMin;
-            rt.anchorMax = anchorMax;
-            rt.anchoredPosition = anchoredPos;
-            rt.sizeDelta = sizeDelta;
-            return obj;
-        }
-
-        private static Text CreateUIText(string name, Transform parent, string content, Font font, int size, FontStyle style, Color color)
+        private static Text CreateSafeUIText(string name, Transform parent, string content, Font font, int size, FontStyle style, Color color)
         {
             GameObject textObj = new GameObject(name);
             textObj.transform.SetParent(parent, false);
             RectTransform rt = textObj.AddComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(400f, 50f);
 
             Text t = textObj.AddComponent<Text>();
             t.text = content;
@@ -349,19 +451,15 @@ namespace Minigame.Editor
             t.color = color;
             t.raycastTarget = false;
 
+            // Configuracion crucial para evitar que las letras se corten por los lados o lineas
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            t.verticalOverflow = VerticalWrapMode.Overflow;
+
             Outline outline = textObj.AddComponent<Outline>();
-            outline.effectColor = new Color(0f, 0f, 0f, 0.85f);
+            outline.effectColor = new Color(0f, 0f, 0f, 0.9f);
             outline.effectDistance = new Vector2(1.5f, -1.5f);
 
             return t;
-        }
-
-        private static void SetRectTransformAnchors(RectTransform rt, Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPos, Vector2 sizeDelta)
-        {
-            rt.anchorMin = anchorMin;
-            rt.anchorMax = anchorMax;
-            rt.anchoredPosition = anchoredPos;
-            rt.sizeDelta = sizeDelta;
         }
 
         private static Sprite[] LoadSortedSprites(string folderPath)
@@ -416,6 +514,9 @@ namespace Minigame.Editor
 
             string dir2 = Path.GetDirectoryName(SCENE_PATH_2);
             if (!Directory.Exists(dir2)) Directory.CreateDirectory(dir2);
+
+            string matDir = Path.GetDirectoryName(MATERIAL_PATH);
+            if (!Directory.Exists(matDir)) Directory.CreateDirectory(matDir);
         }
     }
 }

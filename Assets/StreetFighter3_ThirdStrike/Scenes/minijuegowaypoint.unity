@@ -183,11 +183,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1467187300}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.65, y: 0.1}
-  m_AnchorMax: {x: 0.95, y: 0.1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 250, y: 30}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -40, y: -20}
+  m_SizeDelta: {x: 400, y: 35}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &38814911
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -241,8 +241,8 @@ MonoBehaviour:
     m_Alignment: 5
     m_AlignByGeometry: 0
     m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
+    m_HorizontalOverflow: 1
+    m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: 'ORBES: 0 / 4'
 --- !u!1 &45470777
@@ -311,20 +311,12 @@ MonoBehaviour:
   floatSpeed: 3.5
   floatAmplitude: 0.15
   orbFrames:
-  - {fileID: 21300000, guid: 1573c9a874c09cb498e41f9347e4cc62, type: 3}
-  - {fileID: 21300000, guid: 0655cebd21543d34a871ad87bb2c685b, type: 3}
-  - {fileID: 21300000, guid: 20fac2f1add8d4046a1453da2aef3f6a, type: 3}
-  - {fileID: 21300000, guid: 8249f3c3829888045a674a5cb2c9dd55, type: 3}
-  - {fileID: 21300000, guid: 6a87fb8d99835ab448ed972d62601430, type: 3}
-  - {fileID: 21300000, guid: 532f37a6c45d7f14eb830c072f631198, type: 3}
-  - {fileID: 21300000, guid: 380cd2cf452cf5f42b497bbad2b870c0, type: 3}
-  - {fileID: 21300000, guid: 8955cae6911a05f47a731ac53be26c4b, type: 3}
-  - {fileID: 21300000, guid: d63fc41bd60d1894ab6af5f737503dff, type: 3}
-  - {fileID: 21300000, guid: bc64433e7c8e85348a67e41254909f3a, type: 3}
-  - {fileID: 21300000, guid: 3aea6dc9e864605489344ff5622dfe56, type: 3}
-  - {fileID: 21300000, guid: 99e66e2199f2d0e4dbd68a4b716f1c4b, type: 3}
-  - {fileID: 21300000, guid: 12007068bb586884ba93c769c6d4b398, type: 3}
-  - {fileID: 21300000, guid: c8d8db30196ad714a85b438ab99e30d0, type: 3}
+  - {fileID: 5088316998373936774, guid: 0f3c214d9602b454f8deec467ef0753e, type: 3}
+  - {fileID: -855298285791758126, guid: 5803caad679435b41bc5f31da6cf5738, type: 3}
+  - {fileID: 6937817954938267909, guid: 2686e8631079f6b4382fdee0a6486391, type: 3}
+  - {fileID: -6470460504253458178, guid: 7457e3b77a720424e915febcfd59382f, type: 3}
+  - {fileID: -4178046375966092550, guid: 978407a56af00be49a52212e5e180cc2, type: 3}
+  - {fileID: 4130640169021434097, guid: 2b9b2ca7f041c69459c79fec40f95235, type: 3}
   spriteRenderer: {fileID: 0}
   frameAnimator: {fileID: 0}
   playerTarget: {fileID: 1273669639}
@@ -393,7 +385,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 8
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 1573c9a874c09cb498e41f9347e4cc62, type: 3}
+  m_Sprite: {fileID: 5088316998373936774, guid: 0f3c214d9602b454f8deec467ef0753e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -413,7 +405,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 1.2, y: -2.4, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.7, y: 1.7, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 483016390}
@@ -538,7 +530,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: 8f4a1329c48b20141b7123908ef12345, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -562,7 +554,7 @@ SpriteRenderer:
   m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 1527503421}
-  m_Color: {r: 0.25, g: 0.28, b: 0.35, a: 0.95}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -629,7 +621,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: 8f4a1329c48b20141b7123908ef12345, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -653,7 +645,7 @@ SpriteRenderer:
   m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 1761544711}
-  m_Color: {r: 0.25, g: 0.28, b: 0.35, a: 0.95}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -1433,8 +1425,8 @@ MonoBehaviour:
     m_Alignment: 5
     m_AlignByGeometry: 0
     m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
+    m_HorizontalOverflow: 1
+    m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: 'TIEMPO: 00:00'
 --- !u!114 &610700328
@@ -1474,11 +1466,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1467187300}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.65, y: 0.5}
-  m_AnchorMax: {x: 0.95, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 250, y: 35}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -40, y: 20}
+  m_SizeDelta: {x: 400, y: 40}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!1 &667050347
 GameObject:
   m_ObjectHideFlags: 0
@@ -1512,11 +1504,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1467187300}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.05, y: 0.1}
-  m_AnchorMax: {x: 0.55, y: 0.1}
-  m_AnchoredPosition: {x: 50, y: 0}
-  m_SizeDelta: {x: 500, y: 30}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 40, y: -20}
+  m_SizeDelta: {x: 1000, y: 35}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &667050349
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1570,8 +1562,8 @@ MonoBehaviour:
     m_Alignment: 3
     m_AlignByGeometry: 0
     m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
+    m_HorizontalOverflow: 1
+    m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: 'OBJETIVO: EVITA LAS RUTAS DE WAYPOINTS Y RECOGE LOS ORBES'
 --- !u!1 &699370459
@@ -1905,20 +1897,12 @@ MonoBehaviour:
   floatSpeed: 3.5
   floatAmplitude: 0.15
   orbFrames:
-  - {fileID: 21300000, guid: 1573c9a874c09cb498e41f9347e4cc62, type: 3}
-  - {fileID: 21300000, guid: 0655cebd21543d34a871ad87bb2c685b, type: 3}
-  - {fileID: 21300000, guid: 20fac2f1add8d4046a1453da2aef3f6a, type: 3}
-  - {fileID: 21300000, guid: 8249f3c3829888045a674a5cb2c9dd55, type: 3}
-  - {fileID: 21300000, guid: 6a87fb8d99835ab448ed972d62601430, type: 3}
-  - {fileID: 21300000, guid: 532f37a6c45d7f14eb830c072f631198, type: 3}
-  - {fileID: 21300000, guid: 380cd2cf452cf5f42b497bbad2b870c0, type: 3}
-  - {fileID: 21300000, guid: 8955cae6911a05f47a731ac53be26c4b, type: 3}
-  - {fileID: 21300000, guid: d63fc41bd60d1894ab6af5f737503dff, type: 3}
-  - {fileID: 21300000, guid: bc64433e7c8e85348a67e41254909f3a, type: 3}
-  - {fileID: 21300000, guid: 3aea6dc9e864605489344ff5622dfe56, type: 3}
-  - {fileID: 21300000, guid: 99e66e2199f2d0e4dbd68a4b716f1c4b, type: 3}
-  - {fileID: 21300000, guid: 12007068bb586884ba93c769c6d4b398, type: 3}
-  - {fileID: 21300000, guid: c8d8db30196ad714a85b438ab99e30d0, type: 3}
+  - {fileID: 5088316998373936774, guid: 0f3c214d9602b454f8deec467ef0753e, type: 3}
+  - {fileID: -855298285791758126, guid: 5803caad679435b41bc5f31da6cf5738, type: 3}
+  - {fileID: 6937817954938267909, guid: 2686e8631079f6b4382fdee0a6486391, type: 3}
+  - {fileID: -6470460504253458178, guid: 7457e3b77a720424e915febcfd59382f, type: 3}
+  - {fileID: -4178046375966092550, guid: 978407a56af00be49a52212e5e180cc2, type: 3}
+  - {fileID: 4130640169021434097, guid: 2b9b2ca7f041c69459c79fec40f95235, type: 3}
   spriteRenderer: {fileID: 0}
   frameAnimator: {fileID: 0}
   playerTarget: {fileID: 1273669639}
@@ -1987,7 +1971,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 8
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 1573c9a874c09cb498e41f9347e4cc62, type: 3}
+  m_Sprite: {fileID: 5088316998373936774, guid: 0f3c214d9602b454f8deec467ef0753e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -2007,7 +1991,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -4.8, y: 1.5, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.7, y: 1.7, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 483016390}
@@ -2695,8 +2679,8 @@ MonoBehaviour:
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
+    m_HorizontalOverflow: 1
+    m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: 'CONTROLES: [WASD / FLECHAS] Moverse  |  [R] Reiniciar'
 --- !u!114 &1042506384
@@ -2736,10 +2720,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1900159111}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.1, y: 0.5}
-  m_AnchorMax: {x: 0.9, y: 0.5}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 600, y: 30}
+  m_SizeDelta: {x: 1400, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1081590700
 GameObject:
@@ -3136,11 +3120,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1467187300}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.05, y: 0.5}
-  m_AnchorMax: {x: 0.45, y: 0.5}
-  m_AnchoredPosition: {x: 50, y: 0}
-  m_SizeDelta: {x: 400, y: 40}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 40, y: 20}
+  m_SizeDelta: {x: 800, y: 40}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1206133511
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3186,8 +3170,8 @@ MonoBehaviour:
     m_Alignment: 3
     m_AlignByGeometry: 0
     m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
+    m_HorizontalOverflow: 1
+    m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: 'DOJO STEALTH: WAYPOINTS MISSION'
 --- !u!222 &1206133513
@@ -3663,20 +3647,12 @@ MonoBehaviour:
   floatSpeed: 3.5
   floatAmplitude: 0.15
   orbFrames:
-  - {fileID: 21300000, guid: 1573c9a874c09cb498e41f9347e4cc62, type: 3}
-  - {fileID: 21300000, guid: 0655cebd21543d34a871ad87bb2c685b, type: 3}
-  - {fileID: 21300000, guid: 20fac2f1add8d4046a1453da2aef3f6a, type: 3}
-  - {fileID: 21300000, guid: 8249f3c3829888045a674a5cb2c9dd55, type: 3}
-  - {fileID: 21300000, guid: 6a87fb8d99835ab448ed972d62601430, type: 3}
-  - {fileID: 21300000, guid: 532f37a6c45d7f14eb830c072f631198, type: 3}
-  - {fileID: 21300000, guid: 380cd2cf452cf5f42b497bbad2b870c0, type: 3}
-  - {fileID: 21300000, guid: 8955cae6911a05f47a731ac53be26c4b, type: 3}
-  - {fileID: 21300000, guid: d63fc41bd60d1894ab6af5f737503dff, type: 3}
-  - {fileID: 21300000, guid: bc64433e7c8e85348a67e41254909f3a, type: 3}
-  - {fileID: 21300000, guid: 3aea6dc9e864605489344ff5622dfe56, type: 3}
-  - {fileID: 21300000, guid: 99e66e2199f2d0e4dbd68a4b716f1c4b, type: 3}
-  - {fileID: 21300000, guid: 12007068bb586884ba93c769c6d4b398, type: 3}
-  - {fileID: 21300000, guid: c8d8db30196ad714a85b438ab99e30d0, type: 3}
+  - {fileID: 5088316998373936774, guid: 0f3c214d9602b454f8deec467ef0753e, type: 3}
+  - {fileID: -855298285791758126, guid: 5803caad679435b41bc5f31da6cf5738, type: 3}
+  - {fileID: 6937817954938267909, guid: 2686e8631079f6b4382fdee0a6486391, type: 3}
+  - {fileID: -6470460504253458178, guid: 7457e3b77a720424e915febcfd59382f, type: 3}
+  - {fileID: -4178046375966092550, guid: 978407a56af00be49a52212e5e180cc2, type: 3}
+  - {fileID: 4130640169021434097, guid: 2b9b2ca7f041c69459c79fec40f95235, type: 3}
   spriteRenderer: {fileID: 0}
   frameAnimator: {fileID: 0}
   playerTarget: {fileID: 1273669639}
@@ -3745,7 +3721,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 8
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 1573c9a874c09cb498e41f9347e4cc62, type: 3}
+  m_Sprite: {fileID: 5088316998373936774, guid: 0f3c214d9602b454f8deec467ef0753e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -3765,7 +3741,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -1.2, y: 2.4, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.7, y: 1.7, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 483016390}
@@ -4542,20 +4518,12 @@ MonoBehaviour:
   floatSpeed: 3.5
   floatAmplitude: 0.15
   orbFrames:
-  - {fileID: 21300000, guid: 1573c9a874c09cb498e41f9347e4cc62, type: 3}
-  - {fileID: 21300000, guid: 0655cebd21543d34a871ad87bb2c685b, type: 3}
-  - {fileID: 21300000, guid: 20fac2f1add8d4046a1453da2aef3f6a, type: 3}
-  - {fileID: 21300000, guid: 8249f3c3829888045a674a5cb2c9dd55, type: 3}
-  - {fileID: 21300000, guid: 6a87fb8d99835ab448ed972d62601430, type: 3}
-  - {fileID: 21300000, guid: 532f37a6c45d7f14eb830c072f631198, type: 3}
-  - {fileID: 21300000, guid: 380cd2cf452cf5f42b497bbad2b870c0, type: 3}
-  - {fileID: 21300000, guid: 8955cae6911a05f47a731ac53be26c4b, type: 3}
-  - {fileID: 21300000, guid: d63fc41bd60d1894ab6af5f737503dff, type: 3}
-  - {fileID: 21300000, guid: bc64433e7c8e85348a67e41254909f3a, type: 3}
-  - {fileID: 21300000, guid: 3aea6dc9e864605489344ff5622dfe56, type: 3}
-  - {fileID: 21300000, guid: 99e66e2199f2d0e4dbd68a4b716f1c4b, type: 3}
-  - {fileID: 21300000, guid: 12007068bb586884ba93c769c6d4b398, type: 3}
-  - {fileID: 21300000, guid: c8d8db30196ad714a85b438ab99e30d0, type: 3}
+  - {fileID: 5088316998373936774, guid: 0f3c214d9602b454f8deec467ef0753e, type: 3}
+  - {fileID: -855298285791758126, guid: 5803caad679435b41bc5f31da6cf5738, type: 3}
+  - {fileID: 6937817954938267909, guid: 2686e8631079f6b4382fdee0a6486391, type: 3}
+  - {fileID: -6470460504253458178, guid: 7457e3b77a720424e915febcfd59382f, type: 3}
+  - {fileID: -4178046375966092550, guid: 978407a56af00be49a52212e5e180cc2, type: 3}
+  - {fileID: 4130640169021434097, guid: 2b9b2ca7f041c69459c79fec40f95235, type: 3}
   spriteRenderer: {fileID: 0}
   frameAnimator: {fileID: 0}
   playerTarget: {fileID: 1273669639}
@@ -4624,7 +4592,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 8
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 1573c9a874c09cb498e41f9347e4cc62, type: 3}
+  m_Sprite: {fileID: 5088316998373936774, guid: 0f3c214d9602b454f8deec467ef0753e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -4644,7 +4612,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 4.8, y: -1.5, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.7, y: 1.7, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 483016390}
@@ -4707,7 +4675,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: 8f4a1329c48b20141b7123908ef12345, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4731,7 +4699,7 @@ SpriteRenderer:
   m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 700920526}
-  m_Color: {r: 0.3, g: 0.22, b: 0.28, a: 0.95}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

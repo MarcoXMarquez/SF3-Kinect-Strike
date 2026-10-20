@@ -34,6 +34,7 @@ namespace Minigame.Waypoints
                 if (frameAnimator == null) frameAnimator = gameObject.AddComponent<SpriteFrameAnimator>();
             }
             basePosition = transform.position;
+            if (spriteRenderer != null) spriteRenderer.enabled = true;
         }
 
         private void Start()
@@ -48,7 +49,7 @@ namespace Minigame.Waypoints
         {
             if (isCollected) return;
 
-            // Animacion flotante en Y
+            // Animacion flotante en eje Y
             transform.position = basePosition + new Vector3(0f, Mathf.Sin(Time.time * floatSpeed) * floatAmplitude, 0f);
 
             // Comprobacion de proximidad con el jugador
@@ -65,7 +66,7 @@ namespace Minigame.Waypoints
         private void Collect()
         {
             isCollected = true;
-            gameObject.SetActive(false);
+            if (spriteRenderer != null) spriteRenderer.enabled = false;
             onCollectedCallback?.Invoke();
         }
 
@@ -92,7 +93,11 @@ namespace Minigame.Waypoints
         {
             isCollected = false;
             transform.position = basePosition;
-            gameObject.SetActive(true);
+            if (spriteRenderer != null) spriteRenderer.enabled = true;
+            if (frameAnimator != null && orbFrames != null && orbFrames.Length > 0)
+            {
+                frameAnimator.PlayAnimation(orbFrames, true);
+            }
         }
 
         private void OnDrawGizmosSelected()
