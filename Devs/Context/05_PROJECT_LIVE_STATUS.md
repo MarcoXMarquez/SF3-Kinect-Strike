@@ -81,6 +81,11 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 | `RinneganPortal2D.shader` | `Shaders/` | Equipo | Shader procedural de vórtice dimensional Rinnegan para el portal del minijuego. |
 | `RockStone2D.shader` | `Shaders/` | Equipo | Shader procedural para pilares de roca del minijuego. |
 | `minijuegowaypoint.unity` | `Scenes/` | Equipo | Escena jugable del minijuego de sigilo y waypoints. |
+| `SpriteFrameAnimator.cs` | `Scripts/Loading/` | Marco / Equipo | Reproductor ligero de secuencias de frames a 14 FPS CPS-3 sin allocations de GC. |
+| `StoryPrologueController.cs` | `Scripts/UI/` | Marco / Kevin | Prólogo narrativo en pantalla negra del Modo Historia explicando el porqué de la pelea Ryu vs Ken. |
+| `SF3StoryModeBuilder.cs` | `Scripts/Editor/` | Marco / Kevin | Constructor automatizado de la escena StoryMode_Scene con estética CPS-3 y Canvas UI. |
+| `NeonSiegeGame.cs` | `Minigames/NeonSiege/` | Equipo | Controlador principal del minijuego de campaña balística de proyectiles con Ryu contra Urien. |
+| `NeonSiege.unity` | `Minigames/NeonSiege/` | Equipo | Escena jugable de Neon Siege en azoteas de Hong Kong. |
 
 ---
 

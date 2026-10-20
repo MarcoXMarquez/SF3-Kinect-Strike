@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 namespace Minigame.Waypoints
 {
@@ -52,6 +53,18 @@ namespace Minigame.Waypoints
             {
                 RestartGame();
             }
+
+            // Atajo para volver al Menú Principal con ESC o M
+            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.M))
+            {
+                ReturnToMainMenu();
+            }
+        }
+
+        public void ReturnToMainMenu()
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene("MainMenu_Scene");
         }
 
         private void SetupGame()
@@ -128,7 +141,7 @@ namespace Minigame.Waypoints
 
             if (statusText != null)
             {
-                statusText.text = "¡DETECTADO POR LA PATRULLA! PRESIONA [R] PARA REINTENTAR";
+                statusText.text = "¡DETECTADO POR LA PATRULLA! [R] REINTENTAR | [ESC] MENÚ";
                 statusText.color = new Color(1f, 0.25f, 0.2f);
             }
         }
@@ -146,7 +159,7 @@ namespace Minigame.Waypoints
 
             if (statusText != null)
             {
-                statusText.text = string.Format("¡MISIÓN COMPLETADA! TIEMPO: {0:F1}s | [R] PARA REPETIR", gameTimer);
+                statusText.text = string.Format("¡MISIÓN COMPLETADA! TIEMPO: {0:F1}s | [R] REPETIR | [ESC] MENÚ", gameTimer);
                 statusText.color = new Color(0.3f, 1f, 0.6f);
             }
         }
@@ -171,7 +184,7 @@ namespace Minigame.Waypoints
 
             if (helperHintText != null)
             {
-                helperHintText.text = "CONTROLES: [WASD / FLECHAS] Moverse  |  [R] Reiniciar";
+                helperHintText.text = "CONTROLES: [WASD / FLECHAS] Moverse  |  [R] Reiniciar  |  [ESC] Volver al Menú";
             }
         }
 

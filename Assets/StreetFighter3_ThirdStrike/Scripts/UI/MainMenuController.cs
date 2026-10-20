@@ -8,24 +8,27 @@ namespace StreetFighter3.UI
     public enum MainMenuState
     {
         Root,
-        VersusSubmenu
+        VersusSubmenu,
+        MinigamesSubmenu
     }
 
     /// <summary>
-    /// Controlador del MenÃº Principal arcade de Street Fighter III.
-    /// Soporta navegaciÃ³n 100% por teclado, submenÃºs jerÃ¡rquicos (Versus Bot / Versus 2P),
-    /// efectos de cursor/pulsaciÃ³n CPS-3 y transiciÃ³n hacia la pantalla de carga.
+    /// Controlador del Menú Principal arcade de Street Fighter III.
+    /// Soporta navegación 100% por teclado, submenús jerárquicos (Modo Historia, Duelos Versus, Minijuegos),
+    /// efectos de cursor/pulsación CPS-3 y transición hacia la pantalla de carga.
     /// </summary>
     public class MainMenuController : MonoBehaviour
     {
-        [Header("Referencias de MenÃºs")]
+        [Header("Referencias de Menús")]
         [SerializeField] private GameObject rootMenuPanel;
         [SerializeField] private GameObject versusSubmenuPanel;
+        [SerializeField] private GameObject minigamesSubmenuPanel;
         [SerializeField] private RectTransform cursorIndicator;
 
-        [Header("Botones MenÃº Principal")]
+        [Header("Botones Menú Principal")]
         [SerializeField] private Button storyModeButton;
         [SerializeField] private Button versusButton;
+        [SerializeField] private Button minigamesButton;
         [SerializeField] private Button exitButton;
 
         [Header("Botones Submenú Versus")]
@@ -33,6 +36,12 @@ namespace StreetFighter3.UI
         [SerializeField] private Button versus2PlayerButton;
         [SerializeField] private Button versusTombButton;
         [SerializeField] private Button backVersusButton;
+
+        [Header("Botones Submenú Minijuegos")]
+        [SerializeField] private Button minigameWaypointButton;
+        [SerializeField] private Button minigameNeonSiegeButton;
+        [SerializeField] private Button minigameLoadingButton;
+        [SerializeField] private Button backMinigamesButton;
 
         [Header("Audio")]
         [SerializeField] private AudioSource bgmAudioSource;
@@ -47,11 +56,13 @@ namespace StreetFighter3.UI
         [SerializeField] private string duelSceneChina = "Sandbox_China";
         [SerializeField] private string duelSceneTomb = "Sandbox_Tomb";
         [SerializeField] private string storyModeScene = "StoryMode_Scene";
+        [SerializeField] private string waypointSceneName = "minijuegowaypoint";
+        [SerializeField] private string neonSiegeSceneName = "NeonSiege";
 
-        [Header("Modal PrÃ³ximamente (Modo Historia)")]
+        [Header("Modal Próximamente (Azure Kinect)")]
         [SerializeField] private GameObject comingSoonModalPanel;
 
-        [Header("ConfiguraciÃ³n Visual")]
+        [Header("Configuración Visual")]
         [SerializeField] private Color normalColor = new Color(0.85f, 0.85f, 0.85f, 1f);
         [SerializeField] private Color selectedColor = new Color(1f, 0.88f, 0.15f, 1f);
         [SerializeField] private float pulseSpeed = 7f;
@@ -84,20 +95,34 @@ namespace StreetFighter3.UI
             {
                 if (rootMenuPanel != null) rootMenuPanel.SetActive(true);
                 if (versusSubmenuPanel != null) versusSubmenuPanel.SetActive(false);
+                if (minigamesSubmenuPanel != null) minigamesSubmenuPanel.SetActive(false);
 
                 if (storyModeButton != null) currentButtons.Add(storyModeButton);
                 if (versusButton != null) currentButtons.Add(versusButton);
+                if (minigamesButton != null) currentButtons.Add(minigamesButton);
                 if (exitButton != null) currentButtons.Add(exitButton);
             }
             else if (currentState == MainMenuState.VersusSubmenu)
             {
                 if (rootMenuPanel != null) rootMenuPanel.SetActive(false);
                 if (versusSubmenuPanel != null) versusSubmenuPanel.SetActive(true);
+                if (minigamesSubmenuPanel != null) minigamesSubmenuPanel.SetActive(false);
 
                 if (versusBotButton != null) currentButtons.Add(versusBotButton);
                 if (versus2PlayerButton != null) currentButtons.Add(versus2PlayerButton);
                 if (versusTombButton != null) currentButtons.Add(versusTombButton);
                 if (backVersusButton != null) currentButtons.Add(backVersusButton);
+            }
+            else if (currentState == MainMenuState.MinigamesSubmenu)
+            {
+                if (rootMenuPanel != null) rootMenuPanel.SetActive(false);
+                if (versusSubmenuPanel != null) versusSubmenuPanel.SetActive(false);
+                if (minigamesSubmenuPanel != null) minigamesSubmenuPanel.SetActive(true);
+
+                if (minigameWaypointButton != null) currentButtons.Add(minigameWaypointButton);
+                if (minigameNeonSiegeButton != null) currentButtons.Add(minigameNeonSiegeButton);
+                if (minigameLoadingButton != null) currentButtons.Add(minigameLoadingButton);
+                if (backMinigamesButton != null) currentButtons.Add(backMinigamesButton);
             }
 
             for (int i = 0; i < currentButtons.Count; i++)
@@ -112,7 +137,7 @@ namespace StreetFighter3.UI
         {
             if (loadingScreenController != null && loadingScreenController.gameObject.activeSelf && loadingScreenController.GetComponent<CanvasGroup>() != null && loadingScreenController.GetComponent<CanvasGroup>().alpha > 0.01f)
             {
-                // Si la pantalla de carga estÃ¡ activa, suspender el menÃº
+                // Si la pantalla de carga está activa, suspender el menú
                 return;
             }
 
@@ -135,7 +160,7 @@ namespace StreetFighter3.UI
 
             if (currentButtons.Count == 0) return;
 
-            // NavegaciÃ³n Vertical (W / S o Flechas)
+            // Navegación Vertical (W / S o Flechas)
             if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
             {
                 Navigate(-1);
@@ -145,7 +170,7 @@ namespace StreetFighter3.UI
                 Navigate(1);
             }
 
-            // ConfirmaciÃ³n (Enter / Espacio)
+            // Confirmación (Enter / Espacio)
             if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.KeypadEnter))
             {
                 ConfirmSelection();
@@ -154,7 +179,7 @@ namespace StreetFighter3.UI
             // Volver / Cancelar (Escape / Backspace)
             if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Backspace))
             {
-                if (currentState == MainMenuState.VersusSubmenu)
+                if (currentState == MainMenuState.VersusSubmenu || currentState == MainMenuState.MinigamesSubmenu)
                 {
                     PlaySFX(cancelBackSfx);
                     EnterState(MainMenuState.Root);
@@ -205,14 +230,17 @@ namespace StreetFighter3.UI
             {
                 switch (selectedIndex)
                 {
-                    case 0: // Modo Historia -> Cinemática y Diálogos DBZ Tenkaichi 3
-                        Debug.Log("[MainMenu] Modo Historia seleccionado. Iniciando Modo Historia y Cinemáticas DBZ Tenkaichi de KINET STRIKE...");
-                        LaunchLoadingScreen(storyModeScene, 2.5f);
+                    case 0: // Modo Historia -> Prólogo Narrativo en Pantalla Negra Ryu vs Ken
+                        Debug.Log("[MainMenu] Modo Historia seleccionado. Iniciando Prólogo Narrativo Ryu vs Ken...");
+                        LaunchLoadingScreen(storyModeScene, 1.8f);
                         break;
-                    case 1: // Versus (Abrir SubmenÃº)
+                    case 1: // Versus (Abrir Submenú)
                         EnterState(MainMenuState.VersusSubmenu);
                         break;
-                    case 2: // Salir
+                    case 2: // Minijuegos (Abrir Submenú)
+                        EnterState(MainMenuState.MinigamesSubmenu);
+                        break;
+                    case 3: // Salir
                         QuitApplication();
                         break;
                 }
@@ -225,15 +253,15 @@ namespace StreetFighter3.UI
                     {
                         case 0: // Japón (Suzaku Castle)
                             Debug.Log("[MainMenu] Iniciando Duelo en Suzaku Castle (Japón)...");
-                            LaunchLoadingScreen(duelSceneName, 4.5f);
+                            LaunchLoadingScreen(duelSceneName, 3.5f);
                             break;
                         case 1: // China (Crowded Street)
                             Debug.Log("[MainMenu] Iniciando Duelo en Crowded Street (China)...");
-                            LaunchLoadingScreen(duelSceneChina, 4.0f);
+                            LaunchLoadingScreen(duelSceneChina, 3.5f);
                             break;
                         case 2: // Grecia (Tomb of Urien)
                             Debug.Log("[MainMenu] Iniciando Duelo en Olympian Tomb (Grecia - Urien)...");
-                            LaunchLoadingScreen(duelSceneTomb, 4.0f);
+                            LaunchLoadingScreen(duelSceneTomb, 3.5f);
                             break;
                         case 3: // Volver
                             EnterState(MainMenuState.Root);
@@ -245,15 +273,36 @@ namespace StreetFighter3.UI
                     switch (selectedIndex)
                     {
                         case 0:
-                            LaunchLoadingScreen(duelSceneName, 4.5f);
+                            LaunchLoadingScreen(duelSceneName, 3.5f);
                             break;
                         case 1:
-                            LaunchLoadingScreen(duelSceneChina, 4.0f);
+                            LaunchLoadingScreen(duelSceneChina, 3.5f);
                             break;
                         case 2:
                             EnterState(MainMenuState.Root);
                             break;
                     }
+                }
+            }
+            else if (currentState == MainMenuState.MinigamesSubmenu)
+            {
+                switch (selectedIndex)
+                {
+                    case 0: // Minijuego 1: Sigilo & Waypoints
+                        Debug.Log("[MainMenu] Iniciando Minijuego 1: Sigilo y Waypoints (Rinnegan)...");
+                        LaunchLoadingScreen(waypointSceneName, 2.0f);
+                        break;
+                    case 1: // Minijuego 2: Neon Siege
+                        Debug.Log("[MainMenu] Iniciando Minijuego 2: Neon Siege (Lanzamiento Balístico)...");
+                        LaunchLoadingScreen(neonSiegeSceneName, 2.0f);
+                        break;
+                    case 2: // Minijuego 3: Pantalla de carga DBZ Tenkaichi
+                        Debug.Log("[MainMenu] Iniciando Entrenamiento de Avatar DBZ Tenkaichi...");
+                        LaunchLoadingScreen(duelSceneName, 1.0f);
+                        break;
+                    case 3: // Volver
+                        EnterState(MainMenuState.Root);
+                        break;
                 }
             }
         }
@@ -302,20 +351,23 @@ namespace StreetFighter3.UI
                 }
             }
 
-            // Posicionar cursor indicador
             if (cursorIndicator != null && selectedIndex >= 0 && selectedIndex < currentButtons.Count)
             {
-                Button currentBtn = currentButtons[selectedIndex];
-                RectTransform btnRt = currentBtn.GetComponent<RectTransform>();
+                Button activeBtn = currentButtons[selectedIndex];
+                if (activeBtn != null)
+                {
+                    Vector3 btnPos = activeBtn.transform.localPosition;
+                    float targetX = btnPos.x - (activeBtn.GetComponent<RectTransform>().sizeDelta.x * 0.5f) - 35f;
+                    Vector3 targetPos = new Vector3(targetX, btnPos.y, 0f);
 
-                Vector3 targetPos = btnRt.position + new Vector3(-btnRt.rect.width * 0.5f - 30f, 0f, 0f);
-                if (snapCursor)
-                {
-                    cursorIndicator.position = targetPos;
-                }
-                else
-                {
-                    cursorIndicator.position = targetPos;
+                    if (snapCursor)
+                    {
+                        cursorIndicator.localPosition = targetPos;
+                    }
+                    else
+                    {
+                        cursorIndicator.localPosition = Vector3.Lerp(cursorIndicator.localPosition, targetPos, Time.unscaledDeltaTime * 25f);
+                    }
                 }
             }
         }
@@ -327,16 +379,18 @@ namespace StreetFighter3.UI
             Button activeBtn = currentButtons[selectedIndex];
             if (activeBtn == null || selectedIndex >= originalScales.Count) return;
 
-            // PulsaciÃ³n de escala con onda senoidal
+            // Pulsación de escala con onda senoidal
             float scaleMultiplier = 1f + Mathf.Sin(Time.unscaledTime * pulseSpeed) * pulseAmount;
             activeBtn.transform.localScale = originalScales[selectedIndex] * scaleMultiplier;
 
-            // Ligera oscilaciÃ³n horizontal del cursor
+            // Ligera oscilación horizontal del cursor
             if (cursorIndicator != null)
             {
                 float cursorOffset = Mathf.Sin(Time.unscaledTime * 8f) * 6f;
-                RectTransform btnRt = activeBtn.GetComponent<RectTransform>();
-                cursorIndicator.position = btnRt.position + new Vector3(-btnRt.rect.width * 0.5f - 30f + cursorOffset, 0f, 0f);
+                Vector3 pos = cursorIndicator.localPosition;
+                Button targetBtn = currentButtons[selectedIndex];
+                float baseX = targetBtn.transform.localPosition.x - (targetBtn.GetComponent<RectTransform>().sizeDelta.x * 0.5f) - 35f;
+                cursorIndicator.localPosition = new Vector3(baseX + cursorOffset, targetBtn.transform.localPosition.y, 0f);
             }
         }
 
@@ -347,6 +401,8 @@ namespace StreetFighter3.UI
                 if (currentButtons[i] != null && i < originalScales.Count)
                 {
                     currentButtons[i].transform.localScale = originalScales[i];
+                    Text t = currentButtons[i].GetComponentInChildren<Text>();
+                    if (t != null) t.color = normalColor;
                 }
             }
         }

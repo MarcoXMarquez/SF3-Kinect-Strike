@@ -24,6 +24,9 @@ EditorBuildSettings:
     path: Assets/StreetFighter3_ThirdStrike/Scenes/minijuegowaypoint.unity
     guid: 675cf80c1e40db245b3d0d8bb2d10a0b
   - enabled: 1
+    path: Assets/StreetFighter3_ThirdStrike/Minigames/NeonSiege/NeonSiege.unity
+    guid: 4d3cf10d1bd40ad4294850e9f6466faa
+  - enabled: 1
     path: Assets/Scenes/minijuegowaypoint.unity
     guid: c70ab970f3a4bea428a8d51c9099a11e
   - enabled: 1

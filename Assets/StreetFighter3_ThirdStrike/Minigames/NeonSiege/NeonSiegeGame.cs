@@ -370,11 +370,8 @@ namespace SF3.NeonSiege
         {
             if (state != Mode.Complete) return;
             PlayerPrefs.Save();
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
+            Time.timeScale = 1;
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu_Scene");
         }
 
         public bool FindSolution(SiegeTarget target, out Vector2 velocity, out float time)

@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace SF3.NeonSiege
 {
@@ -38,7 +39,14 @@ namespace SF3.NeonSiege
             Type(new Rect(62, 300, 680, 148), Stories[state == Mode.Title ? 0 : Mission], 26, Color.white, assets.bodyFont);
             Slant(new Rect(55, 465, 590, 40), blue);
             Type(new Rect(82, 470, 550, 30), state == Mode.Title ? "CINCO ASALTOS. UNA CIUDAD POR RECUPERAR." : "OBJETIVO: DESPEJA LA AZOTEA Y CONSERVA LA SEÑAL.", 21, gold, assets.numberFont);
-            if (Button(new Rect(55, 546, 345, 58), state == Mode.Title ? "EMPEZAR PARTIDA" : "¡A LUCHAR!", gold)) BeginMission(state == Mode.Title ? 0 : Mission);
+            
+            if (Button(new Rect(55, 546, 320, 58), state == Mode.Title ? "EMPEZAR PARTIDA" : "¡A LUCHAR!", gold)) BeginMission(state == Mode.Title ? 0 : Mission);
+            if (state == Mode.Title && Button(new Rect(390, 546, 300, 58), "VOLVER AL MENÚ", blue))
+            {
+                Time.timeScale = 1;
+                SceneManager.LoadScene("MainMenu_Scene");
+            }
+
             Type(new Rect(64, 652, 500, 30), "HONG KONG / MODO HISTORIA", 21, Color.white, assets.numberFont);
             Type(new Rect(840, 652, 360, 30), "RÉCORD  " + best, 25, gold, assets.numberFont, TextAnchor.UpperRight);
             Arcade(new Rect(937, 155, 280, 60), "URIEN", 52, gold, TextAnchor.MiddleCenter);
@@ -129,16 +137,29 @@ namespace SF3.NeonSiege
             }
             if (state == Mode.Paused)
             {
-                Type(new Rect(305, 373, 195, 30), "VOLUMEN", 24, gold, assets.numberFont);
-                volume = GUI.HorizontalSlider(new Rect(485, 387, 320, 22), volume, 0, 1); music.volume = volume * 0.3f;
-                if (Button(new Rect(450, 462, 380, 52), "VOLVER AL COMBATE", gold)) { PlayerPrefs.SetFloat("NeonSiege.Volume", volume); TogglePause(); }
-                if (Button(new Rect(450, 532, 380, 41), "VOLVER AL TÍTULO", blue)) { Time.timeScale = 1; Score = 0; ClearMission(); state = Mode.Title; music.UnPause(); }
+                Type(new Rect(305, 360, 195, 30), "VOLUMEN", 24, gold, assets.numberFont);
+                volume = GUI.HorizontalSlider(new Rect(485, 374, 320, 22), volume, 0, 1); music.volume = volume * 0.3f;
+                if (Button(new Rect(450, 420, 380, 46), "VOLVER AL COMBATE", gold)) { PlayerPrefs.SetFloat("NeonSiege.Volume", volume); TogglePause(); }
+                if (Button(new Rect(450, 476, 380, 40), "VOLVER AL TÍTULO", blue)) { Time.timeScale = 1; Score = 0; ClearMission(); state = Mode.Title; music.UnPause(); }
+                if (Button(new Rect(450, 526, 380, 40), "VOLVER AL MENÚ PRINCIPAL", coral)) { Time.timeScale = 1; SceneManager.LoadScene("MainMenu_Scene"); }
             }
-            else if (Button(new Rect(450, 473, 380, 55), state == Mode.Clear ? "SIGUIENTE ROUND" : state == Mode.Complete ? "SALIR DEL JUEGO" : "REINTENTAR", gold))
+            else
             {
-                if (state == Mode.Clear) { Mission++; state = Mode.Briefing; ClearMission(); }
-                else if (state == Mode.Complete) ExitCompletedCampaign();
-                else Retry();
+                if (Button(new Rect(450, 465, 380, 50), state == Mode.Clear ? "SIGUIENTE ROUND" : state == Mode.Complete ? "FINALIZAR CAMPAÑA" : "REINTENTAR", gold))
+                {
+                    if (state == Mode.Clear) { Mission++; state = Mode.Briefing; ClearMission(); }
+                    else if (state == Mode.Complete) ExitCompletedCampaign();
+                    else Retry();
+                }
+
+                if (state == Mode.Failed || state == Mode.Complete)
+                {
+                    if (Button(new Rect(450, 525, 380, 40), "VOLVER AL MENÚ PRINCIPAL", blue))
+                    {
+                        Time.timeScale = 1;
+                        SceneManager.LoadScene("MainMenu_Scene");
+                    }
+                }
             }
         }
 

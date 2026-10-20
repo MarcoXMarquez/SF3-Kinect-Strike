@@ -17,6 +17,11 @@ namespace StreetFighter3.Editor
         private const string SceneFolder = "Assets/StreetFighter3_ThirdStrike/Scenes";
         private const string ScenePath = "Assets/StreetFighter3_ThirdStrike/Scenes/MainMenu_Scene.unity";
         private const string DuelScenePath = "Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_Sebas.unity";
+        private const string StoryScenePath = "Assets/StreetFighter3_ThirdStrike/Scenes/StoryMode_Scene.unity";
+        private const string ChinaDuelPath = "Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_China.unity";
+        private const string TombDuelPath = "Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_Tomb.unity";
+        private const string WaypointScenePath = "Assets/StreetFighter3_ThirdStrike/Scenes/minijuegowaypoint.unity";
+        private const string NeonSiegeScenePath = "Assets/StreetFighter3_ThirdStrike/Minigames/NeonSiege/NeonSiege.unity";
 
         static SF3MainMenuBuilder()
         {
@@ -29,6 +34,13 @@ namespace StreetFighter3.Editor
             {
                 BuildMainMenuScene();
             }
+        }
+
+        [MenuItem("SF3 Tools/Build All Project Scenes")]
+        public static void BuildAllProjectScenes()
+        {
+            BuildMainMenuScene();
+            SF3StoryModeBuilder.BuildStoryModeScene();
         }
 
         [MenuItem("SF3 Tools/Build Main Menu & Loading Scene")]
@@ -97,44 +109,55 @@ namespace StreetFighter3.Editor
             titleRt.anchorMin = new Vector2(0.5f, 1f);
             titleRt.anchorMax = new Vector2(0.5f, 1f);
             titleRt.pivot = new Vector2(0.5f, 1f);
-            titleRt.anchoredPosition = new Vector2(0f, -80f);
+            titleRt.anchoredPosition = new Vector2(0f, -70f);
             titleRt.sizeDelta = new Vector2(1200f, 220f);
 
-            CreateText("Header_CPS3", titleObj.transform, "SOMATOSENSORY 3D COMBAT SYSTEM", retroFont, 20, FontStyle.Bold,
+            CreateText("Header_CPS3", titleObj.transform, "SOMATOSENSORY 3D COMBAT SYSTEM — CPS-3", retroFont, 20, FontStyle.Bold,
                 new Color(0.85f, 0.75f, 0.4f, 0.85f), new Vector2(0f, -20f), new Vector2(1000f, 30f));
 
-            CreateText("Title_SF3", titleObj.transform, "KINET STRIKE", retroFont, 76, FontStyle.Bold,
-                new Color(1f, 0.82f, 0.15f, 1f), new Vector2(0f, -75f), new Vector2(1200f, 95f));
+            CreateText("Title_SF3", titleObj.transform, "STREET FIGHTER III: 3rd STRIKE", retroFont, 68, FontStyle.Bold,
+                new Color(1f, 0.82f, 0.15f, 1f), new Vector2(0f, -75f), new Vector2(1400f, 85f));
 
-            CreateText("Subtitle_Strike", titleObj.transform, "KINECT 3D & ADAPTIVE AI FIGHTING SYSTEM", retroFont, 36, FontStyle.Bold,
-                new Color(0.2f, 0.9f, 1f, 1f), new Vector2(0f, -145f), new Vector2(1000f, 50f));
+            CreateText("Subtitle_Strike", titleObj.transform, "KINECT 3D & ADAPTIVE AI FIGHTING SYSTEM", retroFont, 30, FontStyle.Bold,
+                new Color(0.2f, 0.9f, 1f, 1f), new Vector2(0f, -140f), new Vector2(1000f, 45f));
 
             // 7. Contenedor de Botones de Menú
             GameObject menuContainerObj = CreateUIElement("Menu_Container", canvasObj.transform);
             RectTransform menuRt = menuContainerObj.GetComponent<RectTransform>();
-            menuRt.anchorMin = new Vector2(0.5f, 0.42f);
-            menuRt.anchorMax = new Vector2(0.5f, 0.42f);
+            menuRt.anchorMin = new Vector2(0.5f, 0.40f);
+            menuRt.anchorMax = new Vector2(0.5f, 0.40f);
             menuRt.pivot = new Vector2(0.5f, 0.5f);
             menuRt.anchoredPosition = Vector2.zero;
-            menuRt.sizeDelta = new Vector2(600f, 320f);
+            menuRt.sizeDelta = new Vector2(680f, 360f);
 
             // Panel Menú Principal
             GameObject rootPanel = CreateUIElement("RootMenu_Panel", menuContainerObj.transform);
             StretchFull(rootPanel.GetComponent<RectTransform>());
 
-            Button btnStory = CreateMenuButton("Btn_ModoHistoria", rootPanel.transform, "MODO HISTORIA", retroFont, new Vector2(0f, 70f));
-            Button btnVersus = CreateMenuButton("Btn_Versus", rootPanel.transform, "VERSUS", retroFont, new Vector2(0f, -10f));
-            Button btnExit = CreateMenuButton("Btn_Salir", rootPanel.transform, "SALIR", retroFont, new Vector2(0f, -90f));
+            Button btnStory = CreateMenuButton("Btn_ModoHistoria", rootPanel.transform, "MODO HISTORIA (Ryu vs Ken)", retroFont, new Vector2(0f, 105f));
+            Button btnVersus = CreateMenuButton("Btn_Versus", rootPanel.transform, "VERSUS (Duelos)", retroFont, new Vector2(0f, 35f));
+            Button btnMinijuegos = CreateMenuButton("Btn_Minijuegos", rootPanel.transform, "MINIJUEGOS ARCADE", retroFont, new Vector2(0f, -35f));
+            Button btnExit = CreateMenuButton("Btn_Salir", rootPanel.transform, "SALIR", retroFont, new Vector2(0f, -105f));
 
             // Panel Submenú Versus
             GameObject versusPanel = CreateUIElement("VersusSubmenu_Panel", menuContainerObj.transform);
             StretchFull(versusPanel.GetComponent<RectTransform>());
             versusPanel.SetActive(false);
 
-            Button btnVersusBot = CreateMenuButton("Btn_VersusBot", versusPanel.transform, "VERSUS JAPÓN (Suzaku Castle)", retroFont, new Vector2(0f, 95f));
+            Button btnVersusBot = CreateMenuButton("Btn_VersusBot", versusPanel.transform, "VERSUS JAPÓN (Suzaku Castle)", retroFont, new Vector2(0f, 105f));
             Button btnVersus2P = CreateMenuButton("Btn_Versus2P", versusPanel.transform, "VERSUS CHINA (Crowded Street)", retroFont, new Vector2(0f, 35f));
-            Button btnVersusTomb = CreateMenuButton("Btn_VersusTomb", versusPanel.transform, "VERSUS OLIMPO (Tomb of Urien)", retroFont, new Vector2(0f, -25f));
-            Button btnBackVersus = CreateMenuButton("Btn_Volver", versusPanel.transform, "VOLVER (Atrás)", retroFont, new Vector2(0f, -85f));
+            Button btnVersusTomb = CreateMenuButton("Btn_VersusTomb", versusPanel.transform, "VERSUS GRECIA (Tomb of Urien)", retroFont, new Vector2(0f, -35f));
+            Button btnBackVersus = CreateMenuButton("Btn_VolverVersus", versusPanel.transform, "VOLVER (Atrás)", retroFont, new Vector2(0f, -105f));
+
+            // Panel Submenú Minijuegos
+            GameObject minigamesPanel = CreateUIElement("MinigamesSubmenu_Panel", menuContainerObj.transform);
+            StretchFull(minigamesPanel.GetComponent<RectTransform>());
+            minigamesPanel.SetActive(false);
+
+            Button btnMinigameWaypoint = CreateMenuButton("Btn_MinigameWaypoint", minigamesPanel.transform, "1. SIGILO & WAYPOINTS (Rinnegan)", retroFont, new Vector2(0f, 105f));
+            Button btnMinigameNeonSiege = CreateMenuButton("Btn_MinigameNeonSiege", minigamesPanel.transform, "2. NEON SIEGE (Balística 2D)", retroFont, new Vector2(0f, 35f));
+            Button btnMinigameLoading = CreateMenuButton("Btn_MinigameLoading", minigamesPanel.transform, "3. AVATAR DE CARGA DBZ", retroFont, new Vector2(0f, -35f));
+            Button btnBackMinigames = CreateMenuButton("Btn_VolverMinigames", minigamesPanel.transform, "VOLVER (Atrás)", retroFont, new Vector2(0f, -105f));
 
             // Cursor Indicador (>>)
             GameObject cursorObj = CreateUIElement("Cursor_Indicator", menuContainerObj.transform);
@@ -155,10 +178,10 @@ namespace StreetFighter3.Editor
             footerRt.anchorMax = new Vector2(0.5f, 0f);
             footerRt.pivot = new Vector2(0.5f, 0f);
             footerRt.anchoredPosition = new Vector2(0f, 35f);
-            footerRt.sizeDelta = new Vector2(1000f, 40f);
+            footerRt.sizeDelta = new Vector2(1200f, 40f);
 
             CreateText("Text_Instructions", footerObj.transform, "NAVEGACIÓN: [W / S o Flechas] Seleccionar   |   [ENTER o ESPACIO] Confirmar   |   [ESC] Volver",
-                retroFont, 19, FontStyle.Normal, new Color(0.7f, 0.75f, 0.8f, 0.85f), Vector2.zero, new Vector2(1000f, 40f));
+                retroFont, 19, FontStyle.Normal, new Color(0.7f, 0.75f, 0.8f, 0.85f), Vector2.zero, new Vector2(1200f, 40f));
 
             // 8. Pantalla de Carga y Minijuego DBZ Tenkaichi 3
             GameObject loadingCanvasObj = CreateUIElement("Panel_LoadingScreen", canvasObj.transform);
@@ -168,155 +191,135 @@ namespace StreetFighter3.Editor
             loadingGroup.interactable = false;
             loadingGroup.blocksRaycasts = false;
 
-            // Fondo pantalla de carga
             Image loadingBg = loadingCanvasObj.AddComponent<Image>();
             loadingBg.color = new Color(0.04f, 0.05f, 0.08f, 0.98f);
 
-            // Header Loading
             Text loadingStatusText = CreateText("Text_LoadingTitle", loadingCanvasObj.transform, "NOW LOADING...", retroFont, 46, FontStyle.Bold,
                 new Color(0.2f, 0.9f, 1f, 1f), new Vector2(0f, 410f), new Vector2(900f, 60f));
 
-            // Barra de Carga (Más amplia)
+            // Barra de Carga
             GameObject barBgObj = CreateUIElement("ProgressBar_BG", loadingCanvasObj.transform);
             RectTransform barBgRt = barBgObj.GetComponent<RectTransform>();
-            barBgRt.anchoredPosition = new Vector2(0f, 350f);
-            barBgRt.sizeDelta = new Vector2(960f, 26f);
+            barBgRt.anchoredPosition = new Vector2(0f, 340f);
+            barBgRt.sizeDelta = new Vector2(760f, 28f);
             Image barBgImg = barBgObj.AddComponent<Image>();
-            barBgImg.color = new Color(0.12f, 0.15f, 0.22f, 1f);
+            barBgImg.color = new Color(0.12f, 0.15f, 0.22f, 0.9f);
 
             GameObject barFillObj = CreateUIElement("ProgressBar_Fill", barBgObj.transform);
-            StretchFull(barFillObj.GetComponent<RectTransform>());
+            RectTransform barFillRt = barFillObj.GetComponent<RectTransform>();
+            barFillRt.anchorMin = new Vector2(0f, 0f);
+            barFillRt.anchorMax = new Vector2(0f, 1f);
+            barFillRt.pivot = new Vector2(0f, 0.5f);
+            barFillRt.sizeDelta = new Vector2(0f, 0f);
             Image barFillImg = barFillObj.AddComponent<Image>();
+            barFillImg.color = new Color(1f, 0.82f, 0.15f, 1f);
             barFillImg.type = Image.Type.Filled;
             barFillImg.fillMethod = Image.FillMethod.Horizontal;
-            barFillImg.fillOrigin = (int)Image.OriginHorizontal.Left;
-            barFillImg.fillAmount = 0.15f;
-            barFillImg.color = new Color(1f, 0.82f, 0.15f, 1f);
+            barFillImg.fillAmount = 0f;
 
-            Text progressPercentText = CreateText("Text_Percentage", loadingCanvasObj.transform, "15%", retroFont, 24, FontStyle.Bold,
-                new Color(1f, 0.9f, 0.3f, 1f), new Vector2(0f, 310f), new Vector2(200f, 35f));
+            Text progressText = CreateText("Text_ProgressPercent", barBgObj.transform, "0%", retroFont, 18, FontStyle.Bold,
+                Color.white, Vector2.zero, new Vector2(200f, 26f));
 
-            Text promptContinueText = CreateText("Text_PromptContinue", loadingCanvasObj.transform, "ROUND READY! PRESIONA ENTER", retroFont, 24, FontStyle.Bold,
-                new Color(0.3f, 1f, 0.4f, 1f), new Vector2(0f, 275f), new Vector2(800f, 35f));
-            promptContinueText.gameObject.SetActive(false);
+            // Área del Minijuego
+            GameObject minigameAreaObj = CreateUIElement("Area_MinigamePlayable", loadingCanvasObj.transform);
+            RectTransform areaRt = minigameAreaObj.GetComponent<RectTransform>();
+            areaRt.anchoredPosition = new Vector2(0f, -40f);
+            areaRt.sizeDelta = new Vector2(1460f, 580f);
 
-            // 9. Contenedor del Minijuego (DBZ Budokai Tenkaichi 3 Style - ÁREA AMPLIADA)
-            GameObject minigameContainer = CreateUIElement("Minigame_Arena", loadingCanvasObj.transform);
-            RectTransform miniRt = minigameContainer.GetComponent<RectTransform>();
-            miniRt.anchoredPosition = new Vector2(0f, -40f);
-            miniRt.sizeDelta = new Vector2(1460f, 580f);
+            Image areaBg = minigameAreaObj.AddComponent<Image>();
+            areaBg.color = new Color(0.02f, 0.03f, 0.06f, 0.75f);
 
-            Image miniArenaImg = minigameContainer.AddComponent<Image>();
-            miniArenaImg.color = new Color(0.08f, 0.1f, 0.15f, 0.88f);
+            // Bordes arcade
+            CreateBorder(minigameAreaObj.transform, new Vector2(0f, 290f), new Vector2(1460f, 4f), new Color(0.2f, 0.9f, 1f, 0.9f));
+            CreateBorder(minigameAreaObj.transform, new Vector2(0f, -290f), new Vector2(1460f, 4f), new Color(0.2f, 0.9f, 1f, 0.9f));
+            CreateBorder(minigameAreaObj.transform, new Vector2(-730f, 0f), new Vector2(4f, 580f), new Color(0.2f, 0.9f, 1f, 0.9f));
+            CreateBorder(minigameAreaObj.transform, new Vector2(730f, 0f), new Vector2(4f, 580f), new Color(0.2f, 0.9f, 1f, 0.9f));
 
-            // Línea de suelo del dojo
-            GameObject floorLine = CreateUIElement("Arena_Floor", minigameContainer.transform);
-            RectTransform floorRt = floorLine.GetComponent<RectTransform>();
-            floorRt.anchoredPosition = new Vector2(0f, -220f);
-            floorRt.sizeDelta = new Vector2(1420f, 4f);
-            Image floorImg = floorLine.AddComponent<Image>();
-            floorImg.color = new Color(0.3f, 0.45f, 0.65f, 0.9f);
+            // Sprite de Hadouken para los orbes de carga
+            Sprite hadoukenSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/08_Super_Arts/Ryu_SA1_ShinkuHadouken_SuperFreeze/01.png")
+                ?? AssetDatabase.LoadAssetAtPath<Sprite>("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/03_Special_Moves/Ryu_Hadouken_Startup/01.png");
 
-            // Cargar Sprites de Ryu para el MiniFighter
-            Sprite[] ryuIdle = LoadSpriteSequence("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/01_Movement/idle_stance");
-            Sprite[] ryuWalk = LoadSpriteSequence("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/01_Movement/walk_forward");
-            Sprite[] ryuPunch = LoadSpriteSequence("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/02_Normals/light_punch");
-            Sprite[] ryuJump = LoadSpriteSequence("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/01_Movement/jump_neutral");
+            // Avatar Jugable
+            GameObject fighterObj = CreateUIElement("MiniFighter_Player", minigameAreaObj.transform);
+            RectTransform fighterRt = fighterObj.GetComponent<RectTransform>();
+            fighterRt.sizeDelta = new Vector2(110f, 140f);
+            fighterRt.anchoredPosition = new Vector2(-450f, -190f);
 
-            // Avatar del Jugador (MiniFighter - Escalado y con mayor rango de movimiento)
-            GameObject playerFighterObj = CreateUIElement("MiniFighter_Player", minigameContainer.transform);
-            RectTransform playerRt = playerFighterObj.GetComponent<RectTransform>();
-            playerRt.anchoredPosition = new Vector2(0f, -215f);
-            playerRt.sizeDelta = new Vector2(130f, 175f);
-            Image playerImg = playerFighterObj.AddComponent<Image>();
-            if (ryuIdle != null && ryuIdle.Length > 0) playerImg.sprite = ryuIdle[0];
-            playerImg.preserveAspect = true;
+            Image fighterImg = fighterObj.AddComponent<Image>();
+            Sprite ryuDefaultSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/01_Core_Locomotion/Ryu_Idle/01.png");
+            if (ryuDefaultSprite != null) fighterImg.sprite = ryuDefaultSprite;
 
-            MiniFighterController miniFighter = playerFighterObj.AddComponent<MiniFighterController>();
-            miniFighter.SetupSprites(ryuIdle, ryuWalk, ryuPunch, ryuJump);
-            miniFighter.ConfigureBoundsAndGround(-215f, new Vector2(-670f, 670f), 650f, 400f);
-
-            // Sprites de orbes y perseguidor
-            Sprite orbSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/StreetFighter3_ThirdStrike/Effects/13_Hadouken_Energy_Aura_Blue/3.png");
-            Sprite chaserSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/StreetFighter3_ThirdStrike/Effects/06_Hit_Spark_Electric_Yellow/10.png");
-
-            AudioClip collectSfx = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/StreetFighter3_ThirdStrike/Audio/SFX/05_Announcer_and_Interface/Bonus_Basketball_Bounce.wav");
-            AudioClip punchSfx = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/StreetFighter3_ThirdStrike/Audio/SFX/01_Combat_Hits/Hit_Punch_Light.wav");
+            MiniFighterController miniFighter = fighterObj.AddComponent<MiniFighterController>();
+            AssignField(miniFighter, "idleSprites", LoadSpriteSequence("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/01_Core_Locomotion/Ryu_Idle"));
+            AssignField(miniFighter, "walkSprites", LoadSpriteSequence("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/01_Core_Locomotion/Ryu_Walk_Forward"));
+            AssignField(miniFighter, "punchSprites", LoadSpriteSequence("Assets/StreetFighter3_ThirdStrike/Characters/02_Ryu/02_Normal_Attacks/Ryu_Standing_Far_LP_Jab"));
+            AssignField(miniFighter, "groundY", -190f);
+            AssignField(miniFighter, "minX", -670f);
+            AssignField(miniFighter, "maxX", 670f);
+            AssignField(miniFighter, "jumpForce", 620f);
+            AssignField(miniFighter, "moveSpeed", 360f);
 
             // Textos del Minijuego
-            Text scoreText = CreateText("Text_Score", minigameContainer.transform, "PUNTOS DBZ: 0000", retroFont, 24, FontStyle.Bold,
-                new Color(1f, 0.85f, 0.15f, 1f), new Vector2(-510f, 250f), new Vector2(360f, 40f));
+            Text scoreText = CreateText("Text_MinigameScore", minigameAreaObj.transform, "ORBES: 0", retroFont, 24, FontStyle.Bold,
+                new Color(1f, 0.85f, 0.1f, 1f), new Vector2(-540f, 250f), new Vector2(300f, 40f));
             scoreText.alignment = TextAnchor.MiddleLeft;
 
-            Text algoBadgeText = CreateText("Text_AlgoBadge", minigameContainer.transform, "⚡ CINEMÁTICA IA: [Wandering: 3 Orbes] + [Seeking: Perseguidor Hadouken]",
-                retroFont, 18, FontStyle.Bold, new Color(0.2f, 0.9f, 1f, 1f), new Vector2(240f, 250f), new Vector2(800f, 40f));
-            algoBadgeText.alignment = TextAnchor.MiddleRight;
+            Text minigameHelp = CreateText("Text_MinigameHelp", minigameAreaObj.transform,
+                "MINIJUEGO INTERACTIVO: [A / D] Moverse   |   [W / Espacio] Saltar   |   [J] Puñetazo",
+                retroFont, 18, FontStyle.Normal, new Color(0.85f, 0.85f, 0.9f, 0.9f), new Vector2(0f, -255f), new Vector2(1000f, 35f));
 
-            Text hintText = CreateText("Text_ControlsHint", minigameContainer.transform, "🎮 CONTROLES: [A / D] Moverse  |  [W] Saltar  |  [J / F / ESPACIO] Golpear Orbes",
-                retroFont, 18, FontStyle.Normal, new Color(0.75f, 0.8f, 0.9f, 0.95f), new Vector2(0f, -255f), new Vector2(1200f, 35f));
-
-            // LoadingMinigameManager (Área ampliada a 670 x 240)
-            LoadingMinigameManager minigameMgr = minigameContainer.AddComponent<LoadingMinigameManager>();
-            AssignField(minigameMgr, "minigameContainer", miniRt);
+            // Administrador del Minijuego de Carga
+            LoadingMinigameManager minigameMgr = loadingCanvasObj.AddComponent<LoadingMinigameManager>();
+            AssignField(minigameMgr, "minigameContainer", areaRt);
             AssignField(minigameMgr, "playerFighter", miniFighter);
             AssignField(minigameMgr, "scoreText", scoreText);
-            AssignField(minigameMgr, "algoBadgeText", algoBadgeText);
-            AssignField(minigameMgr, "hintText", hintText);
-            AssignField(minigameMgr, "targetSprite", orbSprite);
-            AssignField(minigameMgr, "chaserSprite", chaserSprite);
-            AssignField(minigameMgr, "collectSound", collectSfx);
-            AssignField(minigameMgr, "punchSound", punchSfx);
-            AssignField(minigameMgr, "areaBounds", new Vector2(670f, 240f));
+            AssignField(minigameMgr, "targetSprite", hadoukenSprite);
+            AssignField(minigameMgr, "areaBounds", new Vector2(680f, 260f));
 
-            // LoadingScreenController
+            // Controlador de Pantalla de Carga
             LoadingScreenController loadingCtrl = loadingCanvasObj.AddComponent<LoadingScreenController>();
             AssignField(loadingCtrl, "loadingCanvasGroup", loadingGroup);
             AssignField(loadingCtrl, "progressBarFill", barFillImg);
+            AssignField(loadingCtrl, "progressPercentText", progressText);
             AssignField(loadingCtrl, "loadingStatusText", loadingStatusText);
-            AssignField(loadingCtrl, "progressPercentageText", progressPercentText);
-            AssignField(loadingCtrl, "continuePromptText", promptContinueText);
             AssignField(loadingCtrl, "minigameManager", minigameMgr);
 
-            // 10. Modal "PRÓXIMAMENTE" para Modo Historia
-            GameObject modalObj = CreateUIElement("Modal_Proximamente", canvasObj.transform);
+            // 9. Ventana Modal "Próximamente"
+            GameObject modalObj = CreateUIElement("Modal_ComingSoon_Kinect", canvasObj.transform);
             StretchFull(modalObj.GetComponent<RectTransform>());
-            Image modalBg = modalObj.AddComponent<Image>();
-            modalBg.color = new Color(0.02f, 0.03f, 0.05f, 0.88f);
-
-            GameObject modalBox = CreateUIElement("Modal_Box", modalObj.transform);
-            RectTransform boxRt = modalBox.GetComponent<RectTransform>();
-            boxRt.sizeDelta = new Vector2(880f, 460f);
-            Image boxImg = modalBox.AddComponent<Image>();
-            boxImg.color = new Color(0.08f, 0.10f, 0.16f, 0.98f);
-
-            // Bordes dorados de la ventana
-            CreateBorder(modalBox.transform, new Vector2(0f, 228f), new Vector2(880f, 4f), new Color(1f, 0.82f, 0.15f, 0.9f));
-            CreateBorder(modalBox.transform, new Vector2(0f, -228f), new Vector2(880f, 4f), new Color(1f, 0.82f, 0.15f, 0.9f));
-            CreateBorder(modalBox.transform, new Vector2(-438f, 0f), new Vector2(4f, 460f), new Color(1f, 0.82f, 0.15f, 0.9f));
-            CreateBorder(modalBox.transform, new Vector2(438f, 0f), new Vector2(4f, 460f), new Color(1f, 0.82f, 0.15f, 0.9f));
-
-            CreateText("Modal_Title", modalBox.transform, "MODO HISTORIA", retroFont, 40, FontStyle.Bold,
-                new Color(1f, 0.85f, 0.15f, 1f), new Vector2(0f, 155f), new Vector2(800f, 50f));
-
-            CreateText("Modal_Subtitle", modalBox.transform, "¡PRÓXIMAMENTE!", retroFont, 30, FontStyle.Bold,
-                new Color(0.2f, 0.9f, 1f, 1f), new Vector2(0f, 105f), new Vector2(800f, 40f));
-
-            CreateText("Modal_Description", modalBox.transform,
-                "El Modo Historia integrará el control somatosensorial por hardware con Azure Kinect DK e IA Adaptativa.\n\nEn este modo enfrentarás la campaña ejecutando golpes, patadas y bloqueos con tu propio cuerpo en tiempo real.\n\nActualmente en desarrollo para el Sprint 2.",
-                retroFont, 21, FontStyle.Normal, new Color(0.85f, 0.88f, 0.92f, 1f), new Vector2(0f, -10f), new Vector2(780f, 160f));
-
-            CreateText("Modal_DismissPrompt", modalBox.transform, "[ PRESIONA ENTER, ESPACIO O ESC PARA VOLVER ]", retroFont, 20, FontStyle.Bold,
-                new Color(1f, 0.88f, 0.2f, 1f), new Vector2(0f, -180f), new Vector2(800f, 35f));
-
             modalObj.SetActive(false);
 
-            // 10. Audio Manager del Menú
-            GameObject audioMgrObj = new GameObject("Menu_Audio");
+            Image modalDimmer = modalObj.AddComponent<Image>();
+            modalDimmer.color = new Color(0.02f, 0.03f, 0.05f, 0.85f);
+
+            GameObject modalCard = CreateUIElement("Modal_Card", modalObj.transform);
+            RectTransform cardRt = modalCard.GetComponent<RectTransform>();
+            cardRt.sizeDelta = new Vector2(750f, 420f);
+            Image cardBg = modalCard.AddComponent<Image>();
+            cardBg.color = new Color(0.08f, 0.10f, 0.16f, 0.98f);
+
+            CreateBorder(modalCard.transform, new Vector2(0f, 210f), new Vector2(750f, 3f), new Color(1f, 0.82f, 0.15f, 1f));
+            CreateBorder(modalCard.transform, new Vector2(0f, -210f), new Vector2(750f, 3f), new Color(1f, 0.82f, 0.15f, 1f));
+
+            CreateText("Modal_Title", modalCard.transform, "MODO HISTORIA — KINET STRIKE", retroFont, 32, FontStyle.Bold,
+                new Color(1f, 0.82f, 0.15f, 1f), new Vector2(0f, 140f), new Vector2(700f, 50f));
+
+            CreateText("Modal_Desc", modalCard.transform,
+                "El Modo Historia integra cinemáticas somatosensoriales y combates por capítulos.\n\n" +
+                "El Episodio I te llevará a la batalla de Suzaku Castle entre Ryu y Ken con narrativa estilo arcade.\n\n" +
+                "Presiona ENTER o ESPACIO para continuar.",
+                retroFont, 20, FontStyle.Normal, new Color(0.9f, 0.9f, 0.95f, 1f), new Vector2(0f, 15f), new Vector2(650f, 180f));
+
+            Button btnModalClose = CreateMenuButton("Btn_ModalClose", modalCard.transform, "ENTENDIDO [ENTER]", retroFont, new Vector2(0f, -140f));
+
+            // 10. Audio Manager
+            GameObject audioMgrObj = new GameObject("AudioManager_MainMenu");
             AudioSource bgmSource = audioMgrObj.AddComponent<AudioSource>();
             bgmSource.loop = true;
-            bgmSource.playOnAwake = true;
-            bgmSource.volume = 0.65f;
-            AudioClip bgmClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/StreetFighter3_ThirdStrike/Audio/BGM/01_Opening_Demo.mp3")
+            bgmSource.volume = 0.45f;
+            bgmSource.playOnAwake = false;
+
+            AudioClip bgmClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/StreetFighter3_ThirdStrike/Resources/Audio/BGM_Japan.mp3")
                 ?? AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/StreetFighter3_ThirdStrike/Audio/BGM/02_Player_Select.mp3");
             bgmSource.clip = bgmClip;
             if (bgmClip != null) bgmSource.Play();
@@ -331,23 +334,36 @@ namespace StreetFighter3.Editor
             MainMenuController menuCtrl = canvasObj.AddComponent<MainMenuController>();
             AssignField(menuCtrl, "rootMenuPanel", rootPanel);
             AssignField(menuCtrl, "versusSubmenuPanel", versusPanel);
+            AssignField(menuCtrl, "minigamesSubmenuPanel", minigamesPanel);
             AssignField(menuCtrl, "cursorIndicator", cursorRt);
             AssignField(menuCtrl, "storyModeButton", btnStory);
             AssignField(menuCtrl, "versusButton", btnVersus);
+            AssignField(menuCtrl, "minigamesButton", btnMinijuegos);
             AssignField(menuCtrl, "exitButton", btnExit);
+
             AssignField(menuCtrl, "versusBotButton", btnVersusBot);
             AssignField(menuCtrl, "versus2PlayerButton", btnVersus2P);
             AssignField(menuCtrl, "versusTombButton", btnVersusTomb);
             AssignField(menuCtrl, "backVersusButton", btnBackVersus);
+
+            AssignField(menuCtrl, "minigameWaypointButton", btnMinigameWaypoint);
+            AssignField(menuCtrl, "minigameNeonSiegeButton", btnMinigameNeonSiege);
+            AssignField(menuCtrl, "minigameLoadingButton", btnMinigameLoading);
+            AssignField(menuCtrl, "backMinigamesButton", btnBackMinigames);
+
+            AssignField(menuCtrl, "duelSceneName", "Sandbox_Sebas");
             AssignField(menuCtrl, "duelSceneChina", "Sandbox_China");
             AssignField(menuCtrl, "duelSceneTomb", "Sandbox_Tomb");
+            AssignField(menuCtrl, "storyModeScene", "StoryMode_Scene");
+            AssignField(menuCtrl, "waypointSceneName", "minijuegowaypoint");
+            AssignField(menuCtrl, "neonSiegeSceneName", "NeonSiege");
+
             AssignField(menuCtrl, "bgmAudioSource", bgmSource);
             AssignField(menuCtrl, "sfxAudioSource", sfxSource);
             AssignField(menuCtrl, "cursorMoveSfx", cursorSfx);
             AssignField(menuCtrl, "confirmSelectSfx", confirmSfx);
             AssignField(menuCtrl, "cancelBackSfx", cursorSfx);
             AssignField(menuCtrl, "loadingScreenController", loadingCtrl);
-            AssignField(menuCtrl, "duelSceneName", "Sandbox_Sebas");
             AssignField(menuCtrl, "comingSoonModalPanel", modalObj);
 
             // 12. Guardar Escena
@@ -356,7 +372,7 @@ namespace StreetFighter3.Editor
             Debug.Log($"✅ [SF3 Builder] Escena de Menú guardada exitosamente en: {ScenePath}");
 
             // 13. Sincronizar Build Settings
-            EnsureBuildSettings(ScenePath, DuelScenePath);
+            EnsureBuildSettings();
         }
 
         private static void CreateBorder(Transform parent, Vector2 pos, Vector2 size, Color color)
@@ -369,38 +385,36 @@ namespace StreetFighter3.Editor
             img.color = color;
         }
 
-        private static void EnsureBuildSettings(string menuPath, string duelPath)
+        public static void EnsureBuildSettings()
         {
             var scenes = EditorBuildSettings.scenes.ToList();
             bool changed = false;
 
-            if (!scenes.Any(s => s.path == menuPath))
+            string[] requiredScenes = new string[]
             {
-                scenes.Insert(0, new EditorBuildSettingsScene(menuPath, true));
-                changed = true;
-            }
-            if (!scenes.Any(s => s.path == duelPath) && File.Exists(duelPath))
+                ScenePath,
+                StoryScenePath,
+                DuelScenePath,
+                ChinaDuelPath,
+                TombDuelPath,
+                WaypointScenePath,
+                NeonSiegeScenePath
+            };
+
+            for (int i = 0; i < requiredScenes.Length; i++)
             {
-                scenes.Add(new EditorBuildSettingsScene(duelPath, true));
-                changed = true;
-            }
-            string chinaDuelPath = "Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_China.unity";
-            if (!scenes.Any(s => s.path == chinaDuelPath) && File.Exists(chinaDuelPath))
-            {
-                scenes.Add(new EditorBuildSettingsScene(chinaDuelPath, true));
-                changed = true;
-            }
-            string tombDuelPath = "Assets/StreetFighter3_ThirdStrike/Scenes/Sandbox_Tomb.unity";
-            if (!scenes.Any(s => s.path == tombDuelPath) && File.Exists(tombDuelPath))
-            {
-                scenes.Add(new EditorBuildSettingsScene(tombDuelPath, true));
-                changed = true;
+                string path = requiredScenes[i];
+                if (!scenes.Any(s => s.path == path) && File.Exists(path))
+                {
+                    scenes.Add(new EditorBuildSettingsScene(path, true));
+                    changed = true;
+                }
             }
 
             if (changed)
             {
                 EditorBuildSettings.scenes = scenes.ToArray();
-                Debug.Log("🔄 [SF3 Builder] Escenas sincronizadas en EditorBuildSettings.");
+                Debug.Log("🔄 [SF3 Builder] Todas las escenas sincronizadas en EditorBuildSettings.");
             }
         }
 
@@ -425,16 +439,15 @@ namespace StreetFighter3.Editor
             GameObject btnObj = CreateUIElement(name, parent);
             RectTransform rt = btnObj.GetComponent<RectTransform>();
             rt.anchoredPosition = position;
-            rt.sizeDelta = new Vector2(460f, 62f);
+            rt.sizeDelta = new Vector2(520f, 56f);
 
             Image img = btnObj.AddComponent<Image>();
-            img.color = new Color(0.1f, 0.12f, 0.18f, 0.75f);
+            img.color = new Color(0.08f, 0.10f, 0.16f, 0.85f);
 
             Button btn = btnObj.AddComponent<Button>();
 
-            // Texto interno
-            Text txt = CreateText("Label", btnObj.transform, label, font, 28, FontStyle.Bold,
-                new Color(0.85f, 0.85f, 0.85f, 1f), Vector2.zero, new Vector2(440f, 55f));
+            Text txt = CreateText("Label", btnObj.transform, label, font, 24, FontStyle.Bold,
+                new Color(0.85f, 0.85f, 0.85f, 1f), Vector2.zero, new Vector2(500f, 50f));
             txt.alignment = TextAnchor.MiddleCenter;
 
             return btn;
