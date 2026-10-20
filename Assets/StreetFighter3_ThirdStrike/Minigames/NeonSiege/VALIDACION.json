@@ -1,0 +1,42 @@
+{
+    "passed": true,
+    "physicsError": 0.0,
+    "failure": "",
+    "missions": [
+        "Mission 1: all targets defeated, score=2128, ammo=3, integrity=4",
+        "Mission 2: all targets defeated, score=4504, ammo=3, integrity=4",
+        "Mission 3: all targets defeated, score=7402, ammo=4, integrity=4",
+        "Mission 4: all targets defeated, score=10352, ammo=5, integrity=4",
+        "Mission 5: all targets defeated, score=14608, ammo=5, integrity=3"
+    ],
+    "shots": 27,
+    "hits": 26,
+    "pause": true,
+    "retry": true,
+    "shotLock": true,
+    "defeat": true,
+    "cursorAim": true,
+    "spanishFonts": true,
+    "campaignEnding": true,
+    "enemyFacing": true,
+    "namesAboveSprites": true,
+    "levelThreePhaseCases": 16,
+    "levelThreeRoutes": [
+        "x=2.5, phase=0, speed=13.8, angle=21.1",
+        "x=2.5, phase=0.7, speed=13.8, angle=21.0",
+        "x=2.5, phase=1.4, speed=13.8, angle=75.4",
+        "x=2.5, phase=2.1, speed=13.8, angle=76.0",
+        "x=2.5, phase=2.8, speed=13.8, angle=76.1",
+        "x=2.5, phase=3.5, speed=13.8, angle=76.0",
+        "x=2.5, phase=4.2, speed=13.8, angle=75.6",
+        "x=2.5, phase=4.9, speed=13.8, angle=20.4",
+        "x=5.5, phase=0, speed=13.8, angle=32.5",
+        "x=5.5, phase=0.7, speed=13.8, angle=30.1",
+        "x=5.5, phase=1.4, speed=13.8, angle=27.5",
+        "x=5.5, phase=2.1, speed=13.8, angle=27.2",
+        "x=5.5, phase=2.8, speed=13.8, angle=29.6",
+        "x=5.5, phase=3.5, speed=13.8, angle=32.3",
+        "x=5.5, phase=4.2, speed=13.8, angle=32.5",
+        "x=5.5, phase=4.9, speed=13.8, angle=30.1"
+    ]
+}
