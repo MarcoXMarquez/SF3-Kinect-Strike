@@ -96,22 +96,22 @@ namespace Minigame.Editor
             // Fondo retro oscuro amplio para que nada se pierda en ningun aspect ratio
             CreateVisualQuad(envRoot.transform, "ArenaBackground", Vector3.zero, new Vector3(16.5f, 10.0f, 1f), new Color(0.07f, 0.08f, 0.12f));
 
-            // Bordes delimitadores
-            CreateVisualQuad(envRoot.transform, "Border_Top", new Vector3(0f, 4.0f, 0f), new Vector3(14.8f, 0.14f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.85f));
-            CreateVisualQuad(envRoot.transform, "Border_Bottom", new Vector3(0f, -4.0f, 0f), new Vector3(14.8f, 0.14f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.85f));
-            CreateVisualQuad(envRoot.transform, "Border_Left", new Vector3(-7.4f, 0f, 0f), new Vector3(0.14f, 8.14f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.85f));
-            CreateVisualQuad(envRoot.transform, "Border_Right", new Vector3(7.4f, 0f, 0f), new Vector3(0.14f, 8.14f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.85f));
+            // Bordes delimitadores con BoxCollider2D
+            CreateVisualQuad(envRoot.transform, "Border_Top", new Vector3(0f, 4.0f, 0f), new Vector3(14.8f, 0.14f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.85f), null, true);
+            CreateVisualQuad(envRoot.transform, "Border_Bottom", new Vector3(0f, -4.0f, 0f), new Vector3(14.8f, 0.14f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.85f), null, true);
+            CreateVisualQuad(envRoot.transform, "Border_Left", new Vector3(-7.4f, 0f, 0f), new Vector3(0.14f, 8.14f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.85f), null, true);
+            CreateVisualQuad(envRoot.transform, "Border_Right", new Vector3(7.4f, 0f, 0f), new Vector3(0.14f, 8.14f, 1f), new Color(0.2f, 0.6f, 0.9f, 0.85f), null, true);
 
-            // 7. Obstaculos con Shader y Material de Rocas
+            // 7. Obstaculos con Shader, Material de Rocas y BoxCollider2D
             GameObject obsRoot = new GameObject("Obstacles");
             obsRoot.transform.SetParent(envRoot.transform);
 
             // Obstaculo 1 (Pilar Izquierdo de Roca)
-            GameObject pillarLeft = CreateVisualQuad(obsRoot.transform, "Pillar_Left_Rock", new Vector3(-2.8f, 0.8f, 0f), new Vector3(1.8f, 3.2f, 1f), Color.white, stoneMaterial);
+            GameObject pillarLeft = CreateVisualQuad(obsRoot.transform, "Pillar_Left_Rock", new Vector3(-2.8f, 0.8f, 0f), new Vector3(1.8f, 3.2f, 1f), Color.white, stoneMaterial, true);
             // Obstaculo 2 (Pilar Derecho de Roca)
-            GameObject pillarRight = CreateVisualQuad(obsRoot.transform, "Pillar_Right_Rock", new Vector3(2.8f, -0.8f, 0f), new Vector3(1.8f, 3.2f, 1f), Color.white, stoneMaterial);
+            GameObject pillarRight = CreateVisualQuad(obsRoot.transform, "Pillar_Right_Rock", new Vector3(2.8f, -0.8f, 0f), new Vector3(1.8f, 3.2f, 1f), Color.white, stoneMaterial, true);
             // Obstaculo 3 (Muro Central de Roca)
-            GameObject barrierCenter = CreateVisualQuad(obsRoot.transform, "Barrier_Center_Rock", new Vector3(0f, 0f, 0f), new Vector3(1.4f, 1.8f, 1f), Color.white, stoneMaterial);
+            GameObject barrierCenter = CreateVisualQuad(obsRoot.transform, "Barrier_Center_Rock", new Vector3(0f, 0f, 0f), new Vector3(1.4f, 1.8f, 1f), Color.white, stoneMaterial, true);
 
             // 8. Circuitos de Waypoints
             GameObject circuitsRoot = new GameObject("WaypointCircuits");
@@ -151,6 +151,16 @@ namespace Minigame.Editor
             SpriteRenderer playerRenderer = playerObj.AddComponent<SpriteRenderer>();
             playerRenderer.sortingOrder = 10;
             if (ryuIdle.Length > 0) playerRenderer.sprite = ryuIdle[0];
+
+            Rigidbody2D playerRb = playerObj.AddComponent<Rigidbody2D>();
+            playerRb.bodyType = RigidbodyType2D.Dynamic;
+            playerRb.gravityScale = 0f;
+            playerRb.freezeRotation = true;
+            playerRb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+
+            CircleCollider2D playerCol = playerObj.AddComponent<CircleCollider2D>();
+            playerCol.radius = 0.38f;
+            playerCol.offset = new Vector2(0f, 0.4f);
 
             SpriteFrameAnimator playerAnimator = playerObj.AddComponent<SpriteFrameAnimator>();
             StealthPlayerController playerController = playerObj.AddComponent<StealthPlayerController>();
@@ -222,10 +232,10 @@ namespace Minigame.Editor
                 GameObject itemObj = new GameObject($"Orb_Sparks_Collectible_{i + 1}");
                 itemObj.transform.SetParent(itemsRoot.transform);
                 itemObj.transform.localPosition = itemPositions[i];
-                itemObj.transform.localScale = new Vector3(1.7f, 1.7f, 1f);
+                itemObj.transform.localScale = new Vector3(2.0f, 2.0f, 1f);
 
                 SpriteRenderer itemRenderer = itemObj.AddComponent<SpriteRenderer>();
-                itemRenderer.sortingOrder = 8;
+                itemRenderer.sortingOrder = 15;
                 if (orbSparks.Length > 0) itemRenderer.sprite = orbSparks[0];
 
                 SpriteFrameAnimator itemAnimator = itemObj.AddComponent<SpriteFrameAnimator>();
@@ -303,7 +313,7 @@ namespace Minigame.Editor
             return node.transform;
         }
 
-        private static GameObject CreateVisualQuad(Transform parent, string name, Vector3 pos, Vector3 scale, Color color, Material customMat = null)
+        private static GameObject CreateVisualQuad(Transform parent, string name, Vector3 pos, Vector3 scale, Color color, Material customMat = null, bool addBoxCollider = false)
         {
             GameObject quad = new GameObject(name);
             quad.transform.SetParent(parent);
@@ -324,6 +334,12 @@ namespace Minigame.Editor
             tex.Apply();
             Sprite dummy = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
             sr.sprite = dummy;
+
+            if (addBoxCollider)
+            {
+                BoxCollider2D box = quad.AddComponent<BoxCollider2D>();
+                box.size = Vector2.one;
+            }
 
             return quad;
         }

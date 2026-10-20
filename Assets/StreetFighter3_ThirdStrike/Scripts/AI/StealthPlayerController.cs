@@ -4,11 +4,13 @@ using StreetFighter3.Loading;
 namespace Minigame.Waypoints
 {
     [RequireComponent(typeof(SpriteRenderer))]
+    [RequireComponent(typeof(Rigidbody2D))]
+    [RequireComponent(typeof(CircleCollider2D))]
     public class StealthPlayerController : MonoBehaviour
     {
         [Header("Movimiento")]
         [SerializeField] private float moveSpeed = 4.0f;
-        [SerializeField] private Rect moveBounds = new Rect(-7.5f, -4f, 15f, 8f);
+        [SerializeField] private Rect moveBounds = new Rect(-6.8f, -3.5f, 13.6f, 7.0f);
 
         [Header("Animaciones")]
         [SerializeField] private Sprite[] idleFrames;
@@ -18,13 +20,16 @@ namespace Minigame.Waypoints
         [Header("Referencias")]
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private SpriteFrameAnimator frameAnimator;
+        [SerializeField] private Rigidbody2D rb;
+        [SerializeField] private CircleCollider2D circleCollider;
 
         private bool canControl = true;
         private bool isMoving = false;
+        private Vector2 movementInput = Vector2.zero;
         private Vector3 spawnPosition;
 
         public bool CanControl => canControl;
-        public Vector2 Position => transform.position;
+        public Vector2 Position => rb != null ? rb.position : (Vector2)transform.position;
 
         private void Awake()
         {
@@ -34,6 +39,23 @@ namespace Minigame.Waypoints
                 frameAnimator = GetComponent<SpriteFrameAnimator>();
                 if (frameAnimator == null) frameAnimator = gameObject.AddComponent<SpriteFrameAnimator>();
             }
+
+            if (rb == null) rb = GetComponent<Rigidbody2D>();
+            if (rb != null)
+            {
+                rb.bodyType = RigidbodyType2D.Dynamic;
+                rb.gravityScale = 0f;
+                rb.freezeRotation = true;
+                rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            }
+
+            if (circleCollider == null) circleCollider = GetComponent<CircleCollider2D>();
+            if (circleCollider != null)
+            {
+                circleCollider.radius = 0.38f;
+                circleCollider.offset = new Vector2(0f, 0.4f);
+            }
+
             spawnPosition = transform.position;
         }
 
@@ -44,27 +66,20 @@ namespace Minigame.Waypoints
 
         private void Update()
         {
-            if (!canControl) return;
+            if (!canControl)
+            {
+                movementInput = Vector2.zero;
+                return;
+            }
 
             float horizontal = Input.GetAxisRaw("Horizontal");
             float vertical = Input.GetAxisRaw("Vertical");
 
-            Vector2 inputDir = new Vector2(horizontal, vertical);
+            movementInput = new Vector2(horizontal, vertical);
 
-            if (inputDir.sqrMagnitude > 0.01f)
+            if (movementInput.sqrMagnitude > 0.01f)
             {
-                inputDir.Normalize();
-                Vector3 delta = (Vector3)(inputDir * (moveSpeed * Time.deltaTime));
-                Vector3 newPos = transform.position + delta;
-
-                // Restringir dentro de los limites del mapa
-                if (moveBounds.width > 0f && moveBounds.height > 0f)
-                {
-                    newPos.x = Mathf.Clamp(newPos.x, moveBounds.xMin, moveBounds.xMax);
-                    newPos.y = Mathf.Clamp(newPos.y, moveBounds.yMin, moveBounds.yMax);
-                }
-
-                transform.position = newPos;
+                movementInput.Normalize();
 
                 if (horizontal > 0.05f) spriteRenderer.flipX = false;
                 else if (horizontal < -0.05f) spriteRenderer.flipX = true;
@@ -77,12 +92,35 @@ namespace Minigame.Waypoints
             }
             else
             {
+                movementInput = Vector2.zero;
                 if (isMoving)
                 {
                     isMoving = false;
                     PlayIdle();
                 }
             }
+        }
+
+        private void FixedUpdate()
+        {
+            if (rb == null) return;
+
+            if (!canControl || movementInput.sqrMagnitude < 0.001f)
+            {
+                rb.linearVelocity = Vector2.zero;
+                return;
+            }
+
+            Vector2 nextPos = rb.position + movementInput * (moveSpeed * Time.fixedDeltaTime);
+
+            // Delimitar dentro de los limites seguros de la arena
+            if (moveBounds.width > 0f && moveBounds.height > 0f)
+            {
+                nextPos.x = Mathf.Clamp(nextPos.x, moveBounds.xMin, moveBounds.xMax);
+                nextPos.y = Mathf.Clamp(nextPos.y, moveBounds.yMin, moveBounds.yMax);
+            }
+
+            rb.MovePosition(nextPos);
         }
 
         public void SetBounds(Rect bounds)
@@ -101,6 +139,9 @@ namespace Minigame.Waypoints
         {
             canControl = false;
             isMoving = false;
+            movementInput = Vector2.zero;
+            if (rb != null) rb.linearVelocity = Vector2.zero;
+
             if (frameAnimator != null && hitFrames != null && hitFrames.Length > 0)
             {
                 frameAnimator.PlayAnimation(hitFrames, false);
@@ -111,14 +152,22 @@ namespace Minigame.Waypoints
         {
             canControl = false;
             isMoving = false;
+            movementInput = Vector2.zero;
+            if (rb != null) rb.linearVelocity = Vector2.zero;
             PlayIdle();
         }
 
         public void ResetPosition(Vector3 position)
         {
             transform.position = position;
+            if (rb != null)
+            {
+                rb.position = position;
+                rb.linearVelocity = Vector2.zero;
+            }
             canControl = true;
             isMoving = false;
+            movementInput = Vector2.zero;
             PlayIdle();
         }
 
