@@ -30,6 +30,16 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 | `FighterCombatColliders.cs` | `Scripts/Combat/` | Marco | Coordinador de activación/desactivación de hitboxes y voces. |
 | `ParallaxBackground.cs` | `Scripts/Environment/` | Sebas / Marco | Scroll con efecto de profundidad 2.5D para escenarios. |
 | `SF3SoundManager.cs` | `Scripts/Audio/` | Marco / Sebas | Singleton para reproducir BGM, SFX y voces de luchadores. |
+| `SpriteFrameAnimator.cs` | `Scripts/Loading/` | Marco | Reproductor ligero de secuencias de frames a 14 FPS CPS-3 sin GC. |
+| `LoadingPlayerRyu.cs` | `Scripts/Loading/` | Marco | Controlador de Ryu en pantalla de carga (WASD/flechas, turbo, esquinas, colisión). |
+| `LoadingChaserKen.cs` | `Scripts/Loading/` | Marco | IA de Ken para perseguir a Ryu desde la esquina opuesta superior. |
+| `LoadingCollectible.cs` | `Scripts/Loading/` | Marco | Orbe Hadouken coleccionable estilo Budokai Tenkaichi que otorga turbo y puntos. |
+| `LoadingItemSpawner.cs` | `Scripts/Loading/` | Marco | Generador de orbes coleccionables con object pooling seguro. |
+| `LoadingMinigameRunner.cs` | `Scripts/Loading/` | Marco | Gestor de ciclo de juego, cronómetro de supervivencia, puntuación y reinicio. |
+| `LoadingScreenController.cs` | `Scripts/Loading/` | Marco | Coordinador de carga asíncrona de escenas, barra de progreso y HUD arcade. |
+| `SF3LoadingMinigameBuilder.cs` | `Scripts/Editor/` | Marco | Generador en 1 clic de Prefab y Escena con sprites, cámara, límites y UI. |
+| `LoadingScreenMinigame.prefab` | `Prefabs/Loading/` | Marco | Prefab autónomo y reutilizable de la pantalla de carga con minijuego. |
+| `LoadingScreen_Minigame.unity` | `Scenes/` | Marco | Escena interactiva lista para probar el minijuego de Ryu vs Ken. |
 
 ---
 
@@ -43,6 +53,16 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 
 ### 🔄 Historial de Cambios Recientes (Changelog)
 
+* **2026-09-20 (Minijuego Interactivo de Pantalla de Carga - Ryu vs Ken):**
+  - Creada la rama `feature/loading-screen`.
+  - Diseñado e implementado el minijuego estilo Dragon Ball Budokai Tenkaichi 3 para pantallas de carga.
+  - Ryu empieza en la esquina inferior izquierda y escapa de Ken usando Flechas o WASD (`LoadingPlayerRyu.cs`).
+  - Ken empieza en la esquina opuesta superior y persigue incansablemente a Ryu (`LoadingChaserKen.cs`).
+  - Sistema de orbes Hadouken coleccionables con turbo de velocidad y puntos (`LoadingCollectible.cs`, `LoadingItemSpawner.cs`).
+  - Motor de animación ligero a 14 FPS arcade CPS-3 sin consumo de Garbage Collector (`SpriteFrameAnimator.cs`).
+  - Coordinador de carga asíncrona de escenas con barra de progreso, textos arcade retro y ciclo continuo (`LoadingScreenController.cs`, `LoadingMinigameRunner.cs`).
+  - Generador automatizado de Editor para reconstruir Prefab y Escena con 1 clic (`SF3LoadingMinigameBuilder.cs`).
+  - Generados los assets nativos de Unity: `LoadingScreenMinigame.prefab` y escena `LoadingScreen_Minigame.unity`.
 * **2026-09-05:**
   - Creadas las 36 tareas atómicas de los Sprints 1 a 6 en `Devs/`.
   - Creado el sistema de sincronización y contexto para IAs en `Devs/Context/`.
