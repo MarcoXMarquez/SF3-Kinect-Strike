@@ -33,6 +33,15 @@ namespace Minigame.Waypoints
                 frameAnimator = GetComponent<SpriteFrameAnimator>();
                 if (frameAnimator == null) frameAnimator = gameObject.AddComponent<SpriteFrameAnimator>();
             }
+
+            CircleCollider2D col = GetComponent<CircleCollider2D>();
+            if (col == null) col = gameObject.AddComponent<CircleCollider2D>();
+            if (col != null)
+            {
+                col.isTrigger = true;
+                col.radius = pickupRadius;
+            }
+
             basePosition = transform.position;
             if (spriteRenderer != null) spriteRenderer.enabled = true;
         }
@@ -52,7 +61,7 @@ namespace Minigame.Waypoints
             // Animacion flotante en eje Y
             transform.position = basePosition + new Vector3(0f, Mathf.Sin(Time.time * floatSpeed) * floatAmplitude, 0f);
 
-            // Comprobacion de proximidad con el jugador
+            // Comprobacion de proximidad con el jugador (redundancia por distancia)
             if (playerTarget != null && playerTarget.CanControl)
             {
                 float dist = Vector2.Distance(transform.position, playerTarget.Position);
@@ -60,6 +69,17 @@ namespace Minigame.Waypoints
                 {
                     Collect();
                 }
+            }
+        }
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if (isCollected) return;
+
+            StealthPlayerController p = other.GetComponent<StealthPlayerController>();
+            if (p != null && p.CanControl)
+            {
+                Collect();
             }
         }
 

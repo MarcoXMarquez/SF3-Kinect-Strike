@@ -109,8 +109,8 @@ namespace Minigame.Waypoints
 
                 if (statusText != null)
                 {
-                    statusText.text = "¡TODOS LOS ORBES RECOGIDOS! VE AL PORTAL VERDE";
-                    statusText.color = new Color(0.2f, 1f, 0.4f);
+                    statusText.text = "¡TODOS LOS ORBES RECOGIDOS! CRUZA EL PORTAL DIMENSIONAL";
+                    statusText.color = new Color(0.75f, 0.4f, 1.0f);
                 }
             }
         }

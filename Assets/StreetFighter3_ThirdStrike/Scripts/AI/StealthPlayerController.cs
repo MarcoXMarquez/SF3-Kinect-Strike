@@ -11,6 +11,7 @@ namespace Minigame.Waypoints
         [Header("Movimiento")]
         [SerializeField] private float moveSpeed = 4.0f;
         [SerializeField] private Rect moveBounds = new Rect(-6.8f, -3.5f, 13.6f, 7.0f);
+        [SerializeField] private LayerMask obstacleLayerMask = ~0;
 
         [Header("Animaciones")]
         [SerializeField] private Sprite[] idleFrames;
@@ -27,6 +28,10 @@ namespace Minigame.Waypoints
         private bool isMoving = false;
         private Vector2 movementInput = Vector2.zero;
         private Vector3 spawnPosition;
+        private const float COLLIDER_RADIUS = 0.38f;
+        private static readonly Vector2 COLLIDER_OFFSET = new Vector2(0f, 0.4f);
+        private readonly RaycastHit2D[] hitResults = new RaycastHit2D[6];
+        private ContactFilter2D contactFilter;
 
         public bool CanControl => canControl;
         public Vector2 Position => rb != null ? rb.position : (Vector2)transform.position;
@@ -47,14 +52,21 @@ namespace Minigame.Waypoints
                 rb.gravityScale = 0f;
                 rb.freezeRotation = true;
                 rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+                rb.interpolation = RigidbodyInterpolation2D.Interpolate;
             }
 
             if (circleCollider == null) circleCollider = GetComponent<CircleCollider2D>();
             if (circleCollider != null)
             {
-                circleCollider.radius = 0.38f;
-                circleCollider.offset = new Vector2(0f, 0.4f);
+                circleCollider.radius = COLLIDER_RADIUS;
+                circleCollider.offset = COLLIDER_OFFSET;
+                circleCollider.isTrigger = false;
             }
+
+            contactFilter = new ContactFilter2D();
+            contactFilter.useTriggers = false;
+            contactFilter.SetLayerMask(obstacleLayerMask);
+            contactFilter.useLayerMask = true;
 
             spawnPosition = transform.position;
         }
@@ -111,16 +123,42 @@ namespace Minigame.Waypoints
                 return;
             }
 
-            Vector2 nextPos = rb.position + movementInput * (moveSpeed * Time.fixedDeltaTime);
+            Vector2 desiredVel = movementInput * moveSpeed;
+            float castDistance = moveSpeed * Time.fixedDeltaTime + 0.05f;
 
-            // Delimitar dentro de los limites seguros de la arena
-            if (moveBounds.width > 0f && moveBounds.height > 0f)
+            // Deteccion predictiva de obstaculos mediante rb.Cast para frenar y deslizar en paredes
+            int hitCount = rb.Cast(movementInput, contactFilter, hitResults, castDistance);
+            for (int i = 0; i < hitCount; i++)
             {
-                nextPos.x = Mathf.Clamp(nextPos.x, moveBounds.xMin, moveBounds.xMax);
-                nextPos.y = Mathf.Clamp(nextPos.y, moveBounds.yMin, moveBounds.yMax);
+                RaycastHit2D hit = hitResults[i];
+                if (hit.collider != null && !hit.collider.isTrigger && hit.collider != circleCollider)
+                {
+                    Vector2 normal = hit.normal;
+                    float dotNormal = Vector2.Dot(desiredVel, normal);
+                    if (dotNormal < 0f)
+                    {
+                        // Deslizar tangencialmente a lo largo de la superficie del obstaculo
+                        desiredVel -= normal * dotNormal;
+                    }
+                    break;
+                }
             }
 
-            rb.MovePosition(nextPos);
+            // Aplicar velocidad fisica
+            rb.linearVelocity = desiredVel;
+
+            // Restringir posicion dentro de los limites seguros de la arena
+            Vector2 pos = rb.position;
+            if (moveBounds.width > 0f && moveBounds.height > 0f)
+            {
+                float clampedX = Mathf.Clamp(pos.x, moveBounds.xMin, moveBounds.xMax);
+                float clampedY = Mathf.Clamp(pos.y, moveBounds.yMin, moveBounds.yMax);
+
+                if (clampedX != pos.x || clampedY != pos.y)
+                {
+                    rb.position = new Vector2(clampedX, clampedY);
+                }
+            }
         }
 
         public void SetBounds(Rect bounds)

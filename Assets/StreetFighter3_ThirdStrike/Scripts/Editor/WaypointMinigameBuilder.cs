@@ -24,6 +24,7 @@ namespace Minigame.Editor
 
         private const string ORB_SPARKS_PATH = "Assets/StreetFighter3_ThirdStrike/Effects/09_Guard_Block_Sparks";
         private const string MATERIAL_PATH = "Assets/StreetFighter3_ThirdStrike/Materials/StonePillar_Material.mat";
+        private const string PORTAL_MATERIAL_PATH = "Assets/StreetFighter3_ThirdStrike/Materials/RinneganPortal_Material.mat";
 
         private const string SCENE_PATH_1 = "Assets/Scenes/minijuegowaypoint.unity";
         private const string SCENE_PATH_2 = "Assets/StreetFighter3_ThirdStrike/Scenes/minijuegowaypoint.unity";
@@ -245,12 +246,26 @@ namespace Minigame.Editor
                 collectibleList.Add(collectible);
             }
 
-            // 12. Portal de Extraccion / Meta
+            // 12. Portal de Extraccion / Meta (Shader de Vortice Rinnegan)
             GameObject goalObj = new GameObject("Goal_ExtractionPortal");
             goalObj.transform.SetParent(root.transform);
             goalObj.transform.localPosition = new Vector3(6.0f, 2.8f, 0f);
 
-            CreateVisualQuad(goalObj.transform, "PortalVisual", Vector3.zero, new Vector3(1.2f, 1.2f, 1f), new Color(0.8f, 0.2f, 0.2f, 0.7f));
+            Material portalMat = GetOrCreatePortalMaterial();
+
+            SpriteRenderer goalRenderer = goalObj.AddComponent<SpriteRenderer>();
+            goalRenderer.sortingOrder = 7;
+            goalRenderer.material = portalMat;
+
+            Texture2D goalTex = new Texture2D(1, 1);
+            goalTex.SetPixel(0, 0, Color.white);
+            goalTex.Apply();
+            goalRenderer.sprite = Sprite.Create(goalTex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
+
+            CircleCollider2D goalCol = goalObj.AddComponent<CircleCollider2D>();
+            goalCol.isTrigger = true;
+            goalCol.radius = 0.8f;
+
             StealthGoal goal = goalObj.AddComponent<StealthGoal>();
             goal.SetTargetPlayer(playerController);
 
@@ -301,6 +316,39 @@ namespace Minigame.Editor
                 AssetDatabase.CreateAsset(mat, MATERIAL_PATH);
                 AssetDatabase.SaveAssets();
                 Debug.Log($"[Waypoint Builder] Material de roca creado en: {MATERIAL_PATH}");
+            }
+            return mat;
+        }
+
+        private static Material GetOrCreatePortalMaterial()
+        {
+            Material mat = AssetDatabase.LoadAssetAtPath<Material>(PORTAL_MATERIAL_PATH);
+            if (mat == null)
+            {
+                Shader shader = Shader.Find("Custom/RinneganPortal2D");
+                if (shader == null)
+                {
+                    Debug.LogWarning("[Waypoint Builder] Shader Custom/RinneganPortal2D no encontrado en Shader.Find, usando Sprites/Default.");
+                    shader = Shader.Find("Sprites/Default");
+                }
+
+                mat = new Material(shader);
+                mat.name = "RinneganPortal_Material";
+                mat.SetColor("_VoidColor", new Color(0.04f, 0.0f, 0.09f, 1.0f));
+                mat.SetColor("_InnerColor", new Color(0.52f, 0.08f, 0.92f, 1.0f));
+                mat.SetColor("_OuterColor", new Color(0.82f, 0.25f, 1.0f, 1.0f));
+                mat.SetColor("_GlowColor", new Color(0.95f, 0.75f, 1.0f, 1.0f));
+                mat.SetColor("_LockedTint", new Color(0.4f, 0.1f, 0.2f, 1.0f));
+                mat.SetFloat("_RotationSpeed", 3.5f);
+                mat.SetFloat("_RingFrequency", 32.0f);
+                mat.SetFloat("_RingSpeed", 4.0f);
+                mat.SetFloat("_ArmCount", 3.0f);
+                mat.SetFloat("_SwirlTension", 14.0f);
+                mat.SetFloat("_IsUnlocked", 0.0f);
+
+                AssetDatabase.CreateAsset(mat, PORTAL_MATERIAL_PATH);
+                AssetDatabase.SaveAssets();
+                Debug.Log($"[Waypoint Builder] Material de portal creado en: {PORTAL_MATERIAL_PATH}");
             }
             return mat;
         }
