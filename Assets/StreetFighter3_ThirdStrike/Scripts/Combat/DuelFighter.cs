@@ -4,6 +4,7 @@ using UnityEngine;
 public class DuelFighter : MonoBehaviour
 {
     public DuelFighter opponent;
+    public IFighterInput inputProvider;
     public int Health { get; private set; }
     private JapanDuel duel;
     private bool first, crouching, guarding, spentHit, finished;
@@ -125,29 +126,49 @@ public class DuelFighter : MonoBehaviour
             }
             else
             {
-                // Jugador 2 (Ryu): EXCLUSIVAMENTE Flechas y Teclado Numérico
-                move = (Input.GetKey(KeyCode.RightArrow) ? 1 : 0) - (Input.GetKey(KeyCode.LeftArrow) ? 1 : 0);
-                crouching = Grounded && Input.GetKey(KeyCode.DownArrow);
-                guarding = Grounded && (Input.GetKey(KeyCode.RightShift) || Input.GetKey(KeyCode.Keypad0));
-                if (Grounded && !crouching && !guarding && Input.GetKeyDown(KeyCode.UpArrow))
-                    body.linearVelocity = new Vector2(body.linearVelocity.x, JumpSpeed);
-
-                if (!guarding)
+                // Jugador 2 (Ryu): Soporte desacoplado para KinectFighterInput (ML somatosensorial) o Teclado directo
+                if (inputProvider != null)
                 {
-                    for (int i = 0; i < RyuAttacks.Length; i++)
+                    move = inputProvider.GetHorizontalAxis();
+                    crouching = Grounded && inputProvider.IsCrouching();
+                    guarding = Grounded && inputProvider.IsBlocking();
+                    if (Grounded && !crouching && !guarding && inputProvider.IsJumping())
+                        body.linearVelocity = new Vector2(body.linearVelocity.x, JumpSpeed);
+
+                    if (!guarding)
                     {
-                        if (Input.GetKeyDown(RyuAttacks[i]) || Input.GetKeyDown(RyuAlternates[i]))
-                        {
-                            BeginAttack(i);
-                            break;
-                        }
+                        if (inputProvider.WasLightPunchPressed()) BeginAttack(0);
+                        else if (inputProvider.WasHeavyPunchPressed()) BeginAttack(1);
+                        else if (inputProvider.WasLightKickPressed()) BeginAttack(2);
+                        else if (inputProvider.WasHeavyKickPressed()) BeginAttack(3);
                     }
-                    if (attack < 0)
+                }
+                else
+                {
+                    // Fallback directo: EXCLUSIVAMENTE Flechas y Teclado Numérico
+                    move = (Input.GetKey(KeyCode.RightArrow) ? 1 : 0) - (Input.GetKey(KeyCode.LeftArrow) ? 1 : 0);
+                    crouching = Grounded && Input.GetKey(KeyCode.DownArrow);
+                    guarding = Grounded && (Input.GetKey(KeyCode.RightShift) || Input.GetKey(KeyCode.Keypad0));
+                    if (Grounded && !crouching && !guarding && Input.GetKeyDown(KeyCode.UpArrow))
+                        body.linearVelocity = new Vector2(body.linearVelocity.x, JumpSpeed);
+
+                    if (!guarding)
                     {
-                        if (Input.GetKeyDown(KeyCode.B)) BeginAttack(0);
-                        else if (Input.GetKeyDown(KeyCode.N)) BeginAttack(1);
-                        else if (Input.GetKeyDown(KeyCode.M)) BeginAttack(2);
-                        else if (Input.GetKeyDown(KeyCode.Comma)) BeginAttack(3);
+                        for (int i = 0; i < RyuAttacks.Length; i++)
+                        {
+                            if (Input.GetKeyDown(RyuAttacks[i]) || Input.GetKeyDown(RyuAlternates[i]))
+                            {
+                                BeginAttack(i);
+                                break;
+                            }
+                        }
+                        if (attack < 0)
+                        {
+                            if (Input.GetKeyDown(KeyCode.B)) BeginAttack(0);
+                            else if (Input.GetKeyDown(KeyCode.N)) BeginAttack(1);
+                            else if (Input.GetKeyDown(KeyCode.M)) BeginAttack(2);
+                            else if (Input.GetKeyDown(KeyCode.Comma)) BeginAttack(3);
+                        }
                     }
                 }
             }

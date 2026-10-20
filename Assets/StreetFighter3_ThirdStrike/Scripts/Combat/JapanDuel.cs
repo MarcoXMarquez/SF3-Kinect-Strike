@@ -55,6 +55,13 @@ public class JapanDuel : MonoBehaviour
         ryu = Create("Ryu", roster.ryu, false);
         ken.opponent = ryu;
         ryu.opponent = ken;
+
+        // Integración Somatosensorial (Kinect + ML en Python) para Ryu en Modo Historia con Teclado en Paralelo
+        KinectFighterInput kinectInput = ryu.gameObject.AddComponent<KinectFighterInput>();
+        kinectInput.SetOpponent(ken.transform);
+        kinectInput.SetAutoSpacing(true);
+        ryu.inputProvider = kinectInput;
+
         Restart();
     }
 
@@ -296,7 +303,7 @@ public class JapanDuel : MonoBehaviour
             alignment = TextAnchor.MiddleCenter
         };
         controlHint.normal.textColor = new Color(1f, 0.92f, 0.4f);
-        GUI.Label(new Rect(80, 498, 800, 34), "P1 (KEN): [WASD / Flechas] Mover/Saltar | [J / F] Puño D | [K / H] Puño F | [L / V] Patada D | [O / B] Patada F | [ESC] Pausa", controlHint);
+        GUI.Label(new Rect(80, 498, 800, 34), "KEN: [WASD] Mover | [J/K/L/O] Ataques   ||   RYU: [AZURE KINECT ML / Flechas + NumPad] Puños/Patadas/Guardia | [ESC] Pausa", controlHint);
 
         GUI.matrix = old;
     }

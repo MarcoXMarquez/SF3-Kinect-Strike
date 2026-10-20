@@ -86,6 +86,8 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 | `SF3StoryModeBuilder.cs` | `Scripts/Editor/` | Marco / Kevin | Constructor automatizado de la escena StoryMode_Scene con estética CPS-3 y Canvas UI. |
 | `NeonSiegeGame.cs` | `Minigames/NeonSiege/` | Equipo | Controlador principal del minijuego de campaña balística de proyectiles con Ryu contra Urien. |
 | `NeonSiege.unity` | `Minigames/NeonSiege/` | Equipo | Escena jugable de Neon Siege en azoteas de Hong Kong. |
+| `KinectUDPReceiver.cs` | `Scripts/Input/` | Kevin | Receptor UDP no bloqueante y thread-safe (puerto 5005) para telemetría somatosensorial en tiempo real. |
+| `KinectFighterInput.cs` | `Scripts/Input/` | Kevin | Adaptador somatosensorial de IFighterInput con Auto-Spacing asistido, mapeo de gestos ML y teclado fallback en paralelo. |
 
 ---
 
@@ -98,6 +100,16 @@ Al hacer `git pull origin main`, todos los asistentes de IA leerán este documen
 ---
 
 ### 🔄 Historial de Cambios Recientes (Changelog)
+
+* **2026-10-20 (Conexión Somatosensorial Kinect + ML al Modo Historia Ryu vs Ken):**
+  - **Transmisor UDP en Python (`Tools/test_live_kinect_classifier.py`):** Integrado canal de transmisión de datagramas UDP JSON de baja latencia (<3ms) a 30 FPS hacia Unity (`127.0.0.1:5005`), compatible con sensor físico Azure Kinect DK y simulador `--mock`.
+  - **Receptor UDP No Bloqueante (`KinectUDPReceiver.cs`):** Componente receptor thread-safe que drena el buffer de red y entrega la pose, confianza, presencia corporal y distancia en profundidad (Z).
+  - **Adaptador de Entrada Somatosensorial (`KinectFighterInput.cs`):** Implementación de `IFighterInput` con:
+    1. **Control de Ryu:** Mapeo de gestos de puñetazo der/izq, patada der/izq, agachado, salto y bloqueo.
+    2. **Auto-Spacing Asistido (Opción A):** Regulación suave de distancia de combate respecto a Ken (~1.35m) para enfoque 100% en ataques corporales y defensas.
+    3. **Teclado Fallback en Paralelo:** Respaldo híbrido simultáneo con flechas y teclado numérico sin conflicto.
+    4. **HUD de Telemetría Somatosensorial:** Badge arcade CPS-3 en pantalla con estado de conexión, gesto clasificado y tecla [F1]/[F2].
+  - **Desacoplamiento de `DuelFighter.cs` y cableado en `JapanDuel.cs`:** Ahora `DuelFighter` recibe entradas a través de la interfaz desacoplada `IFighterInput inputProvider`, integrando a Ryu automáticamente con Kinect en el Modo Historia / Duelo de Japón.
 
 * **2026-10-20 (Integración de Minijuegos y Modo Historia Ryu vs Ken):**
   - **Fusión de `minijuego-waypoint`:** Integrado el minijuego de sigilo por waypoints con Ryu, centinelas patrulleros, orbes de energía y portal Rinnegan.

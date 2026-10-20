@@ -12,6 +12,8 @@ Detector somatosensorial en vivo con soporte para hardware físico Azure Kinect 
 import os
 import sys
 import time
+import socket
+import json
 import argparse
 import collections
 import numpy as np
@@ -202,6 +204,12 @@ def main():
                         help="Forzar modo simulador procedural (sin sensor físico)")
     parser.add_argument("--model", type=str, default=os.path.join(os.path.dirname(__file__), "gesture_classifier.joblib"),
                         help="Ruta al modelo entrenado (.joblib)")
+    parser.add_argument("--unity-ip", type=str, default="127.0.0.1",
+                        help="Dirección IP de destino para transmisión UDP a Unity (default: 127.0.0.1)")
+    parser.add_argument("--unity-port", type=int, default=5005,
+                        help="Puerto UDP de destino para Unity (default: 5005)")
+    parser.add_argument("--no-stream", action="store_true", default=False,
+                        help="Desactivar transmisión de paquetes UDP a Unity")
     args = parser.parse_args()
 
     print("=" * 80)
@@ -253,6 +261,19 @@ def main():
     else:
         use_mock = True
         print("🎮 Iniciando en modo simulador procedural (--mock).")
+
+    # Configuración de transmisión UDP en tiempo real a Unity
+    stream_sock = None
+    if not args.no_stream:
+        try:
+            stream_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            print(f"📡 Transmisor UDP hacia Unity inicializado -> {args.unity_ip}:{args.unity_port}")
+        except Exception as ex:
+            print(f"⚠️ Error al crear socket UDP ({ex}). Transmisión desactivada.")
+            stream_sock = None
+    else:
+        print("ℹ️ Transmisión UDP desactivada (--no-stream).")
+    last_stream_time = 0.0
 
     # 3. Variables de ventana e inferencia
     WINDOW_NAME = "KINET STRIKE - Live Gesture & Transition Studio"
@@ -444,6 +465,25 @@ def main():
                     pass
 
             # -------------------------------------------------------------
+            # TRANSMISIÓN UDP EN TIEMPO REAL HACIA UNITY (~30-33 FPS)
+            # -------------------------------------------------------------
+            if stream_sock is not None and (now - last_stream_time) >= 0.030:
+                last_stream_time = now
+                payload = {
+                    "action": pred_action,
+                    "action_id": int(ACTION_NAME_TO_ID.get(pred_action, 0)),
+                    "confidence": float(round(pred_conf, 3)),
+                    "has_body": bool(has_body),
+                    "timestamp": float(now),
+                    "z_distance": float(round(joints_xyz_m[0, 2], 2)) if (has_body and joints_xyz_m is not None) else 0.0
+                }
+                try:
+                    payload_bytes = json.dumps(payload).encode("utf-8")
+                    stream_sock.sendto(payload_bytes, (args.unity_ip, args.unity_port))
+                except Exception:
+                    pass
+
+            # -------------------------------------------------------------
             # DIBUJAR LIENZO EN OPENCV
             # -------------------------------------------------------------
             canvas = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
@@ -460,8 +500,9 @@ def main():
             z_col = (0, 255, 200) if has_body and joints_xyz_m is not None and (1.7 <= joints_xyz_m[0, 2] <= 2.8) else (0, 180, 255)
 
             mode_tag = "SIMULADOR (--mock)" if use_mock else "AZURE KINECT DK (ONLINE)"
-            cv2.putText(canvas, f"{mode_tag} | {dist_z_str}", (16, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.50, z_col, 2, cv2.LINE_AA)
+            stream_tag = f"UDP: {args.unity_ip}:{args.unity_port}" if stream_sock is not None else "UDP: OFF"
+            cv2.putText(canvas, f"{mode_tag} | {dist_z_str} | {stream_tag}", (16, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.44, z_col, 1, cv2.LINE_AA)
             cv2.putText(canvas, f"FPS: {display_fps:.1f}", (LEFT_W - 110, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.48, (160, 175, 195), 1, cv2.LINE_AA)
 
@@ -660,6 +701,11 @@ def main():
 
     finally:
         print("\n🛑 Deteniendo Live Classifier...")
+        if stream_sock is not None:
+            try:
+                stream_sock.close()
+            except Exception:
+                pass
         if not use_mock and device:
             try:
                 device.close()
