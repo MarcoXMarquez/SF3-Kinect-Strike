@@ -93,3 +93,7 @@ Tools/dataset_processed.csv
 !Tools/dataset_raw/subject_profiles.json
 
 
+
+# Microsoft Office temporary lock files
+~$*
+
